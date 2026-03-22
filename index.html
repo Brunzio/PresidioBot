@@ -573,6 +573,15 @@
             </tbody>
           </table>
         </div>
+        <!-- Banner bolla non salvata -->
+        <div id="bolla-unsaved-banner" style="display:none;background:rgba(255,184,0,0.1);border:1px solid var(--warning);border-radius:8px;padding:12px 16px;margin-bottom:16px;display:none;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="font-size:12px;color:var(--warning);">⚠ Bolla generata ma non ancora salvata.</div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="bollaRiaprPDF()">↗ Riapri PDF</button>
+            <button class="btn btn-primary btn-sm" onclick="bollaSalva()">✓ Salva e vai all'archivio</button>
+          </div>
+        </div>
+
         <div style="display:flex;gap:10px;justify-content:flex-end;">
           <button class="btn btn-secondary" onclick="bollaReset()">↺ Svuota</button>
           <button class="btn btn-primary" onclick="bollaGenera()">⬇ Genera Bolla</button>
@@ -594,7 +603,7 @@
               <th>Data</th>
               <th>Cessionario</th>
               <th>N° Apparati</th>
-              <th style="width:100px;"></th>
+              <th style="width:130px;"></th>
             </tr></thead>
             <tbody id="archivio-body">
               <tr><td colspan="5"><div class="empty">Clicca Aggiorna per caricare</div></td></tr>
@@ -2277,15 +2286,17 @@ function switchBolleTab(name) {
   if (name === 'anagrafiche') loadAnagrafiche();
 }
 
-// ── INIT NUOVA BOLLA ──────────────────────────────────────────────────────────
-let bollaApparati = []; // array di oggetti {qty, desc, asset, sn, colli}
-let anagraficheCache = []; // cache per datalist
+// ── STATO ────────────────────────────────────────────────────────────────────
+let bollaApparati = [];
+let bollaUnsavedData = null;
+let anagraficheCache = [];
 let anagraficaEditingId = null;
+let archivioEditingId = null;
 let archivioSearchTimeout = null;
 let anagraficaSearchTimeout = null;
 
+// ── INIT NUOVA BOLLA ──────────────────────────────────────────────────────────
 async function initNuovaBolla() {
-  // numero progressivo
   const oggi = new Date();
   const meseAnno = `${oggi.getFullYear()}-${String(oggi.getMonth()+1).padStart(2,'0')}`;
   const { data } = await db.from('bolle_ddt').select('numero').eq('mese_anno', meseAnno).order('id', { ascending: false }).limit(1);
@@ -2295,11 +2306,7 @@ async function initNuovaBolla() {
     nextNum = 'P' + (last + 1);
   }
   document.getElementById('bolla-numero').value = nextNum;
-
-  // data odierna
   document.getElementById('bolla-data').value = oggi.toISOString().split('T')[0];
-
-  // carica anagrafiche per datalist
   await loadAnagraficheCache();
 }
 
@@ -2365,15 +2372,18 @@ function bollaRenderApparati() {
 
 function bollaReset() {
   bollaApparati = [];
+  bollaUnsavedData = null;
+  archivioEditingId = null;
   bollaRenderApparati();
   document.getElementById('bolla-proprietario').value = '';
   document.getElementById('bolla-cessionario').value = '';
   document.getElementById('bolla-destinazione').value = '';
+  document.getElementById('bolla-unsaved-banner').style.display = 'none';
   initNuovaBolla();
 }
 
-// ── GENERA BOLLA ──────────────────────────────────────────────────────────────
-async function bollaGenera() {
+// ── GENERA (solo PDF, niente salvataggio) ─────────────────────────────────────
+function bollaGenera() {
   const numero = document.getElementById('bolla-numero').value.trim();
   const dataVal = document.getElementById('bolla-data').value;
   const cessionario = document.getElementById('bolla-cessionario').value.trim();
@@ -2382,30 +2392,61 @@ async function bollaGenera() {
 
   const proprietario = document.getElementById('bolla-proprietario').value.trim();
   const destinazione = document.getElementById('bolla-destinazione').value.trim();
-  const meseAnno = dataVal.slice(0, 7); // "2026-03"
-  const dataFormatted = new Date(dataVal).toLocaleDateString('it-IT');
 
-  // Salva su Supabase
-  const { error } = await db.from('bolle_ddt').insert({
-    numero, mese_anno: meseAnno, data_bolla: dataVal,
+  bollaUnsavedData = {
+    numero,
+    data_bolla: dataVal,
+    mese_anno: dataVal.slice(0, 7),
     proprietario: proprietario || null,
     cessionario,
     luogo_destinazione: destinazione || null,
-    apparati: bollaApparati
-  });
-  if (error) { showToast('Errore salvataggio: ' + error.message, 'error'); return; }
-  showToast('Bolla salvata', 'success');
+    apparati: bollaApparati.map(b => ({ qty: b.qty, desc: b.desc, asset: b.asset, sn: b.sn, colli: b.colli }))
+  };
 
-  // Apre il template DDT
+  _apriDDT(bollaUnsavedData);
+  const banner = document.getElementById('bolla-unsaved-banner');
+  banner.style.display = 'flex';
+  banner.querySelector('div').textContent = '⚠ Bolla generata ma non ancora salvata.';
+}
+
+function bollaRiaprPDF() {
+  if (bollaUnsavedData) _apriDDT(bollaUnsavedData);
+}
+
+function _apriDDT(d) {
   const ddtData = {
-    numero, data: dataFormatted,
-    proprietario, cessionario, destinazione,
-    beni: bollaApparati.map(b => ({
-      qty: b.qty, desc: b.desc, asset: b.asset, sn: b.sn, colli: b.colli
-    }))
+    numero: d.numero,
+    data: new Date(d.data_bolla).toLocaleDateString('it-IT'),
+    proprietario: d.proprietario || '',
+    cessionario: d.cessionario,
+    destinazione: d.luogo_destinazione || '',
+    beni: d.apparati
   };
   sessionStorage.setItem('ddt_data', JSON.stringify(ddtData));
   window.open('ddt_template.html', '_blank');
+}
+
+// ── SALVA ─────────────────────────────────────────────────────────────────────
+async function bollaSalva() {
+  if (!bollaUnsavedData) return;
+  const btn = document.querySelector('[onclick="bollaSalva()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvo...'; }
+
+  let error;
+  if (archivioEditingId) {
+    ({ error } = await db.from('bolle_ddt').update(bollaUnsavedData).eq('id', archivioEditingId));
+  } else {
+    ({ error } = await db.from('bolle_ddt').insert(bollaUnsavedData));
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '✓ Salva e vai all\'archivio'; }
+  if (error) { showToast('Errore salvataggio: ' + error.message, 'error'); return; }
+
+  showToast(archivioEditingId ? 'Bolla aggiornata' : 'Bolla salvata', 'success');
+  bollaUnsavedData = null;
+  archivioEditingId = null;
+  document.getElementById('bolla-unsaved-banner').style.display = 'none';
+  switchBolleTab('archivio');
 }
 
 // ── ARCHIVIO ──────────────────────────────────────────────────────────────────
@@ -2432,7 +2473,11 @@ async function loadArchivio() {
       <td>${new Date(r.data_bolla).toLocaleDateString('it-IT')}</td>
       <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${r.cessionario}</td>
       <td>${(r.apparati || []).length}</td>
-      <td><button class="btn btn-secondary btn-sm" onclick="archivioRiapri(${r.id})">⬇ PDF</button></td>
+      <td><div class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="archivioRiapri(${r.id})">⬇ PDF</button>
+        <button class="btn btn-secondary btn-sm" onclick="archivioModifica(${r.id})">✎</button>
+        <button class="btn btn-danger btn-sm" onclick="archivioElimina(${r.id},'${escHtml(r.numero)}')">✕</button>
+      </div></td>
     </tr>
   `).join('') || '<tr><td colspan="5"><div class="empty">Nessuna bolla</div></td></tr>';
 }
@@ -2440,19 +2485,51 @@ async function loadArchivio() {
 async function archivioRiapri(id) {
   const { data } = await db.from('bolle_ddt').select('*').eq('id', id).single();
   if (!data) { showToast('Bolla non trovata', 'error'); return; }
-  const ddtData = {
-    numero: data.numero,
-    data: new Date(data.data_bolla).toLocaleDateString('it-IT'),
-    proprietario: data.proprietario || '',
-    cessionario: data.cessionario,
-    destinazione: data.luogo_destinazione || '',
-    beni: (data.apparati || []).map(b => ({
-      qty: b.qty, desc: b.desc, asset: b.asset, sn: b.sn, colli: b.colli
-    }))
-  };
-  sessionStorage.setItem('ddt_data', JSON.stringify(ddtData));
-  window.open('ddt_template.html', '_blank');
+  _apriDDT(data);
 }
+
+async function archivioModifica(id) {
+  const { data } = await db.from('bolle_ddt').select('*').eq('id', id).single();
+  if (!data) return;
+  archivioEditingId = id;
+  switchBolleTab('nuova');
+  await loadAnagraficheCache();
+  document.getElementById('bolla-numero').value = data.numero;
+  document.getElementById('bolla-data').value = data.data_bolla;
+  document.getElementById('bolla-proprietario').value = data.proprietario || '';
+  document.getElementById('bolla-cessionario').value = data.cessionario;
+  document.getElementById('bolla-destinazione').value = data.luogo_destinazione || '';
+  bollaApparati = (data.apparati || []).map(b => ({ ...b }));
+  bollaRenderApparati();
+  bollaUnsavedData = { ...data };
+  const banner = document.getElementById('bolla-unsaved-banner');
+  banner.style.display = 'flex';
+  banner.querySelector('div').textContent = '✎ Stai modificando una bolla esistente — genera il PDF e poi salva.';
+}
+
+async function archivioElimina(id, numero) {
+  document.getElementById('delete-label').textContent = `Bolla ${numero}`;
+  document.getElementById('delete-detail').textContent = 'La bolla verrà eliminata definitivamente dall\'archivio.';
+  document.getElementById('delete-modal').dataset.mode = 'bolla';
+  document.getElementById('delete-modal').dataset.bollaId = id;
+  document.getElementById('delete-modal').classList.add('open');
+}
+
+// estendi confirmDelete per le bolle
+const _origConfirmDelete = confirmDelete;
+confirmDelete = async function() {
+  const mode = document.getElementById('delete-modal').dataset.mode;
+  if (mode === 'bolla') {
+    const id = document.getElementById('delete-modal').dataset.bollaId;
+    const { error } = await db.from('bolle_ddt').delete().eq('id', id);
+    if (error) { showToast('Errore: ' + error.message, 'error'); return; }
+    showToast('Bolla eliminata', 'success');
+    closeDeleteModal();
+    loadArchivio();
+  } else {
+    _origConfirmDelete();
+  }
+};
 
 // ── ANAGRAFICHE ───────────────────────────────────────────────────────────────
 let anagraficaSearch = '';
@@ -2476,7 +2553,7 @@ async function loadAnagrafiche() {
       <td>${r.nome}</td>
       <td style="white-space:pre-line;font-size:11px;color:var(--text-muted);">${r.indirizzo || '—'}</td>
       <td><div class="td-actions">
-        <button class="btn btn-secondary btn-sm" onclick="openAnagraficaModal(${r.id},'${escHtml(r.nome)}','${escHtml(r.indirizzo||'')}')">✎</button>
+        <button class="btn btn-secondary btn-sm" onclick='openAnagraficaModal(${r.id},${JSON.stringify(r.nome)},${JSON.stringify(r.indirizzo||"")})'>✎</button>
         <button class="btn btn-danger btn-sm" onclick="deleteAnagrafica(${r.id})">✕</button>
       </div></td>
     </tr>
@@ -2487,7 +2564,7 @@ function openAnagraficaModal(id, nome, indirizzo) {
   anagraficaEditingId = id || null;
   document.getElementById('anagrafica-modal-title').textContent = id ? 'Modifica Anagrafica' : 'Nuova Anagrafica';
   document.getElementById('anagrafica-nome').value = nome || '';
-  document.getElementById('anagrafica-indirizzo').value = (indirizzo || '').replace(/\\n/g, '\n');
+  document.getElementById('anagrafica-indirizzo').value = indirizzo || '';
   document.getElementById('anagrafica-modal').classList.add('open');
 }
 
