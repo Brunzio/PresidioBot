@@ -212,7 +212,9 @@
 <div class="tabs">
   <div class="tab active" onclick="switchTab('browse')">Sfoglia</div>
   <div class="tab" onclick="switchTab('chiave')">Cerca Chiave</div>
+  <div class="tab" onclick="switchTab('ricercasn')">Ricerca SN</div>
   <div class="tab" onclick="switchTab('clienti')">Clienti</div>
+  <div class="tab" onclick="switchTab('bolle')">Bolle</div>
   <div class="tab" onclick="switchTab('admin')">Admin</div>
 </div>
 
@@ -301,6 +303,21 @@
       </div>
       <div id="chiave-loading" style="display:none;" class="loading">
         <div class="spinner"></div><br>Ricerca in corso...
+      </div>
+    </div>
+  </div>
+
+  <!-- RICERCA SN PANEL -->
+  <div class="panel" id="panel-ricercasn">
+    <div style="max-width:680px;margin:0 auto;">
+      <div style="margin-bottom:20px;">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Lista</div>
+        <textarea id="sn-input" placeholder="Incolla qui la lista" style="width:100%;min-height:200px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:6px;font-family:var(--mono);font-size:12px;resize:vertical;outline:none;transition:border .2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="snCercaIncident()">Cerca Incident</button>
+        <button class="btn btn-primary" onclick="snCercaAsset()">Cerca Asset</button>
+        <button class="btn btn-secondary" onclick="snCercaMoncall()">Cerca MONCALL</button>
       </div>
     </div>
   </div>
@@ -488,6 +505,131 @@
 
     </div>
   </div>
+
+  <!-- BOLLE PANEL -->
+  <div class="panel" id="panel-bolle">
+    <div style="max-width:960px;">
+
+      <!-- SOTTO-TAB BOLLE -->
+      <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px;">
+        <div class="tab active" id="btab-nuova" onclick="switchBolleTab('nuova')" style="padding:8px 16px;">Nuova Bolla</div>
+        <div class="tab" id="btab-archivio" onclick="switchBolleTab('archivio')" style="padding:8px 16px;">Archivio</div>
+        <div class="tab" id="btab-anagrafiche" onclick="switchBolleTab('anagrafiche')" style="padding:8px 16px;">Anagrafiche</div>
+      </div>
+
+      <!-- ── NUOVA BOLLA ── -->
+      <div id="bpanel-nuova">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;">
+          <div class="form-group">
+            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Numero Bolla <span style="color:var(--accent)">*</span></label>
+            <input type="text" id="bolla-numero" placeholder="es. P1">
+          </div>
+          <div class="form-group">
+            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Data Bolla <span style="color:var(--accent)">*</span></label>
+            <input type="date" id="bolla-data">
+          </div>
+          <div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;">
+          <div class="form-group">
+            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Proprietario <span style="color:var(--text-muted);font-size:9px;">(opzionale)</span></label>
+            <input type="text" id="bolla-proprietario" list="bolla-proprietario-list" placeholder="Cerca o scrivi...">
+            <datalist id="bolla-proprietario-list"></datalist>
+          </div>
+          <div class="form-group">
+            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Cessionario <span style="color:var(--accent)">*</span></label>
+            <input type="text" id="bolla-cessionario" list="bolla-cessionario-list" placeholder="Cerca o scrivi...">
+            <datalist id="bolla-cessionario-list"></datalist>
+          </div>
+          <div class="form-group">
+            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Luogo Destinazione <span style="color:var(--text-muted);font-size:9px;">(opzionale)</span></label>
+            <input type="text" id="bolla-destinazione" list="bolla-destinazione-list" placeholder="Cerca o scrivi...">
+            <datalist id="bolla-destinazione-list"></datalist>
+          </div>
+        </div>
+
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">Apparati</div>
+        <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+          <div class="search-box" style="max-width:360px;">
+            <input type="text" id="bolla-cerca-apparato" placeholder="Etichetta o seriale..." onkeydown="if(event.key==='Enter')bollaAggiungiDaRicerca()">
+          </div>
+          <button class="btn btn-secondary" onclick="bollaAggiungiDaRicerca()">Cerca e aggiungi</button>
+          <button class="btn btn-secondary" onclick="bollaAggiungiManuale()">+ Riga manuale</button>
+        </div>
+        <div class="table-wrapper" style="margin-bottom:16px;">
+          <table id="bolla-apparati-table">
+            <thead>
+              <tr>
+                <th style="width:40px;">Qt</th>
+                <th>Descrizione (Modello)</th>
+                <th style="width:120px;">Asset TIM</th>
+                <th style="width:140px;">S/N</th>
+                <th style="width:60px;">Colli</th>
+                <th style="width:40px;"></th>
+              </tr>
+            </thead>
+            <tbody id="bolla-apparati-body">
+              <tr id="bolla-empty-row"><td colspan="6"><div class="empty">Nessun apparato aggiunto</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button class="btn btn-secondary" onclick="bollaReset()">↺ Svuota</button>
+          <button class="btn btn-primary" onclick="bollaGenera()">⬇ Genera Bolla</button>
+        </div>
+      </div>
+
+      <!-- ── ARCHIVIO ── -->
+      <div id="bpanel-archivio" style="display:none;">
+        <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;">
+          <div class="search-box" style="max-width:320px;">
+            <input type="text" id="archivio-search" placeholder="Cerca numero, cessionario..." oninput="onArchivioSearch()">
+          </div>
+          <button class="btn btn-secondary" onclick="loadArchivio()">↺ Aggiorna</button>
+        </div>
+        <div class="table-wrapper scrollable">
+          <table>
+            <thead><tr>
+              <th>Numero</th>
+              <th>Data</th>
+              <th>Cessionario</th>
+              <th>N° Apparati</th>
+              <th style="width:100px;"></th>
+            </tr></thead>
+            <tbody id="archivio-body">
+              <tr><td colspan="5"><div class="empty">Clicca Aggiorna per caricare</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px;"><span class="pagination-info" id="archivio-info"></span></div>
+      </div>
+
+      <!-- ── ANAGRAFICHE ── -->
+      <div id="bpanel-anagrafiche" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="search-box" style="max-width:320px;">
+            <input type="text" id="anagrafica-search" placeholder="Cerca nome o indirizzo..." oninput="onAnagraficaSearch()">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openAnagraficaModal()">+ Aggiungi</button>
+        </div>
+        <div class="table-wrapper scrollable">
+          <table>
+            <thead><tr>
+              <th>Nome</th>
+              <th>Indirizzo</th>
+              <th style="width:80px;"></th>
+            </tr></thead>
+            <tbody id="anagrafiche-body">
+              <tr><td colspan="3"><div class="loading"><div class="spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px;"><span class="pagination-info" id="anagrafiche-info"></span></div>
+      </div>
+
+    </div>
+  </div>
+
 </main>
 
 
@@ -604,6 +746,32 @@
   </div>
 </div>
 
+<!-- MODAL ANAGRAFICA -->
+<div class="modal-overlay" id="anagrafica-modal">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <h2 id="anagrafica-modal-title">Nuova Anagrafica</h2>
+      <button class="modal-close" onclick="closeAnagraficaModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Nome <span style="color:var(--accent)">*</span></label>
+          <input type="text" id="anagrafica-nome" placeholder="es. Acme S.p.A.">
+        </div>
+        <div class="form-group full">
+          <label>Indirizzo</label>
+          <textarea id="anagrafica-indirizzo" placeholder="Via Roma 1&#10;40100 - Bologna&#10;P.IVA 01234567890"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeAnagraficaModal()">Annulla</button>
+      <button class="btn btn-primary" id="btn-save-anagrafica" onclick="saveAnagrafica()">Salva</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -666,12 +834,13 @@ let parsedRows = [];
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function switchTab(name) {
-  const tabs = ['browse','chiave','clienti','admin'];
+  const tabs = ['browse','chiave','ricercasn','clienti','bolle','admin'];
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
   if (name === 'admin') loadAdminTables();
   if (name === 'clienti') loadClienti();
+  if (name === 'bolle') { switchBolleTab('nuova'); initNuovaBolla(); }
 }
 
 // ─── CERCA CHIAVE ─────────────────────────────────────────────────────────────
@@ -1980,6 +2149,62 @@ async function loadChiaviCCondivise() {
   `;
 }
 
+// ─── RICERCA SN ───────────────────────────────────────────────────────────────
+function snCercaIncident() {
+  const input = document.getElementById('sn-input').value;
+  const listinc = [];
+  const regex = /.*?(INC)?(0*)((6|7|8)(\d{6}))/g;
+  let m;
+  while ((m = regex.exec(input)) !== null) listinc.push(m[3]);
+  if (!listinc.length) { showToast('Nessun incident trovato', 'error'); return; }
+
+  let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3D';
+  listinc.forEach((inc, i) => {
+    if (i > 0) url += '%255EOR';
+    url += 'number%253DINC00000' + inc;
+  });
+  window.open(url, '_blank');
+}
+
+function snCercaAsset() {
+  const input = document.getElementById('sn-input').value;
+  const listass = input.match(/\d{10}/g) || [];
+  const listmsc = (input.match(/\S{5,}/g) || []).filter(t => !listass.includes(t));
+  if (!listass.length && !listmsc.length) { showToast('Nessun asset trovato', 'error'); return; }
+
+  let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/alm_hardware_list.do%3Fsysparm_query%3D';
+  const foot = '%26sysparm_first_row%3D1%26sysparm_view%3Dasset_inventory';
+
+  listass.forEach(ass => { url += 'u_asset_label%253D' + ass + '%255EOR'; });
+  listmsc.forEach(m => {
+    url += 'u_asset_label%253D' + m +
+           '%255EORu_asset_sn%253D' + m +
+           '%255EORu_hostnameLIKE' + m +
+           '%255EORserial_number%253D' + m +
+           '%255EOR';
+  });
+  url += foot;
+  window.open(url, '_blank');
+}
+
+function snCercaMoncall() {
+  const input = document.getElementById('sn-input').value;
+  const listmsc = input.match(/\S{5,}/g) || [];
+  if (!listmsc.length) { showToast('Nessun token trovato', 'error'); return; }
+
+  let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3D';
+  const query = 'short_descriptionLIKE%255BMON%2520CALL%2520HW%255D%255E';
+  const foot = '%26sysparm_first_row%3D1%26sysparm_view%3D';
+
+  url += query;
+  listmsc.forEach((msc, i) => {
+    if (i > 0) url += '%255EOR';
+    url += 'short_descriptionLIKE' + msc;
+  });
+  url += foot;
+  window.open(url, '_blank');
+}
+
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 function showApp(user) {
   document.getElementById('login-screen').classList.remove('active');
@@ -2039,6 +2264,267 @@ document.getElementById('detail-modal').addEventListener('click', function(e) { 
 document.getElementById('delete-modal').addEventListener('click', function(e) { if (e.target === this) closeDeleteModal(); });
 document.getElementById('lookup-modal').addEventListener('click', function(e) { if (e.target === this) closeLookupModal(); });
 document.getElementById('cliente-modal').addEventListener('click', function(e) { if (e.target === this) closeClienteModal(); });
+document.getElementById('anagrafica-modal').addEventListener('click', function(e) { if (e.target === this) closeAnagraficaModal(); });
+
+// ─── TAB BOLLE ────────────────────────────────────────────────────────────────
+
+function switchBolleTab(name) {
+  ['nuova','archivio','anagrafiche'].forEach(t => {
+    document.getElementById('btab-' + t).classList.toggle('active', t === name);
+    document.getElementById('bpanel-' + t).style.display = t === name ? 'block' : 'none';
+  });
+  if (name === 'archivio') loadArchivio();
+  if (name === 'anagrafiche') loadAnagrafiche();
+}
+
+// ── INIT NUOVA BOLLA ──────────────────────────────────────────────────────────
+let bollaApparati = []; // array di oggetti {qty, desc, asset, sn, colli}
+let anagraficheCache = []; // cache per datalist
+let anagraficaEditingId = null;
+let archivioSearchTimeout = null;
+let anagraficaSearchTimeout = null;
+
+async function initNuovaBolla() {
+  // numero progressivo
+  const oggi = new Date();
+  const meseAnno = `${oggi.getFullYear()}-${String(oggi.getMonth()+1).padStart(2,'0')}`;
+  const { data } = await db.from('bolle_ddt').select('numero').eq('mese_anno', meseAnno).order('id', { ascending: false }).limit(1);
+  let nextNum = 'P1';
+  if (data && data.length > 0) {
+    const last = parseInt((data[0].numero || 'P0').replace(/\D/g,''), 10);
+    nextNum = 'P' + (last + 1);
+  }
+  document.getElementById('bolla-numero').value = nextNum;
+
+  // data odierna
+  document.getElementById('bolla-data').value = oggi.toISOString().split('T')[0];
+
+  // carica anagrafiche per datalist
+  await loadAnagraficheCache();
+}
+
+async function loadAnagraficheCache() {
+  const { data } = await db.from('anagrafiche').select('nome,indirizzo').order('nome');
+  anagraficheCache = data || [];
+  ['bolla-proprietario-list','bolla-cessionario-list','bolla-destinazione-list'].forEach(id => {
+    const dl = document.getElementById(id);
+    if (!dl) return;
+    dl.innerHTML = anagraficheCache.map(a => {
+      const label = a.indirizzo ? `${a.nome} — ${a.indirizzo.split('\n')[0]}` : a.nome;
+      return `<option value="${label.replace(/"/g,'&quot;')}">`;
+    }).join('');
+  });
+}
+
+// ── APPARATI ─────────────────────────────────────────────────────────────────
+async function bollaAggiungiDaRicerca() {
+  const q = document.getElementById('bolla-cerca-apparato').value.trim();
+  if (!q) return;
+  const { data } = await db.from('sn_main')
+    .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn')
+    .or(`etichetta_asset.eq.${q},numero_di_serie.ilike.%${q}%,asset_sn.ilike.%${q}%`)
+    .limit(5);
+  if (!data || !data.length) { showToast('Nessun apparato trovato', 'error'); return; }
+  data.forEach(r => {
+    const sn = r.numero_di_serie || r.asset_sn || '';
+    const desc = [r.produttore, r.asset_model].filter(Boolean).join(' ');
+    bollaApparati.push({ qty: 1, desc, asset: r.etichetta_asset || '', sn, colli: 1 });
+  });
+  document.getElementById('bolla-cerca-apparato').value = '';
+  bollaRenderApparati();
+  if (data.length > 1) showToast(`${data.length} apparati aggiunti`, 'success');
+}
+
+function bollaAggiungiManuale() {
+  bollaApparati.push({ qty: 1, desc: '', asset: '', sn: '', colli: 1 });
+  bollaRenderApparati();
+}
+
+function bollaRimuovi(idx) {
+  bollaApparati.splice(idx, 1);
+  bollaRenderApparati();
+}
+
+function bollaRenderApparati() {
+  const tbody = document.getElementById('bolla-apparati-body');
+  if (!bollaApparati.length) {
+    tbody.innerHTML = '<tr id="bolla-empty-row"><td colspan="6"><div class="empty">Nessun apparato aggiunto</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = bollaApparati.map((b, i) => `
+    <tr>
+      <td><input type="number" min="1" value="${b.qty}" onchange="bollaApparati[${i}].qty=+this.value" style="width:48px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
+      <td><input type="text" value="${escHtml(b.desc)}" onchange="bollaApparati[${i}].desc=this.value" placeholder="Modello/descrizione" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
+      <td><span style="font-family:var(--mono);font-size:11px;">${b.asset || '—'}</span></td>
+      <td><input type="text" value="${escHtml(b.sn)}" onchange="bollaApparati[${i}].sn=this.value" placeholder="Seriale" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
+      <td><input type="number" min="1" value="${b.colli}" onchange="bollaApparati[${i}].colli=+this.value" style="width:48px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
+      <td><button class="btn btn-danger btn-sm" onclick="bollaRimuovi(${i})">✕</button></td>
+    </tr>
+  `).join('');
+}
+
+function bollaReset() {
+  bollaApparati = [];
+  bollaRenderApparati();
+  document.getElementById('bolla-proprietario').value = '';
+  document.getElementById('bolla-cessionario').value = '';
+  document.getElementById('bolla-destinazione').value = '';
+  initNuovaBolla();
+}
+
+// ── GENERA BOLLA ──────────────────────────────────────────────────────────────
+async function bollaGenera() {
+  const numero = document.getElementById('bolla-numero').value.trim();
+  const dataVal = document.getElementById('bolla-data').value;
+  const cessionario = document.getElementById('bolla-cessionario').value.trim();
+  if (!numero || !dataVal || !cessionario) { showToast('Numero, data e cessionario sono obbligatori', 'error'); return; }
+  if (!bollaApparati.length) { showToast('Aggiungi almeno un apparato', 'error'); return; }
+
+  const proprietario = document.getElementById('bolla-proprietario').value.trim();
+  const destinazione = document.getElementById('bolla-destinazione').value.trim();
+  const meseAnno = dataVal.slice(0, 7); // "2026-03"
+  const dataFormatted = new Date(dataVal).toLocaleDateString('it-IT');
+
+  // Salva su Supabase
+  const { error } = await db.from('bolle_ddt').insert({
+    numero, mese_anno: meseAnno, data_bolla: dataVal,
+    proprietario: proprietario || null,
+    cessionario,
+    luogo_destinazione: destinazione || null,
+    apparati: bollaApparati
+  });
+  if (error) { showToast('Errore salvataggio: ' + error.message, 'error'); return; }
+  showToast('Bolla salvata', 'success');
+
+  // Apre il template DDT
+  const ddtData = {
+    numero, data: dataFormatted,
+    proprietario, cessionario, destinazione,
+    beni: bollaApparati.map(b => ({
+      qty: b.qty, desc: b.desc, asset: b.asset, sn: b.sn, colli: b.colli
+    }))
+  };
+  sessionStorage.setItem('ddt_data', JSON.stringify(ddtData));
+  window.open('ddt_template.html', '_blank');
+}
+
+// ── ARCHIVIO ──────────────────────────────────────────────────────────────────
+let archivioSearch = '';
+
+function onArchivioSearch() {
+  clearTimeout(archivioSearchTimeout);
+  archivioSearchTimeout = setTimeout(() => {
+    archivioSearch = document.getElementById('archivio-search').value.trim();
+    loadArchivio();
+  }, 300);
+}
+
+async function loadArchivio() {
+  document.getElementById('archivio-body').innerHTML = '<tr><td colspan="5"><div class="loading"><div class="spinner"></div></div></td></tr>';
+  let q = db.from('bolle_ddt').select('*', { count: 'exact' }).order('data_bolla', { ascending: false });
+  if (archivioSearch) q = q.or(`numero.ilike.%${archivioSearch}%,cessionario.ilike.%${archivioSearch}%`);
+  const { data, count, error } = await q;
+  if (error) { document.getElementById('archivio-body').innerHTML = `<tr><td colspan="5"><div class="empty" style="color:var(--danger)">Errore: ${error.message}</div></td></tr>`; return; }
+  document.getElementById('archivio-info').textContent = `${count || 0} bolle`;
+  document.getElementById('archivio-body').innerHTML = (data || []).map(r => `
+    <tr>
+      <td><span class="badge badge-active" style="font-family:var(--mono);">${r.numero}</span></td>
+      <td>${new Date(r.data_bolla).toLocaleDateString('it-IT')}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${r.cessionario}</td>
+      <td>${(r.apparati || []).length}</td>
+      <td><button class="btn btn-secondary btn-sm" onclick="archivioRiapri(${r.id})">⬇ PDF</button></td>
+    </tr>
+  `).join('') || '<tr><td colspan="5"><div class="empty">Nessuna bolla</div></td></tr>';
+}
+
+async function archivioRiapri(id) {
+  const { data } = await db.from('bolle_ddt').select('*').eq('id', id).single();
+  if (!data) { showToast('Bolla non trovata', 'error'); return; }
+  const ddtData = {
+    numero: data.numero,
+    data: new Date(data.data_bolla).toLocaleDateString('it-IT'),
+    proprietario: data.proprietario || '',
+    cessionario: data.cessionario,
+    destinazione: data.luogo_destinazione || '',
+    beni: (data.apparati || []).map(b => ({
+      qty: b.qty, desc: b.desc, asset: b.asset, sn: b.sn, colli: b.colli
+    }))
+  };
+  sessionStorage.setItem('ddt_data', JSON.stringify(ddtData));
+  window.open('ddt_template.html', '_blank');
+}
+
+// ── ANAGRAFICHE ───────────────────────────────────────────────────────────────
+let anagraficaSearch = '';
+
+function onAnagraficaSearch() {
+  clearTimeout(anagraficaSearchTimeout);
+  anagraficaSearchTimeout = setTimeout(() => {
+    anagraficaSearch = document.getElementById('anagrafica-search').value.trim();
+    loadAnagrafiche();
+  }, 300);
+}
+
+async function loadAnagrafiche() {
+  let q = db.from('anagrafiche').select('*', { count: 'exact' }).order('nome');
+  if (anagraficaSearch) q = q.or(`nome.ilike.%${anagraficaSearch}%,indirizzo.ilike.%${anagraficaSearch}%`);
+  const { data, count, error } = await q;
+  if (error) return;
+  document.getElementById('anagrafiche-info').textContent = `${count || 0} record`;
+  document.getElementById('anagrafiche-body').innerHTML = (data || []).map(r => `
+    <tr>
+      <td>${r.nome}</td>
+      <td style="white-space:pre-line;font-size:11px;color:var(--text-muted);">${r.indirizzo || '—'}</td>
+      <td><div class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openAnagraficaModal(${r.id},'${escHtml(r.nome)}','${escHtml(r.indirizzo||'')}')">✎</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteAnagrafica(${r.id})">✕</button>
+      </div></td>
+    </tr>
+  `).join('') || '<tr><td colspan="3"><div class="empty">Nessuna anagrafica</div></td></tr>';
+}
+
+function openAnagraficaModal(id, nome, indirizzo) {
+  anagraficaEditingId = id || null;
+  document.getElementById('anagrafica-modal-title').textContent = id ? 'Modifica Anagrafica' : 'Nuova Anagrafica';
+  document.getElementById('anagrafica-nome').value = nome || '';
+  document.getElementById('anagrafica-indirizzo').value = (indirizzo || '').replace(/\\n/g, '\n');
+  document.getElementById('anagrafica-modal').classList.add('open');
+}
+
+function closeAnagraficaModal() {
+  document.getElementById('anagrafica-modal').classList.remove('open');
+  anagraficaEditingId = null;
+}
+
+async function saveAnagrafica() {
+  const nome = document.getElementById('anagrafica-nome').value.trim();
+  const indirizzo = document.getElementById('anagrafica-indirizzo').value.trim();
+  if (!nome) { showToast('Il nome è obbligatorio', 'error'); return; }
+  const btn = document.getElementById('btn-save-anagrafica');
+  btn.disabled = true;
+  const record = { nome, indirizzo: indirizzo || null };
+  let error;
+  if (anagraficaEditingId) {
+    ({ error } = await db.from('anagrafiche').update(record).eq('id', anagraficaEditingId));
+  } else {
+    ({ error } = await db.from('anagrafiche').insert(record));
+  }
+  btn.disabled = false;
+  if (error) { showToast('Errore: ' + error.message, 'error'); return; }
+  showToast(anagraficaEditingId ? 'Anagrafica aggiornata' : 'Anagrafica aggiunta', 'success');
+  closeAnagraficaModal();
+  loadAnagrafiche();
+  loadAnagraficheCache();
+}
+
+async function deleteAnagrafica(id) {
+  if (!confirm('Eliminare questa anagrafica?')) return;
+  const { error } = await db.from('anagrafiche').delete().eq('id', id);
+  if (error) { showToast('Errore: ' + error.message, 'error'); return; }
+  showToast('Anagrafica eliminata', 'success');
+  loadAnagrafiche();
+  loadAnagraficheCache();
+}
 </script>
 </body>
 </html>
