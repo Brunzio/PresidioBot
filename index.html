@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PresidioBot</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #181818;
+    --surface2: #222222;
+    --border: #2a2a2a;
+    --accent: #00e5a0;
+    --accent2: #005c40;
+    --text: #e8e8e8;
+    --text-muted: #666;
+    --danger: #ff4d4d;
+    --warning: #ffb800;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,15,15,0.95);
+    backdrop-filter: blur(8px);
+  }
+  .logo { font-family: var(--mono); font-size: 13px; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
+  .logo span { color: var(--text-muted); }
+  .header-actions { display: flex; gap: 10px; align-items: center; }
+  #record-count { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
+  .user-email { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
+  #btn-logout { display: none; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 28px; background: var(--surface); }
+  .tab { padding: 12px 20px; font-size: 12px; font-family: var(--mono); letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-muted); transition: all .2s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* MAIN */
+  main { padding: 24px 28px; }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* TOOLBAR */
+  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .search-box { position: relative; flex: 1; min-width: 200px; }
+  .search-box input { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 12px 8px 36px; border-radius: 6px; font-family: var(--sans); font-size: 13px; outline: none; transition: border .2s; }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box::before { content: '⌕'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 16px; pointer-events: none; }
+  
+  select, input[type="text"], input[type="date"], textarea {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 12px; border-radius: 6px; font-family: var(--sans); font-size: 13px; outline: none; transition: border .2s;
+  }
+  select:focus, input:focus, textarea:focus { border-color: var(--accent); }
+  select { cursor: pointer; }
+
+  /* BUTTONS */
+  .btn { padding: 8px 16px; border-radius: 6px; border: none; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all .2s; }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: #00ffb3; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+  .btn-sm { padding: 4px 10px; font-size: 10px; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* TABLE */
+  .table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+  .table-wrapper.scrollable { max-height: 460px; overflow-y: auto; }
+  .table-wrapper.scrollable thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+  .table-wrapper.scrollable-sm { max-height: 220px; overflow-y: auto; }
+  .table-wrapper.scrollable-sm thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead { background: var(--surface); position: sticky; top: 0; }
+  th { padding: 10px 12px; text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); white-space: nowrap; cursor: pointer; user-select: none; border-bottom: 1px solid var(--border); }
+  th:hover { color: var(--accent); }
+  th .sort-icon { margin-left: 4px; opacity: 0.4; }
+  th.sorted { color: var(--accent); }
+  th.sorted .sort-icon { opacity: 1; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  .td-actions { display: flex; gap: 6px; white-space: nowrap; }
+
+  /* STATUS BADGES */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-family: var(--mono); letter-spacing: 0.5px; }
+  .badge-active { background: rgba(0,229,160,0.15); color: var(--accent); }
+  .badge-inactive { background: rgba(255,77,77,0.15); color: var(--danger); }
+  .badge-default { background: var(--surface2); color: var(--text-muted); }
+
+  /* PAGINATION */
+  .pagination { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
+  .pagination-info { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
+  .pagination-controls { display: flex; gap: 6px; }
+
+  /* FILTERS */
+  .filters-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; width: 700px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
+  .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--surface); z-index: 1; }
+  .modal-header h2 { font-family: var(--mono); font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); }
+  .modal-close { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; line-height: 1; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 24px; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* FORM GRID */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label { font-size: 10px; font-family: var(--mono); letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+
+  /* IMPORT PANEL */
+  .import-zone { border: 2px dashed var(--border); border-radius: 10px; padding: 48px; text-align: center; cursor: pointer; transition: all .2s; margin-bottom: 20px; }
+  .import-zone:hover, .import-zone.drag-over { border-color: var(--accent); background: rgba(0,229,160,0.05); }
+  .import-zone h3 { font-family: var(--mono); font-size: 14px; color: var(--text-muted); margin-bottom: 8px; }
+  .import-zone p { font-size: 12px; color: var(--text-muted); }
+  .import-zone .icon { font-size: 36px; margin-bottom: 12px; }
+  #import-file { display: none; }
+
+  /* PROGRESS */
+  .progress-bar { background: var(--surface2); border-radius: 4px; height: 6px; overflow: hidden; margin: 10px 0; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width .3s; width: 0%; }
+  .import-log { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-family: var(--mono); font-size: 11px; max-height: 200px; overflow-y: auto; color: var(--text-muted); }
+  .log-line { margin-bottom: 4px; }
+  .log-line.success { color: var(--accent); }
+  .log-line.error { color: var(--danger); }
+  .log-line.info { color: var(--warning); }
+
+  /* TOAST */
+  #toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; font-family: var(--mono); font-size: 12px; z-index: 999; transform: translateY(80px); opacity: 0; transition: all .3s; }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-color: var(--accent); color: var(--accent); }
+  #toast.error { border-color: var(--danger); color: var(--danger); }
+
+  /* LOADING */
+  .loading { text-align: center; padding: 60px; color: var(--text-muted); font-family: var(--mono); font-size: 12px; }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 60px; color: var(--text-muted); font-family: var(--mono); font-size: 12px; }
+
+
+  /* ADMIN SECTIONS */
+  .admin-section { margin-bottom: 36px; }
+  .admin-section-title { font-family: var(--mono); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .tag { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; background: var(--surface2); color: var(--text-muted); font-family: var(--mono); }
+
+  /* LOGIN SCREEN */
+  #login-screen { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 999; align-items: center; justify-content: center; }
+  #login-screen.active { display: flex; }
+  #login-screen .modal { width: 380px; padding: 40px 44px; }
+  #login-screen .logo { margin-bottom: 8px; }
+  #login-screen .subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 32px; }
+  #login-error { display: none; color: var(--danger); font-size: 12px; margin-bottom: 14px; font-family: var(--mono); }
+  #btn-login { width: 100%; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="active">
+  <div class="modal">
+    <div class="logo">Presidio<span>//</span>Bot</div>
+    <div class="subtitle">Accesso richiesto per continuare</div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="email@dominio.it" autocomplete="username"
+        onkeydown="if(event.key==='Enter') document.getElementById('login-password').focus()">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <div id="login-error">Email o password non corretti</div>
+    <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Accedi</button>
+  </div>
+</div>
+
+<header>
+  <div class="logo">Presidio<span>//</span>Bot</div>
+  <div class="header-actions">
+    <span id="record-count">— record</span>
+    <span id="user-email" class="user-email"></span>
+    <button class="btn btn-secondary btn-sm" id="btn-logout" onclick="doLogout()">Logout</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('browse')">Sfoglia</div>
+  <div class="tab" onclick="switchTab('chiave')">Cerca Chiave</div>
+  <div class="tab" onclick="switchTab('clienti')">Clienti</div>
+  <div class="tab" onclick="switchTab('admin')">Admin</div>
+</div>
+
+<main>
+  <!-- BROWSE PANEL -->
+  <div class="panel active" id="panel-browse">
+    <div class="toolbar">
+      <div class="search-box" style="min-width:260px;">
+        <input type="text" id="search-input" placeholder="Etichetta (più etichette separate da spazio), seriale, hostname, rack, cliente..." oninput="onSearchInput()">
+      </div>
+      <select id="filter-tipo-piattaforma" onchange="loadData()">
+        <option value="">Tutti i tipi</option>
+      </select>
+      <select id="filter-macrocategory" onchange="loadData()">
+        <option value="">Tutte le categorie</option>
+      </select>
+      <select id="filter-localizzazione" onchange="loadData()">
+        <option value="">Tutte le sedi</option>
+        <option value="sala">In Sala</option>
+      </select>
+      <button class="btn btn-secondary" onclick="clearFilters()">Reset</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table id="main-table">
+        <thead>
+          <tr id="table-head"></tr>
+        </thead>
+        <tbody id="table-body">
+          <tr><td colspan="22"><div class="loading"><div class="spinner"></div><br>Caricamento...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <div class="pagination-info" id="pagination-info"></div>
+      <div class="pagination-controls">
+        <button class="btn btn-secondary btn-sm" id="btn-prev" onclick="prevPage()" disabled>← Prec</button>
+        <button class="btn btn-secondary btn-sm" id="btn-next" onclick="nextPage()" disabled>Succ →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHIAVE PANEL -->
+  <div class="panel" id="panel-chiave">
+    <div style="max-width:680px;margin:0 auto;">
+      <div style="margin-bottom:28px;">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Etichetta Asset</div>
+        <div style="display:flex;gap:10px;">
+          <input type="text" id="chiave-input" placeholder="es. 2020008269" style="flex:1;font-size:15px;padding:10px 14px;"
+            onkeydown="if(event.key==='Enter') cercaChiave()">
+          <button class="btn btn-primary" onclick="cercaChiave()" style="padding:10px 24px;font-size:12px;">Cerca</button>
+        </div>
+      </div>
+
+      <div id="chiave-result" style="display:none;">
+        <!-- risultato chiave principale -->
+        <div id="chiave-box" style="
+          border:1px solid var(--border);border-radius:10px;padding:24px;
+          margin-bottom:20px;background:var(--surface);
+        ">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Chiave</div>
+          <div id="chiave-valore" style="font-family:var(--mono);font-size:36px;color:var(--accent);font-weight:700;margin-bottom:6px;"></div>
+          <div id="chiave-fonte" style="font-size:12px;color:var(--text-muted);"></div>
+        </div>
+
+        <!-- dettagli record -->
+        <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px;">
+          <div style="padding:14px 18px;border-bottom:1px solid var(--border);background:var(--surface);font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;">
+            Dettagli Record
+          </div>
+          <div id="chiave-dettagli" style="padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;"></div>
+        </div>
+
+        <!-- percorso risalita -->
+        <div id="chiave-percorso-box" style="display:none;border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+          <div style="padding:14px 18px;border-bottom:1px solid var(--border);background:var(--surface);font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;">
+            Percorso di Risalita
+          </div>
+          <div id="chiave-percorso" style="padding:18px;"></div>
+        </div>
+      </div>
+
+      <div id="chiave-notfound" style="display:none;" class="empty">
+        Nessun record trovato per questa etichetta.
+      </div>
+      <div id="chiave-loading" style="display:none;" class="loading">
+        <div class="spinner"></div><br>Ricerca in corso...
+      </div>
+    </div>
+  </div>
+
+  <!-- CLIENTI PANEL -->
+  <div class="panel" id="panel-clienti">
+    <div style="max-width:900px;">
+
+      <!-- SEZIONE: GESTIONE CLIENTI CHIAVE -->
+      <div class="admin-section">
+        <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Clienti Chiave</span>
+          <button class="btn btn-primary btn-sm" onclick="openClienteModal()">+ Aggiungi</button>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="search-box" style="max-width:320px;">
+            <input type="text" id="clienti-search" placeholder="Cerca cliente o chiave..." oninput="onClientiSearch()">
+          </div>
+        </div>
+        <div class="table-wrapper scrollable">
+          <table>
+            <thead><tr>
+              <th>Nome Cliente</th>
+              <th>Chiave</th>
+              <th style="width:80px;"></th>
+            </tr></thead>
+            <tbody id="clienti-body">
+              <tr><td colspan="3"><div class="loading"><div class="spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px;">
+          <span class="pagination-info" id="clienti-info"></span>
+        </div>
+      </div>
+
+      <!-- SEZIONE: CLIENTI SENZA CHIAVE -->
+      <div class="admin-section">
+        <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Clienti Mercato Esterno senza chiave mappata</span>
+          <button class="btn btn-secondary btn-sm" onclick="loadClientiSenzaChiave()">↺ Aggiorna</button>
+        </div>
+        <div id="clienti-senza-chiave-body">
+          <div class="empty" style="padding:30px;">Clicca Aggiorna per analizzare il DB</div>
+        </div>
+      </div>
+
+      <!-- SEZIONE: CHIAVI RIUTILIZZABILI -->
+      <div class="admin-section">
+        <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Chiavi potenzialmente riutilizzabili</span>
+          <button class="btn btn-secondary btn-sm" onclick="loadChiaviRiutilizzabili()">↺ Analizza</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">
+          Clienti con chiave mappata ma nessun apparato attualmente in sala (nome_completo contiene /sala/)
+        </div>
+        <div id="chiavi-riutilizzabili-body">
+          <div class="empty" style="padding:30px;">Clicca Analizza per verificare</div>
+        </div>
+      </div>
+
+      <!-- SEZIONE: CHIAVI C NON UTILIZZATE -->
+      <div class="admin-section">
+        <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Chiavi C non utilizzate</span>
+          <button class="btn btn-secondary btn-sm" onclick="loadChiaviCLibere()">↺ Analizza</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">
+          Chiavi CXX non assegnate ad alcun cliente, nell'intervallo C1–Cmax
+        </div>
+        <div id="chiavi-c-libere-body">
+          <div class="empty" style="padding:30px;">Clicca Analizza per verificare</div>
+        </div>
+      </div>
+
+      <!-- SEZIONE: CHIAVI C CONDIVISE -->
+      <div class="admin-section">
+        <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Chiavi C condivise</span>
+          <button class="btn btn-secondary btn-sm" onclick="loadChiaviCCondivise()">↺ Analizza</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">
+          Chiavi assegnate a più clienti, con almeno un apparato in sala
+        </div>
+        <div id="chiavi-c-condivise-body">
+          <div class="empty" style="padding:30px;">Clicca Analizza per verificare</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div class="panel" id="panel-admin">
+    <div style="max-width:900px;">
+
+      <!-- SEZIONE 1: SN MAIN -->
+      <div class="admin-section">
+        <div class="admin-section-title">SN Main</div>
+        <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+          <a href="https://noovleprod.service-now.com/now/sow/list/params/list-id/7c5818e53bd6d210f1009924c3e45ac6/tiny-id/hJnB5ljJIYpHHkBDNWYCGW7uFYd2m60A" target="_blank" class="btn btn-secondary">↗ Esporta da SN</a>
+          <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">📂 Importa CSV</button>
+          <button class="btn btn-primary" id="btn-aggiorna-db" onclick="aggiornaDB()">⟳ Aggiorna DB</button>
+        </div>
+        <input type="file" id="import-file" accept=".csv" onchange="handleFileSelect(event)" style="display:none">
+        <div id="import-preview" style="display:none;margin-top:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div style="font-family:var(--mono);font-size:12px;">
+              File: <span id="file-name" style="color:var(--accent)"></span> —
+              <span id="file-rows"></span> righe valide
+            </div>
+            <button class="btn btn-primary" id="btn-start-import" onclick="startImport()">Avvia importazione</button>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+          <div class="import-log" id="import-log"></div>
+        </div>
+        <div id="aggiorna-preview" style="display:none;margin-top:14px;">
+          <div class="progress-bar"><div class="progress-fill" id="aggiorna-progress"></div></div>
+          <div class="import-log" id="aggiorna-log"></div>
+        </div>
+      </div>
+
+      <!-- SEZIONE 2: MODELLI CHIAVE -->
+      <div class="admin-section">
+        <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Modelli Chiave</span>
+          <button class="btn btn-primary btn-sm" onclick="openLookupModal('modelli')">+ Aggiungi</button>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="search-box" style="max-width:320px;">
+            <input type="text" id="modelli-search" placeholder="Cerca modello o chiave..." oninput="onModelliSearch()">
+          </div>
+        </div>
+        <div class="table-wrapper scrollable-sm" style="margin-top:12px;">
+          <table>
+            <thead><tr>
+              <th>Modello</th>
+              <th>Chiave</th>
+              <th>Tipo</th>
+              <th style="width:80px;"></th>
+            </tr></thead>
+            <tbody id="modelli-body">
+              <tr><td colspan="4"><div class="loading"><div class="spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px;">
+          <span class="pagination-info" id="modelli-info"></span>
+        </div>
+      </div>
+
+      <!-- SEZIONE 3: ECCEZIONI CHIAVE -->
+      <div class="admin-section">
+        <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Eccezioni Chiave</span>
+          <button class="btn btn-primary btn-sm" onclick="openLookupModal('eccezioni')">+ Aggiungi</button>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="search-box" style="max-width:320px;">
+            <input type="text" id="eccezioni-search" placeholder="Cerca etichetta o chiave..." oninput="onEccezioniSearch()">
+          </div>
+        </div>
+        <div class="table-wrapper scrollable-sm" style="margin-top:12px;">
+          <table>
+            <thead><tr>
+              <th>Etichetta Asset</th>
+              <th>Chiave</th>
+              <th style="width:80px;"></th>
+            </tr></thead>
+            <tbody id="eccezioni-body">
+              <tr><td colspan="3"><div class="loading"><div class="spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px;">
+          <span class="pagination-info" id="eccezioni-info"></span>
+        </div>
+      </div>
+
+      <!-- SEZIONE 4: REPORT POST-AGGIORNAMENTO -->
+      <div class="admin-section" id="report-section" style="display:none;">
+        <div class="admin-section-title">Report Post-Aggiornamento</div>
+        <div id="report-body"></div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+
+<!-- MODAL DETTAGLIO RECORD (sola lettura) -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal" style="width:750px">
+    <div class="modal-header">
+      <h2 id="detail-title" style="color:var(--text);font-size:14px;"></h2>
+      <button class="modal-close" onclick="closeDetailModal()">✕</button>
+    </div>
+    <div class="modal-body" id="detail-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeDetailModal()">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AGGIUNGI/MODIFICA -->
+<div class="modal-overlay" id="record-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">Nuovo Record</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid" id="modal-form"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Annulla</button>
+      <button class="btn btn-primary" id="btn-save" onclick="saveRecord()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFERMA ELIMINAZIONE -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal" style="width:440px">
+    <div class="modal-header">
+      <h2 style="color:var(--danger)">⚠ Conferma eliminazione</h2>
+      <button class="modal-close" onclick="closeDeleteModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;line-height:1.8;">
+        Stai per eliminare il record:<br>
+        <strong id="delete-label" style="color:var(--danger);font-family:var(--mono);font-size:14px;"></strong>
+      </p>
+      <p id="delete-detail" style="font-size:12px;color:var(--text-muted);margin-top:10px;line-height:1.6;"></p>
+      <div style="margin-top:14px;background:rgba(255,77,77,0.08);border:1px solid rgba(255,77,77,0.3);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--danger);">
+        Questa operazione è irreversibile. I dati eliminati non potranno essere recuperati.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeDeleteModal()">Annulla</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">Elimina definitivamente</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL LOOKUP (eccezioni/modelli) -->
+<div class="modal-overlay" id="lookup-modal">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <h2 id="lookup-modal-title">Record</h2>
+      <button class="modal-close" onclick="closeLookupModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="lookup-table">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label id="lookup-key-label">Chiave</label>
+          <input type="text" id="lookup-key" placeholder="">
+        </div>
+        <div class="form-group full">
+          <label>Chiave</label>
+          <input type="text" id="lookup-chiave" placeholder="es. 51">
+        </div>
+        <div class="form-group full" id="lookup-tipo-row" style="display:none;">
+          <label>Tipo</label>
+          <input type="text" id="lookup-tipo" placeholder="rack / altro">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeLookupModal()">Annulla</button>
+      <button class="btn btn-primary" id="btn-save-lookup" onclick="saveLookup()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CLIENTE CHIAVE -->
+<div class="modal-overlay" id="cliente-modal">
+  <div class="modal" style="width:440px">
+    <div class="modal-header">
+      <h2 id="cliente-modal-title">Nuovo Cliente</h2>
+      <button class="modal-close" onclick="closeClienteModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Nome Cliente <span style="color:var(--accent)">*</span></label>
+          <input type="text" id="cliente-nome" placeholder="es. ACME SpA">
+        </div>
+        <div class="form-group full">
+          <label>Chiave <span style="color:var(--accent)">*</span></label>
+          <input type="text" id="cliente-chiave" placeholder="es. C71">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeClienteModal()">Annulla</button>
+      <button class="btn btn-primary" id="btn-save-cliente" onclick="saveCliente()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://mupsanczaxnwsttddyxm.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_MSuZ3I_iEDAbK2v3qbj2DQ_ZLmwCrAO';
+const TABLE = 'sn_main';
+const PAGE_SIZE = 25;
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ─── COLUMNS ──────────────────────────────────────────────────────────────────
+const COLUMNS = [
+  { key: 'etichetta_asset',       label: 'Etichetta Asset',       primary: true },
+  { key: 'asset_macro_category',  label: 'Macro Category' },
+  { key: 'asset_subcategory',     label: 'Subcategory' },
+  { key: 'numero_di_serie',       label: 'N. Serie' },
+  { key: 'asset_sn',              label: 'Asset SN' },
+  { key: 'codice_piattaforma',    label: 'Cod. Piattaforma' },
+  { key: 'piattaforma_supportata',label: 'Piattaforma' },
+  { key: 'stato_piattaforma',     label: 'Stato Piattaforma' },
+  { key: 'tipo_piattaforma',      label: 'Tipo Piattaforma' },
+  { key: 'produttore',            label: 'Produttore' },
+  { key: 'asset_model',           label: 'Modello' },
+  { key: 'nome_completo',         label: 'Locazione' },
+  { key: 'rack',                  label: 'Rack' },
+  { key: 'componente_di',         label: 'Partizionato' },
+  { key: 'stato',                 label: 'Stato' },
+  { key: 'hostname',              label: 'Hostname' },
+  { key: 'societa',               label: 'Società' },
+  { key: 'ip_management',         label: 'IP Management' },
+  { key: 'sistema_operativo',     label: 'Sistema Operativo' },
+  { key: 'scadenza_garanzia',     label: 'Scad. Garanzia' },
+  { key: 'fornitore_manutenzione',label: 'Fornitore Manut.' },
+  { key: 'container',             label: 'Container' },
+];
+
+// Columns shown in table (subset for readability)
+const TABLE_COLS = ['etichetta_asset','asset_sn','numero_di_serie','hostname','rack','nome_completo','piattaforma_supportata'];
+
+// CSV column index → DB key mapping
+const CSV_MAP = [
+  'etichetta_asset','asset_macro_category','asset_subcategory','numero_di_serie',
+  'asset_sn','codice_piattaforma','piattaforma_supportata','stato_piattaforma',
+  'tipo_piattaforma','produttore','asset_model','nome_completo','rack',
+  'componente_di','stato','hostname','societa','ip_management',
+  'sistema_operativo','scadenza_garanzia','fornitore_manutenzione','container'
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let currentPage = 0;
+let totalCount = 0;
+let sortCol = 'etichetta_asset';
+let sortAsc = true;
+let searchTimeout = null;
+let editingKey = null;
+let deleteKey = null;
+let parsedRows = [];
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  const tabs = ['browse','chiave','clienti','admin'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'admin') loadAdminTables();
+  if (name === 'clienti') loadClienti();
+}
+
+// ─── CERCA CHIAVE ─────────────────────────────────────────────────────────────
+async function cercaChiave() {
+  const etichetta = document.getElementById('chiave-input').value.trim();
+  if (!etichetta) return;
+
+  document.getElementById('chiave-result').style.display = 'none';
+  document.getElementById('chiave-notfound').style.display = 'none';
+  document.getElementById('chiave-loading').style.display = 'block';
+
+  try {
+    // Prima leggi da chiavi_calcolate, fallback a calcolo in tempo reale
+    let result;
+    const { data: kData } = await db.from('chiavi_calcolate').select('*').eq('etichetta_asset', etichetta).single();
+    if (kData) {
+      const { data: record } = await db.from('sn_main').select('*').eq('etichetta_asset', etichetta).single();
+      result = { record, chiave: kData.chiave, fonte: kData.fonte, cliente: kData.cliente, percorso: null };
+    } else {
+      result = await risolviChiave(etichetta);
+    }
+    document.getElementById('chiave-loading').style.display = 'none';
+
+    if (!result.record) {
+      document.getElementById('chiave-notfound').style.display = 'block';
+      return;
+    }
+
+    // Mostra chiave
+    const chiaveBox = document.getElementById('chiave-box');
+    const chiaveValore = document.getElementById('chiave-valore');
+    const chiaveFonte = document.getElementById('chiave-fonte');
+
+    if (result.chiave) {
+      chiaveValore.textContent = result.chiave;
+      chiaveValore.style.color = 'var(--accent)';
+      chiaveFonte.textContent = result.fonte;
+      chiaveBox.style.borderColor = 'var(--accent2)';
+    } else {
+      chiaveValore.textContent = result.cliente ? '🔑 Cliente: ' + result.cliente : 'Non disponibile';
+      chiaveValore.style.color = result.cliente ? 'var(--warning)' : 'var(--text-muted)';
+      chiaveValore.style.fontSize = result.cliente ? '18px' : '24px';
+      chiaveFonte.textContent = result.fonte;
+      chiaveBox.style.borderColor = 'var(--border)';
+    }
+
+    // Mostra dettagli record
+    const campi = [
+      ['Etichetta Asset', result.record.etichetta_asset],
+      ['Categoria', result.record.asset_subcategory],
+      ['Modello', result.record.asset_model],
+      ['Produttore', result.record.produttore],
+      ['Hostname', result.record.hostname],
+      ['Stato', result.record.stato],
+      ['Rack', result.record.rack],
+      ['Componente Di', result.record.componente_di],
+      ['Tipo Piattaforma', result.record.tipo_piattaforma],
+      ['Piattaforma', result.record.piattaforma_supportata],
+    ];
+    document.getElementById('chiave-dettagli').innerHTML = campi
+      .filter(([,v]) => v)
+      .map(([k,v]) => `
+        <div>
+          <div style="font-size:10px;font-family:var(--mono);color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">${k}</div>
+          <div style="font-size:13px;">${v}</div>
+        </div>
+      `).join('');
+
+    // Mostra percorso risalita (solo se calcolato in tempo reale)
+    if (result.percorso && result.percorso.length > 1) {
+      document.getElementById('chiave-percorso-box').style.display = 'block';
+      const banner = result.chiave
+        ? `<div style="margin-bottom:14px;background:rgba(255,184,0,0.08);border:1px solid rgba(255,184,0,0.3);border-radius:6px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <div style="font-size:12px;color:var(--warning);">⚠ Chiave calcolata in tempo reale — <strong>chiavi_calcolate</strong> non aggiornato</div>
+            <button class="btn btn-secondary btn-sm" onclick="switchTab('admin')" style="white-space:nowrap;">Aggiorna DB</button>
+           </div>`
+        : '';
+      document.getElementById('chiave-percorso').innerHTML = banner + result.percorso.map((step, i) => `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:${i < result.percorso.length-1 ? '8px' : '0'};">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--accent);min-width:16px;">${i+1}</div>
+          <div style="font-size:12px;color:var(--text-muted);">${step}</div>
+        </div>
+      `).join('');
+    } else {
+      document.getElementById('chiave-percorso-box').style.display = 'none';
+    }
+
+    document.getElementById('chiave-result').style.display = 'block';
+
+  } catch(e) {
+    document.getElementById('chiave-loading').style.display = 'none';
+    showToast('Errore: ' + e.message, 'error');
+  }
+}
+
+async function risolviChiave(etichetta) {
+  const percorso = [];
+
+  // 1. Carica record principale
+  const { data: record } = await db.from('sn_main').select('*').eq('etichetta_asset', etichetta).single();
+  if (!record) return { record: null };
+  percorso.push(`Record trovato: ${etichetta} (${record.asset_subcategory || record.asset_macro_category || '—'})`);
+
+  // 2. Controlla eccezioni_chiave
+  const { data: eccezione } = await db.from('eccezioni_chiave').select('chiave').eq('etichetta_asset', etichetta).single();
+  if (eccezione) {
+    percorso.push(`Trovato in eccezioni_chiave → chiave: ${eccezione.chiave}`);
+    return { record, chiave: eccezione.chiave, fonte: 'Eccezione diretta', percorso };
+  }
+
+  // 3. Mercato esterno → cliente
+  if (record.tipo_piattaforma && record.tipo_piattaforma.toLowerCase().includes('esterno')) {
+    const cliente = record.piattaforma_supportata || 'Cliente sconosciuto';
+    percorso.push(`Tipo piattaforma: Mercato Esterno → cliente: ${cliente}`);
+
+    // Prova a cercare in clienti_chiave se esiste
+    try {
+      const { data: clienteRow } = await db.from('clienti_chiave').select('chiave').eq('nome_cliente', cliente).single();
+      if (clienteRow) {
+        percorso.push(`Trovato in clienti_chiave → chiave: ${clienteRow.chiave}`);
+        return { record, chiave: clienteRow.chiave, fonte: `Cliente: ${cliente}`, percorso };
+      }
+    } catch(e) { /* tabella non ancora presente */ }
+
+    return { record, chiave: null, cliente, fonte: `Cliente non mappato in clienti_chiave`, percorso };
+  }
+
+  // 3. Ha campo rack → risali al rack
+  if (record.rack) {
+    percorso.push(`Campo rack valorizzato: ${record.rack} → carico il rack`);
+    const { data: rackRecord } = await db.from('sn_main').select('*').eq('etichetta_asset', record.rack).single();
+    if (rackRecord) {
+      percorso.push(`Rack trovato: ${rackRecord.etichetta_asset} (${rackRecord.asset_model})`);
+      const { data: eccRack } = await db.from('eccezioni_chiave').select('chiave').eq('etichetta_asset', record.rack).single();
+      if (eccRack) {
+        percorso.push(`Rack in eccezioni_chiave → chiave: ${eccRack.chiave}`);
+        return { record, chiave: eccRack.chiave, fonte: `Eccezione rack: ${record.rack}`, percorso };
+      }
+      if (rackRecord.tipo_piattaforma && rackRecord.tipo_piattaforma.toLowerCase().includes('esterno')) {
+        const cliente = rackRecord.piattaforma_supportata || 'Cliente sconosciuto';
+        percorso.push(`Rack è Mercato Esterno → cliente: ${cliente}`);
+        try {
+          const { data: clienteRow } = await db.from('clienti_chiave').select('chiave').eq('nome_cliente', cliente).single();
+          if (clienteRow) return { record, chiave: clienteRow.chiave, fonte: `Cliente rack: ${cliente}`, percorso };
+        } catch(e) {}
+        return { record, chiave: null, cliente, fonte: `Cliente rack non mappato in clienti_chiave`, percorso };
+      }
+      const chiave = await cercaModello(rackRecord.asset_model);
+      if (chiave) {
+        percorso.push(`Modello rack trovato → chiave: ${chiave}`);
+        return { record, chiave, fonte: `Modello rack: ${rackRecord.asset_model}`, percorso };
+      }
+      percorso.push(`Modello rack non trovato in modelli_chiave`);
+    } else {
+      percorso.push(`Rack ${record.rack} non trovato in sn_main`);
+    }
+    return { record, chiave: null, fonte: 'Chiave non disponibile', percorso };
+  }
+
+  // 4. Cerca modello standalone in modelli_chiave
+  if (record.asset_model) {
+    percorso.push(`Cerco modello "${record.asset_model}" in modelli_chiave`);
+    const chiave = await cercaModello(record.asset_model);
+    if (chiave) {
+      percorso.push(`Modello trovato → chiave: ${chiave}`);
+      return { record, chiave, fonte: `Modello standalone: ${record.asset_model}`, percorso };
+    }
+    percorso.push(`Modello non trovato in modelli_chiave`);
+  }
+
+  // 5. Ha container → carica macchina, eccezione macchina, poi rack o modello macchina
+  if (record.container) {
+    percorso.push(`Campo container valorizzato: ${record.container} → carico la macchina`);
+    const { data: compRecord } = await db.from('sn_main').select('*').eq('etichetta_asset', record.container).single();
+    if (compRecord) {
+      const { data: eccComp } = await db.from('eccezioni_chiave').select('chiave').eq('etichetta_asset', record.container).single();
+      if (eccComp) {
+        percorso.push(`Macchina in eccezioni_chiave → chiave: ${eccComp.chiave}`);
+        return { record, chiave: eccComp.chiave, fonte: `Eccezione macchina: ${record.container}`, percorso };
+      }
+      if (compRecord.rack) {
+        percorso.push(`Macchina ha rack: ${compRecord.rack} → carico il rack`);
+        const { data: rackRecord2 } = await db.from('sn_main').select('*').eq('etichetta_asset', compRecord.rack).single();
+        if (rackRecord2) {
+          const { data: eccRack2 } = await db.from('eccezioni_chiave').select('chiave').eq('etichetta_asset', compRecord.rack).single();
+          if (eccRack2) {
+            percorso.push(`Rack in eccezioni_chiave → chiave: ${eccRack2.chiave}`);
+            return { record, chiave: eccRack2.chiave, fonte: `Eccezione rack (via container): ${compRecord.rack}`, percorso };
+          }
+          const chiave = await cercaModello(rackRecord2.asset_model);
+          if (chiave) {
+            percorso.push(`Modello rack trovato → chiave: ${chiave}`);
+            return { record, chiave, fonte: `Modello rack (via container): ${rackRecord2.asset_model}`, percorso };
+          }
+          percorso.push(`Modello rack non trovato in modelli_chiave`);
+        }
+      } else {
+        percorso.push(`Macchina senza rack → cerco modello macchina`);
+        const chiave = await cercaModello(compRecord.asset_model);
+        if (chiave) {
+          percorso.push(`Modello macchina trovato → chiave: ${chiave}`);
+          return { record, chiave, fonte: `Modello macchina: ${compRecord.asset_model}`, percorso };
+        }
+        percorso.push(`Modello macchina non trovato in modelli_chiave`);
+      }
+    } else {
+      percorso.push(`Container ${record.container} non trovato in sn_main`);
+    }
+  }
+
+  // 6. Ha componente_di → carica macchina, eccezione macchina, poi rack o modello macchina
+  if (record.componente_di) {
+    percorso.push(`Campo componente_di valorizzato: ${record.componente_di} → carico la macchina`);
+    const { data: partRecord } = await db.from('sn_main').select('*').eq('etichetta_asset', record.componente_di).single();
+    if (partRecord) {
+      percorso.push(`Macchina trovata: ${partRecord.etichetta_asset} (${partRecord.asset_model || '—'})`);
+      const { data: eccPart } = await db.from('eccezioni_chiave').select('chiave').eq('etichetta_asset', record.componente_di).single();
+      if (eccPart) {
+        percorso.push(`Macchina in eccezioni_chiave → chiave: ${eccPart.chiave}`);
+        return { record, chiave: eccPart.chiave, fonte: `Eccezione macchina (via part.): ${record.componente_di}`, percorso };
+      }
+      if (partRecord.rack) {
+        percorso.push(`Macchina ha rack: ${partRecord.rack} → carico il rack`);
+        const { data: rackPartRecord } = await db.from('sn_main').select('*').eq('etichetta_asset', partRecord.rack).single();
+        if (rackPartRecord) {
+          const { data: eccRackPart } = await db.from('eccezioni_chiave').select('chiave').eq('etichetta_asset', partRecord.rack).single();
+          if (eccRackPart) {
+            percorso.push(`Rack in eccezioni_chiave → chiave: ${eccRackPart.chiave}`);
+            return { record, chiave: eccRackPart.chiave, fonte: `Eccezione rack (via part.): ${partRecord.rack}`, percorso };
+          }
+          const chiave = await cercaModello(rackPartRecord.asset_model);
+          if (chiave) {
+            percorso.push(`Modello rack trovato → chiave: ${chiave}`);
+            return { record, chiave, fonte: `Modello rack (via part.): ${rackPartRecord.asset_model}`, percorso };
+          }
+          percorso.push(`Modello rack non trovato in modelli_chiave`);
+        }
+      } else {
+        percorso.push(`Macchina senza rack → cerco modello macchina`);
+        const chiave = await cercaModello(partRecord.asset_model);
+        if (chiave) {
+          percorso.push(`Modello macchina trovato → chiave: ${chiave}`);
+          return { record, chiave, fonte: `Modello macchina (via part.): ${partRecord.asset_model}`, percorso };
+        }
+        percorso.push(`Modello macchina non trovato in modelli_chiave`);
+      }
+    } else {
+      percorso.push(`Macchina ${record.componente_di} non trovata in sn_main`);
+    }
+  }
+
+  // 7. Nessuna chiave trovata
+  percorso.push('Nessuna chiave trovabile con i dati disponibili');
+  return { record, chiave: null, fonte: 'Chiave non disponibile', percorso };
+}
+
+async function cercaModello(modello) {
+  if (!modello) return null;
+  const { data } = await db.from('modelli_chiave').select('chiave').eq('modello', modello).single();
+  return data ? data.chiave : null;
+}
+
+// ─── TABLE HEAD ───────────────────────────────────────────────────────────────
+function buildTableHead() {
+  const tr = document.getElementById('table-head');
+  tr.innerHTML = TABLE_COLS.map(key => {
+    const col = COLUMNS.find(c => c.key === key);
+    const sorted = key === sortCol;
+    return `<th class="${sorted ? 'sorted' : ''}" onclick="setSort('${key}')">
+      ${col.label} <span class="sort-icon">${sorted ? (sortAsc ? '↑' : '↓') : '↕'}</span>
+    </th>`;
+  }).join('') + '<th>Chiave</th>';
+}
+
+function setSort(key) {
+  if (sortCol === key) sortAsc = !sortAsc; else { sortCol = key; sortAsc = true; }
+  currentPage = 0;
+  buildTableHead();
+  loadData();
+}
+
+// ─── FILTERS ──────────────────────────────────────────────────────────────────
+async function loadFilters() {
+  const selectors = [
+    { id: 'filter-tipo-piattaforma', col: 'tipo_piattaforma' },
+    { id: 'filter-macrocategory',    col: 'asset_macro_category' },
+  ];
+  for (const s of selectors) {
+    const { data } = await db.from(TABLE).select(s.col).neq(s.col, '').neq(s.col, null);
+    if (!data) continue;
+    const unique = [...new Set(data.map(r => r[s.col]).filter(Boolean))].sort();
+    const sel = document.getElementById(s.id);
+    unique.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v; opt.textContent = v;
+      sel.appendChild(opt);
+    });
+  }
+}
+
+function clearFilters() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('filter-tipo-piattaforma').value = '';
+  document.getElementById('filter-macrocategory').value = '';
+  document.getElementById('filter-localizzazione').value = '';
+  currentPage = 0;
+  loadData();
+}
+
+// ─── LOAD DATA ────────────────────────────────────────────────────────────────
+function onSearchInput() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => { currentPage = 0; loadData(); }, 350);
+}
+
+async function loadData() {
+  showLoading();
+  const rawSearch      = document.getElementById('search-input').value.trim();
+  const tipoPiattaforma = document.getElementById('filter-tipo-piattaforma').value;
+  const macrocategory  = document.getElementById('filter-macrocategory').value;
+  const localizzazione = document.getElementById('filter-localizzazione').value;
+
+  // Tokenizza: separa per spazio e/o virgola, rimuove token vuoti
+  const tokens = rawSearch ? rawSearch.split(/[\s,]+/).filter(t => t.length > 0) : [];
+  const isMulti = tokens.length > 1;
+
+  let query = db.from(TABLE).select('*', { count: 'exact' });
+
+  if (isMulti) {
+    // Ricerca multipla: IN su etichetta_asset
+    query = query.in('etichetta_asset', tokens);
+  } else if (tokens.length === 1) {
+    const search = tokens[0];
+    query = query.or(
+      `etichetta_asset.ilike.%${search}%,asset_sn.ilike.%${search}%,numero_di_serie.ilike.%${search}%,hostname.ilike.%${search}%,rack.ilike.%${search}%,piattaforma_supportata.ilike.%${search}%`
+    );
+  }
+
+  if (tipoPiattaforma) query = query.eq('tipo_piattaforma', tipoPiattaforma);
+  if (macrocategory)  query = query.eq('asset_macro_category', macrocategory);
+  if (localizzazione === 'sala') query = query.ilike('nome_completo', '%/sala%');
+
+  query = query.order(sortCol, { ascending: sortAsc });
+  // In ricerca multipla non paginiamo (al massimo sono tanti quanti i token)
+  if (!isMulti) {
+    query = query.range(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE - 1);
+  }
+
+  const { data, count, error } = await query;
+
+  if (error) { showError(error.message); return; }
+
+  totalCount = isMulti ? (data || []).length : (count || 0);
+  document.getElementById('record-count').textContent = totalCount.toLocaleString('it') + ' record';
+  renderTable(data || []);
+  if (!isMulti) updatePagination();
+  else {
+    document.getElementById('pagination-info').textContent = `${totalCount} risultati (ricerca multipla)`;
+    document.getElementById('btn-prev').disabled = true;
+    document.getElementById('btn-next').disabled = true;
+  }
+}
+
+function showLoading() {
+  document.getElementById('table-body').innerHTML = `<tr><td colspan="${TABLE_COLS.length + 1}"><div class="loading"><div class="spinner"></div><br>Caricamento...</div></td></tr>`;
+}
+
+function showError(msg) {
+  document.getElementById('table-body').innerHTML = `<tr><td colspan="${TABLE_COLS.length + 1}"><div class="empty" style="color:var(--danger)">Errore: ${msg}</div></td></tr>`;
+}
+
+// ─── RENDER TABLE ─────────────────────────────────────────────────────────────
+function renderTable(rows) {
+  if (!rows.length) {
+    document.getElementById('table-body').innerHTML = `<tr><td colspan="${TABLE_COLS.length + 1}"><div class="empty">Nessun record trovato</div></td></tr>`;
+    return;
+  }
+  document.getElementById('table-body').innerHTML = rows.map(row => `
+    <tr style="cursor:pointer;" onclick="openDetailModal('${escHtml(row.etichetta_asset)}')">
+      ${TABLE_COLS.map(key => {
+        let val = row[key] || '';
+        return `<td title="${(row[key] || '').toString().replace(/"/g, '&quot;')}">${val}</td>`;
+      }).join('')}
+      <td data-chiave-et="${escHtml(row.etichetta_asset)}"><span style="color:var(--text-muted);font-size:10px;">...</span></td>
+    </tr>
+  `).join('');
+  // Carica chiavi in batch (1 sola query)
+  loadChiaviInlineBatch(rows.map(r => r.etichetta_asset).filter(Boolean));
+}
+
+function escHtml(s) { return (s||'').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+// ─── PAGINATION ───────────────────────────────────────────────────────────────
+function updatePagination() {
+  const from = currentPage * PAGE_SIZE + 1;
+  const to = Math.min((currentPage + 1) * PAGE_SIZE, totalCount);
+  document.getElementById('pagination-info').textContent = `${from}–${to} di ${totalCount.toLocaleString('it')}`;
+  document.getElementById('btn-prev').disabled = currentPage === 0;
+  document.getElementById('btn-next').disabled = to >= totalCount;
+}
+
+function prevPage() { if (currentPage > 0) { currentPage--; loadData(); } }
+function nextPage() { currentPage++; loadData(); }
+
+
+// ─── CHIAVE INLINE ────────────────────────────────────────────────────────────
+async function loadChiaviInlineBatch(etichette) {
+  if (!etichette.length) return;
+  try {
+    const { data } = await db.from('chiavi_calcolate')
+      .select('etichetta_asset,chiave,cliente')
+      .in('etichetta_asset', etichette);
+    const map = {};
+    (data || []).forEach(r => { map[r.etichetta_asset] = r; });
+    etichette.forEach(et => {
+      const cell = document.querySelector(`[data-chiave-et="${et.replace(/"/g,'&quot;')}"]`);
+      if (!cell) return;
+      const r = map[et];
+      if (r && r.chiave) {
+        cell.innerHTML = `<span class="badge badge-active">${r.chiave}</span>`;
+      } else if (r && r.cliente) {
+        cell.innerHTML = `<span class="badge badge-default" title="${r.cliente}">Cliente</span>`;
+      } else {
+        cell.innerHTML = `<span style="color:var(--text-muted);font-size:10px;">—</span>`;
+      }
+    });
+  } catch(e) {
+    etichette.forEach(et => {
+      const cell = document.querySelector(`[data-chiave-et="${et.replace(/"/g,'&quot;')}"]`);
+      if (cell) cell.innerHTML = `<span style="color:var(--text-muted);font-size:10px;">—</span>`;
+    });
+  }
+}
+
+// ─── DETAIL MODAL ─────────────────────────────────────────────────────────────
+async function openDetailModal(etichetta) {
+  document.getElementById('detail-title').textContent = etichetta;
+  document.getElementById('detail-body').innerHTML = `<div class="loading"><div class="spinner"></div></div>`;
+  document.getElementById('detail-modal').classList.add('open');
+
+  const { data, error } = await db.from(TABLE).select('*').eq('etichetta_asset', etichetta).single();
+  if (error || !data) {
+    document.getElementById('detail-body').innerHTML = `<p style="color:var(--danger)">Errore nel caricamento</p>`;
+    return;
+  }
+
+  // Leggi chiave da chiavi_calcolate
+  const { data: kData } = await db.from('chiavi_calcolate').select('chiave,fonte,cliente').eq('etichetta_asset', etichetta).single();
+  const keyResult = kData || { chiave: null, fonte: 'Non calcolata — esegui Aggiorna DB', cliente: null };
+
+  document.getElementById('detail-body').innerHTML = `
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:20px;">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Chiave</div>
+      <div style="font-family:var(--mono);font-size:28px;color:${keyResult.chiave ? 'var(--accent)' : 'var(--text-muted)'};">
+        ${keyResult.chiave || (keyResult.cliente ? '🔑 ' + keyResult.cliente : '—')}
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${keyResult.fonte || ''}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      ${COLUMNS.map(col => {
+        const val = data[col.key];
+        const empty = val === null || val === undefined || val === '';
+        return `<div>
+          <div style="font-size:10px;font-family:var(--mono);color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">${col.label}</div>
+          <div style="font-size:13px;word-break:break-all;${empty ? 'color:var(--text-muted);font-style:italic;' : ''}">${empty ? '—' : val}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function closeDetailModal() {
+  document.getElementById('detail-modal').classList.remove('open');
+}
+
+// ─── ADD / EDIT MODAL ─────────────────────────────────────────────────────────
+function buildForm(record = {}) {
+  return COLUMNS.map(col => {
+    const val = record[col.key] || '';
+    const readonly = col.primary && editingKey ? 'readonly style="opacity:0.5"' : '';
+    return `
+      <div class="form-group${col.key === 'nome_completo' ? ' full' : ''}">
+        <label>${col.label}${col.primary ? ' <span style="color:var(--accent)">*</span>' : ''}</label>
+        <input type="text" id="field-${col.key}" value="${escHtml(val)}" ${readonly} placeholder="${col.label}">
+      </div>
+    `;
+  }).join('');
+}
+
+function openAddModal() {
+  editingKey = null;
+  document.getElementById('modal-title').textContent = 'Nuovo Record';
+  document.getElementById('modal-form').innerHTML = buildForm();
+  document.getElementById('record-modal').classList.add('open');
+}
+
+async function openEditModal(key) {
+  editingKey = key;
+  document.getElementById('modal-title').textContent = 'Modifica Record';
+  document.getElementById('modal-form').innerHTML = `<div class="form-group full"><div class="loading"><div class="spinner"></div></div></div>`;
+  document.getElementById('record-modal').classList.add('open');
+
+  const { data, error } = await db.from(TABLE).select('*').eq('etichetta_asset', key).single();
+  if (error || !data) { showToast('Errore nel caricamento', 'error'); closeModal(); return; }
+  document.getElementById('modal-form').innerHTML = buildForm(data);
+}
+
+function closeModal() {
+  document.getElementById('record-modal').classList.remove('open');
+  editingKey = null;
+}
+
+async function saveRecord() {
+  const record = {};
+  let valid = true;
+  COLUMNS.forEach(col => {
+    const el = document.getElementById('field-' + col.key);
+    if (el) record[col.key] = el.value.trim() || null;
+    if (col.primary && !record[col.key] && !editingKey) valid = false;
+  });
+
+  if (!valid) { showToast('Etichetta Asset è obbligatoria', 'error'); return; }
+
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true; btn.textContent = 'Salvo...';
+
+  let error;
+  if (editingKey) {
+    ({ error } = await db.from(TABLE).update(record).eq('etichetta_asset', editingKey));
+  } else {
+    ({ error } = await db.from(TABLE).insert(record));
+  }
+
+  btn.disabled = false; btn.textContent = 'Salva';
+
+  if (error) { showToast('Errore: ' + error.message, 'error'); return; }
+  showToast(editingKey ? 'Record aggiornato' : 'Record aggiunto', 'success');
+  closeModal();
+  loadData();
+}
+
+// ─── DELETE ───────────────────────────────────────────────────────────────────
+function openDeleteModal(key) {
+  deleteKey = key;
+  document.getElementById('delete-label').textContent = key;
+  document.getElementById('delete-detail').textContent = 'Record sn_main. Tutti i dati associati verranno rimossi.';
+  document.getElementById('delete-modal').dataset.mode = '';
+  document.getElementById('delete-modal').classList.add('open');
+}
+
+// ─── CSV IMPORT ───────────────────────────────────────────────────────────────
+function onDragOver(e) { e.preventDefault(); document.getElementById('import-zone').classList.add('drag-over'); }
+function onDragLeave() { document.getElementById('import-zone').classList.remove('drag-over'); }
+function onDrop(e) { e.preventDefault(); onDragLeave(); const f = e.dataTransfer.files[0]; if (f) processCSV(f); }
+function handleFileSelect(e) { const f = e.target.files[0]; if (f) processCSV(f); }
+
+function processCSV(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    const rows = lines.slice(1); // skip header
+
+    parsedRows = [];
+    let skipped = 0;
+
+    for (const line of rows) {
+      const cols = parseCSVLine(line);
+      const etichetta = (cols[0] || '').trim();
+      if (!etichetta) { skipped++; continue; }
+
+      const record = {};
+      CSV_MAP.forEach((key, i) => {
+        record[key] = (cols[i] || '').trim() || null;
+      });
+      parsedRows.push(record);
+    }
+
+    document.getElementById('file-name').textContent = file.name;
+    document.getElementById('file-rows').textContent = `${parsedRows.length} valide, ${skipped} ignorate (senza etichetta)`;
+    document.getElementById('import-preview').style.display = 'block';
+    document.getElementById('import-log').innerHTML = `<div class="log-line info">Pronto: ${parsedRows.length} righe da importare via upsert.</div>`;
+    document.getElementById('progress-fill').style.width = '0%';
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i+1] === '"') { cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      result.push(cur); cur = '';
+    } else cur += ch;
+  }
+  result.push(cur);
+  return result;
+}
+
+async function startImport() {
+  if (!parsedRows.length) return;
+  const btn = document.getElementById('btn-start-import');
+  btn.disabled = true; btn.textContent = 'Importazione...';
+
+  const log = document.getElementById('import-log');
+  const progress = document.getElementById('progress-fill');
+  log.innerHTML = '';
+
+  const BATCH = 500;
+  let done = 0;
+  let errors = 0;
+
+  for (let i = 0; i < parsedRows.length; i += BATCH) {
+    const batch = parsedRows.slice(i, i + BATCH);
+    const { error } = await db.from(TABLE).upsert(batch, { onConflict: 'etichetta_asset' });
+
+    if (error) {
+      errors++;
+      addLog(log, `✕ Batch ${Math.floor(i/BATCH)+1}: ${error.message}`, 'error');
+    } else {
+      done += batch.length;
+      addLog(log, `✓ Batch ${Math.floor(i/BATCH)+1}: ${batch.length} righe ok`, 'success');
+    }
+
+    const pct = Math.round(((i + BATCH) / parsedRows.length) * 100);
+    progress.style.width = Math.min(pct, 100) + '%';
+    await new Promise(r => setTimeout(r, 50));
+  }
+
+  addLog(log, `─────────────────────`, '');
+  if (errors === 0) {
+    addLog(log, `✓ Completato: ${done} righe importate`, 'success');
+    showToast('Importazione completata', 'success');
+  } else {
+    addLog(log, `Completato con ${errors} errori. ${done} righe ok.`, 'error');
+    showToast('Importazione completata con errori', 'error');
+  }
+
+  btn.disabled = false; btn.textContent = 'Avvia importazione';
+  loadData();
+}
+
+function addLog(el, text, cls) {
+  el.innerHTML += `<div class="log-line ${cls}">${text}</div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  setTimeout(() => t.className = '', 3000);
+}
+
+
+// ─── ADMIN: LOOKUP TABLES ─────────────────────────────────────────────────────
+const ADMIN_PAGE = 5;
+let eccCurrentPage = 0, eccTotal = 0, eccSearch = '';
+let modCurrentPage = 0, modTotal = 0, modSearch = '';
+let lookupEditingKey = null;
+let lookupDeleteTable = null;
+let lookupDeleteKey = null;
+
+// ─── CLIENTI STATE ────────────────────────────────────────────────────────────
+const CLI_PAGE = 5;
+let cliCurrentPage = 0, cliTotal = 0, cliSearch = '';
+let clienteEditingKey = null;
+
+async function loadAdminTables() {
+  loadEccezioni();
+  loadModelli();
+}
+
+// ECCEZIONI
+function onEccezioniSearch() {
+  eccSearch = document.getElementById('eccezioni-search').value.trim();
+  eccCurrentPage = 0;
+  loadEccezioni();
+}
+
+async function loadEccezioni() {
+  let query = db.from('eccezioni_chiave').select('*', { count: 'exact' }).order('etichetta_asset');
+  if (eccSearch) {
+    query = query.or(`etichetta_asset.ilike.%${eccSearch}%,chiave.ilike.%${eccSearch}%`);
+  }
+  const { data, count, error } = await query;
+  if (error) return;
+  eccTotal = count || 0;
+  document.getElementById('eccezioni-info').textContent = `${eccTotal} record`;
+  document.getElementById('eccezioni-body').innerHTML = (data || []).map(r => `
+    <tr>
+      <td>${r.etichetta_asset}</td>
+      <td><span class="badge badge-active">${r.chiave}</span></td>
+      <td><div class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openLookupModal('eccezioni','${escHtml(r.etichetta_asset)}','${escHtml(r.chiave)}')">✎</button>
+        <button class="btn btn-danger btn-sm" onclick="openLookupDelete('eccezioni','${escHtml(r.etichetta_asset)}','${escHtml(r.chiave)}')">✕</button>
+      </div></td>
+    </tr>
+  `).join('') || '<tr><td colspan="3"><div class="empty">Nessun record</div></td></tr>';
+}
+
+
+// MODELLI
+function onModelliSearch() {
+  modSearch = document.getElementById('modelli-search').value.trim();
+  modCurrentPage = 0;
+  loadModelli();
+}
+
+async function loadModelli() {
+  let query = db.from('modelli_chiave').select('*', { count: 'exact' }).order('modello');
+  if (modSearch) {
+    query = query.or(`modello.ilike.%${modSearch}%,chiave.ilike.%${modSearch}%`);
+  }
+  const { data, count, error } = await query;
+  if (error) return;
+  modTotal = count || 0;
+  document.getElementById('modelli-info').textContent = `${modTotal} record`;
+  document.getElementById('modelli-body').innerHTML = (data || []).map(r => `
+    <tr>
+      <td>${r.modello}</td>
+      <td><span class="badge badge-active">${r.chiave}</span></td>
+      <td><span class="tag">${r.tipo || ''}</span></td>
+      <td><div class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openLookupModal('modelli','${escHtml(r.modello)}','${escHtml(r.chiave)}','${escHtml(r.tipo||'')}')">✎</button>
+        <button class="btn btn-danger btn-sm" onclick="openLookupDelete('modelli','${escHtml(r.modello)}','${escHtml(r.chiave)}')">✕</button>
+      </div></td>
+    </tr>
+  `).join('') || '<tr><td colspan="4"><div class="empty">Nessun record</div></td></tr>';
+}
+
+
+// LOOKUP MODAL
+function openLookupModal(table, key, chiave, tipo) {
+  lookupEditingKey = key || null;
+  const isEcc = table === 'eccezioni';
+  document.getElementById('lookup-modal-title').textContent = (key ? 'Modifica' : 'Nuovo') + ' — ' + (isEcc ? 'Eccezione Chiave' : 'Modello Chiave');
+  document.getElementById('lookup-table').value = table;
+  document.getElementById('lookup-key').value = key || '';
+  document.getElementById('lookup-key').readOnly = !!key;
+  document.getElementById('lookup-key').style.opacity = key ? '0.5' : '1';
+  document.getElementById('lookup-key-label').textContent = isEcc ? 'Etichetta Asset' : 'Modello';
+  document.getElementById('lookup-chiave').value = chiave || '';
+  const tipoRow = document.getElementById('lookup-tipo-row');
+  tipoRow.style.display = isEcc ? 'none' : 'flex';
+  document.getElementById('lookup-tipo').value = tipo || '';
+  document.getElementById('lookup-modal').classList.add('open');
+}
+
+function closeLookupModal() {
+  document.getElementById('lookup-modal').classList.remove('open');
+  lookupEditingKey = null;
+}
+
+async function saveLookup() {
+  const table = document.getElementById('lookup-table').value;
+  const key = document.getElementById('lookup-key').value.trim();
+  const chiave = document.getElementById('lookup-chiave').value.trim();
+  const tipo = document.getElementById('lookup-tipo').value.trim();
+  if (!key || !chiave) { showToast('Compila tutti i campi obbligatori', 'error'); return; }
+
+  const isEcc = table === 'eccezioni';
+  const dbTable = isEcc ? 'eccezioni_chiave' : 'modelli_chiave';
+  const record = isEcc
+    ? { etichetta_asset: key, chiave }
+    : { modello: key, chiave, tipo };
+
+  const btn = document.getElementById('btn-save-lookup');
+  btn.disabled = true;
+
+  const { error } = await db.from(dbTable).upsert(record, { onConflict: isEcc ? 'etichetta_asset' : 'modello' });
+
+  btn.disabled = false;
+  if (error) { showToast('Errore: ' + error.message, 'error'); return; }
+  showToast('Record salvato', 'success');
+  closeLookupModal();
+  if (isEcc) loadEccezioni(); else loadModelli();
+}
+
+// LOOKUP DELETE
+function openLookupDelete(table, key, chiave) {
+  lookupDeleteTable = table;
+  lookupDeleteKey = key;
+  const isEcc = table === 'eccezioni';
+  document.getElementById('delete-label').textContent = key;
+  document.getElementById('delete-detail').innerHTML = isEcc
+    ? `Tipo: <strong>Eccezione Chiave</strong><br>Chiave associata: <strong>${chiave || '—'}</strong><br>Questa etichetta tornerà a usare la logica di risoluzione standard.`
+    : `Tipo: <strong>Modello Chiave</strong><br>Chiave associata: <strong>${chiave || '—'}</strong><br>Tutti gli apparati con questo modello perderanno la chiave derivata da esso.`;
+  document.getElementById('delete-modal').classList.add('open');
+  document.getElementById('delete-modal').dataset.mode = 'lookup';
+}
+
+async function confirmDelete() {
+  const mode = document.getElementById('delete-modal').dataset.mode;
+  if (mode === 'lookup') {
+    const isEcc = lookupDeleteTable === 'eccezioni';
+    const dbTable = isEcc ? 'eccezioni_chiave' : 'modelli_chiave';
+    const col = isEcc ? 'etichetta_asset' : 'modello';
+    const { error } = await db.from(dbTable).delete().eq(col, lookupDeleteKey);
+    if (error) { showToast('Errore: ' + error.message, 'error'); return; }
+    showToast('Record eliminato', 'success');
+    closeDeleteModal();
+    if (isEcc) loadEccezioni(); else loadModelli();
+  } else if (mode === 'cliente') {
+    const nomeCliente = document.getElementById('delete-modal').dataset.clienteKey;
+    const { error } = await db.from('clienti_chiave').delete().eq('nome_cliente', nomeCliente);
+    if (error) { showToast('Errore: ' + error.message, 'error'); return; }
+    showToast('Cliente eliminato', 'success');
+    closeDeleteModal();
+    loadClienti();
+  } else {
+    if (!deleteKey) return;
+    const { error } = await db.from(TABLE).delete().eq('etichetta_asset', deleteKey);
+    if (error) { showToast('Errore: ' + error.message, 'error'); return; }
+    showToast('Record eliminato', 'success');
+    closeDeleteModal();
+    loadData();
+  }
+}
+
+function closeDeleteModal() {
+  document.getElementById('delete-modal').classList.remove('open');
+  deleteKey = null;
+  lookupDeleteKey = null;
+  lookupDeleteTable = null;
+  document.getElementById('delete-modal').dataset.mode = '';
+  document.getElementById('delete-modal').dataset.clienteKey = '';
+}
+
+// ─── AGGIORNA DB ──────────────────────────────────────────────────────────────
+async function aggiornaDB() {
+  const btn = document.getElementById('btn-aggiorna-db');
+  btn.disabled = true;
+  const preview = document.getElementById('aggiorna-preview');
+  const log = document.getElementById('aggiorna-log');
+  const progress = document.getElementById('aggiorna-progress');
+  preview.style.display = 'block';
+  log.innerHTML = '';
+  progress.style.width = '0%';
+
+  addLog(log, 'Caricamento tabelle di lookup...', 'info');
+
+  // Carica lookup tables in parallelo
+  const [eccRes, modRes, cliRes] = await Promise.all([
+    db.from('eccezioni_chiave').select('*'),
+    db.from('modelli_chiave').select('*'),
+    db.from('clienti_chiave').select('*'),
+  ]);
+
+  if (eccRes.error || modRes.error) {
+    addLog(log, 'Errore nel caricamento lookup: ' + (eccRes.error || modRes.error).message, 'error');
+    btn.disabled = false; return;
+  }
+
+  // Carica sn_main in loop paginato (limite Supabase: 1000 righe per risposta)
+  const snMap = {};
+  const SN_BATCH = 1000;
+  let snFrom = 0;
+  while (true) {
+    const { data, error } = await db.from('sn_main')
+      .select('etichetta_asset,asset_subcategory,asset_model,rack,componente_di,tipo_piattaforma,piattaforma_supportata,container,nome_completo')
+      .neq('etichetta_asset', '')
+      .range(snFrom, snFrom + SN_BATCH - 1);
+    if (error) {
+      addLog(log, 'Errore caricamento sn_main: ' + error.message, 'error');
+      btn.disabled = false; return;
+    }
+    (data || []).forEach(r => { snMap[r.etichetta_asset] = r; });
+    addLog(log, `sn_main: ${Object.keys(snMap).length} record caricati...`, 'info');
+    if (!data || data.length < SN_BATCH) break;
+    snFrom += SN_BATCH;
+  }
+  const eccMap = {};
+  (eccRes.data || []).forEach(r => { eccMap[r.etichetta_asset] = r.chiave; });
+  const modMap = {};
+  (modRes.data || []).forEach(r => { modMap[r.modello] = r.chiave; });
+  const cliMap = {};
+  (cliRes.data || []).forEach(r => { cliMap[r.nome_cliente] = r.chiave; });
+
+  addLog(log, `Dati caricati: ${Object.keys(snMap).length} record sn_main, ${Object.keys(eccMap).length} eccezioni, ${Object.keys(modMap).length} modelli, ${Object.keys(cliMap).length} clienti`, 'success');
+  addLog(log, 'Calcolo chiavi...', 'info');
+
+  function risolviLocale(et) {
+    const rec = snMap[et];
+    if (!rec) return { chiave: null, fonte: 'Non trovato', cliente: null };
+
+    // 1. Eccezione diretta
+    if (eccMap[et]) return { chiave: eccMap[et], fonte: 'Eccezione diretta', cliente: null };
+
+    // 2. Mercato esterno
+    if (rec.tipo_piattaforma && rec.tipo_piattaforma.toLowerCase().includes('esterno')) {
+      const cliente = (rec.piattaforma_supportata || '').trim();
+      const chiave = cliMap[cliente] || null;
+      return { chiave, fonte: chiave ? `Cliente: ${cliente}` : `Cliente non mappato: ${cliente}`, cliente };
+    }
+
+    // 3. Ha rack
+    if (rec.rack) {
+      const rackRec = snMap[rec.rack];
+      if (rackRec) {
+        if (eccMap[rec.rack]) return { chiave: eccMap[rec.rack], fonte: null, cliente: null };
+        if (rackRec.tipo_piattaforma && rackRec.tipo_piattaforma.toLowerCase().includes('esterno')) {
+          const cliente = (rackRec.piattaforma_supportata || '').trim();
+          const chiave = cliMap[cliente] || null;
+          return { chiave, fonte: null, cliente };
+        }
+        const chiave = modMap[rackRec.asset_model] || null;
+        return { chiave, fonte: chiave ? null : rackRec.asset_model, cliente: null };
+      }
+      return { chiave: null, fonte: null, cliente: null };
+    }
+
+    // 4. Cerca modello standalone in modelli_chiave
+    if (rec.asset_model) {
+      const chiave = modMap[rec.asset_model] || null;
+      if (chiave) return { chiave, fonte: null, cliente: null };
+    }
+
+    // 5. Ha container
+    if (rec.container) {
+      const compRec = snMap[rec.container];
+      if (compRec) {
+        if (eccMap[rec.container]) return { chiave: eccMap[rec.container], fonte: null, cliente: null };
+        if (compRec.rack) {
+          const rackRec = snMap[compRec.rack];
+          if (rackRec) {
+            if (eccMap[compRec.rack]) return { chiave: eccMap[compRec.rack], fonte: null, cliente: null };
+            const chiave = modMap[rackRec.asset_model] || null;
+            return { chiave, fonte: chiave ? null : rackRec.asset_model, cliente: null };
+          }
+        } else {
+          const chiave = modMap[compRec.asset_model] || null;
+          return { chiave, fonte: chiave ? null : compRec.asset_model, cliente: null };
+        }
+      }
+    }
+
+    // 6. Ha componente_di
+    if (rec.componente_di) {
+      const compRec = snMap[rec.componente_di];
+      if (compRec) {
+        if (eccMap[rec.componente_di]) return { chiave: eccMap[rec.componente_di], fonte: null, cliente: null };
+        if (compRec.rack) {
+          const rackRec = snMap[compRec.rack];
+          if (rackRec) {
+            if (eccMap[compRec.rack]) return { chiave: eccMap[compRec.rack], fonte: null, cliente: null };
+            const chiave = modMap[rackRec.asset_model] || null;
+            return { chiave, fonte: chiave ? null : rackRec.asset_model, cliente: null };
+          }
+        } else {
+          const chiave = modMap[compRec.asset_model] || null;
+          return { chiave, fonte: chiave ? null : compRec.asset_model, cliente: null };
+        }
+      }
+    }
+
+    return { chiave: null, fonte: rec.asset_model || null, cliente: null };
+  }
+
+  const etichette = Object.keys(snMap);
+  const tuttiRisultati = etichette.map(et => {
+    const r = risolviLocale(et);
+    return { etichetta_asset: et, chiave: r.chiave, fonte: r.fonte, cliente: r.cliente };
+  });
+  const risultati = tuttiRisultati.filter(r => r.chiave);
+
+  addLog(log, `Chiavi calcolate: ${risultati.length} risolte, ${tuttiRisultati.length - risultati.length} non disponibili`, 'success');
+  addLog(log, 'Salvataggio su chiavi_calcolate...', 'info');
+
+  // Upsert in batch
+  const BATCH = 500;
+  let done = 0;
+  let errors = 0;
+  for (let i = 0; i < risultati.length; i += BATCH) {
+    const batch = risultati.slice(i, i + BATCH);
+    const { error } = await db.from('chiavi_calcolate').upsert(batch, { onConflict: 'etichetta_asset' });
+    if (error) { errors++; addLog(log, `✕ Batch ${Math.floor(i/BATCH)+1}: ${error.message}`, 'error'); }
+    else { done += batch.length; }
+    progress.style.width = Math.min(Math.round(((i + BATCH) / risultati.length) * 100), 100) + '%';
+    await new Promise(r => setTimeout(r, 30));
+  }
+
+  addLog(log, `─────────────────────`, '');
+  if (errors === 0) {
+    addLog(log, `✓ Completato: ${done} record aggiornati in chiavi_calcolate`, 'success');
+    showToast('DB aggiornato', 'success');
+  } else {
+    addLog(log, `Completato con ${errors} errori`, 'error');
+    showToast('Completato con errori', 'error');
+  }
+  btn.disabled = false;
+
+  // Genera report post-aggiornamento
+  generaReport(tuttiRisultati, snMap, modMap, cliMap, eccMap);
+}
+
+// ─── REPORT POST-AGGIORNAMENTO ────────────────────────────────────────────────
+function generaReport(risultati, snMap, modMap, cliMap, eccMap) {
+  const section = document.getElementById('report-section');
+  const body = document.getElementById('report-body');
+  section.style.display = 'block';
+
+  // --- Modelli non mappati: conteggiano separatamente in sala e rimossi ---
+  const SUBCATEGORY_MAPPABILI = new Set(['Rack','Server Unix','Tape Drive','Espansioni Backup','Stack (ISS)','Tape Library','Switch in fibra','Espansioni Storage Enterprise']);
+  const modelliNonMappati = {}; // { modello: { sala: N, rimossi: N } }
+  risultati.forEach(r => {
+    if (!r.chiave && !r.cliente && r.fonte) {
+      const modello = r.fonte.trim();
+      if (modello) {
+        const rec = snMap[r.etichetta_asset];
+        if (!rec || !SUBCATEGORY_MAPPABILI.has(rec.asset_subcategory)) return;
+        if (!modelliNonMappati[modello]) modelliNonMappati[modello] = { sala: 0, rimossi: 0 };
+        const inSala = rec.nome_completo && rec.nome_completo.toLowerCase().includes('/sala');
+        if (inSala) modelliNonMappati[modello].sala++;
+        else modelliNonMappati[modello].rimossi++;
+      }
+    }
+  });
+  // Ordina per apparati in sala desc, esclude modelli con 0 apparati in sala
+  const modelliSortati = Object.entries(modelliNonMappati).filter(([,v]) => v.sala > 0).sort((a,b) => b[1].sala - a[1].sala);
+
+  // --- Clienti non mappati: solo in sala ---
+  const clientiNonMappati = {};
+  risultati.forEach(r => {
+    if (!r.chiave && r.cliente) {
+      const rec = snMap[r.etichetta_asset];
+      if (rec && rec.nome_completo && rec.nome_completo.toLowerCase().includes('/sala')) {
+        clientiNonMappati[r.cliente] = (clientiNonMappati[r.cliente] || 0) + 1;
+      }
+    }
+  });
+  const clientiSortati = Object.entries(clientiNonMappati).sort((a,b) => b[1]-a[1]);
+
+  // --- Totali ---
+  const totRisolte = risultati.filter(r => r.chiave).length;
+  const totNonRis = risultati.filter(r => !r.chiave).length;
+  const totClientiNonMap = Object.keys(clientiNonMappati).length;
+  const totModelliNonMap = modelliSortati.length;
+
+  body.innerHTML = `
+    <!-- Riepilogo numerico -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
+      ${[
+        ['Chiavi risolte', totRisolte, 'var(--accent)'],
+        ['Non risolvibili', totNonRis, totNonRis > 0 ? 'var(--danger)' : 'var(--text-muted)'],
+        ['Clienti da mappare', totClientiNonMap, totClientiNonMap > 0 ? 'var(--warning)' : 'var(--text-muted)'],
+        ['Modelli da mappare', totModelliNonMap, totModelliNonMap > 0 ? 'var(--warning)' : 'var(--text-muted)'],
+      ].map(([label, val, color]) => `
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+          <div style="font-family:var(--mono);font-size:22px;color:${color};font-weight:700;">${val.toLocaleString('it')}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${label}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- Clienti non mappati -->
+    ${clientiSortati.length > 0 ? `
+    <div style="margin-bottom:20px;">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--warning);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">
+        ⚠ Clienti Mercato Esterno senza chiave (${clientiSortati.length})
+        <span style="color:var(--text-muted);margin-left:8px;">→ aggiungi in tab Clienti</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Cliente</th><th>Apparati in sala</th><th style="width:120px;"></th></tr></thead>
+          <tbody>
+            ${clientiSortati.map(([cliente, count]) => `
+              <tr>
+                <td style="font-size:12px;">${cliente}</td>
+                <td><span class="badge badge-inactive">${count}</span></td>
+                <td><button class="btn btn-primary btn-sm" onclick="switchTab('clienti');setTimeout(()=>openClienteModal('${escHtml(cliente)}'),100)">+ Mappa</button></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>` : `<div style="margin-bottom:16px;font-size:12px;color:var(--accent);">✓ Tutti i clienti Mercato Esterno sono mappati</div>`}
+
+    <!-- Modelli non mappati -->
+    ${modelliSortati.length > 0 ? `
+    <div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--warning);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">
+        ⚠ Modelli senza chiave (${modelliSortati.length})
+        <span style="color:var(--text-muted);margin-left:8px;">→ aggiungi in Modelli Chiave</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead><tr><th>Modello</th><th>Apparati coinvolti</th><th style="width:120px;"></th></tr></thead>
+          <tbody>
+            ${modelliSortati.map(([modello, {sala, rimossi}]) => `
+              <tr>
+                <td style="font-family:var(--mono);font-size:11px;">${modello}</td>
+                <td>
+                  <span class="badge badge-inactive">${sala}</span>
+                  ${rimossi > 0 ? `<span style="color:var(--text-muted);font-family:var(--mono);font-size:10px;margin-left:6px;">(+ ${rimossi} Rimossi)</span>` : ''}
+                </td>
+                <td><button class="btn btn-primary btn-sm" onclick="openLookupModal('modelli','${escHtml(modello)}','','')">+ Mappa</button></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>` : `<div style="font-size:12px;color:var(--accent);">✓ Tutti i modelli sono mappati</div>`}
+  `;
+}
+
+// ─── TAB CLIENTI ─────────────────────────────────────────────────────────────
+let clientiSearchTimeout = null;
+
+function onClientiSearch() {
+  clearTimeout(clientiSearchTimeout);
+  clientiSearchTimeout = setTimeout(() => {
+    cliSearch = document.getElementById('clienti-search').value.trim();
+    cliCurrentPage = 0;
+    loadClienti();
+  }, 300);
+}
+
+async function loadClienti() {
+  let query = db.from('clienti_chiave').select('*', { count: 'exact' }).order('nome_cliente');
+  if (cliSearch) {
+    query = query.or(`nome_cliente.ilike.%${cliSearch}%,chiave.ilike.%${cliSearch}%`);
+  }
+  const { data, count, error } = await query;
+  if (error) return;
+  cliTotal = count || 0;
+  document.getElementById('clienti-info').textContent = `${cliTotal} record`;
+  document.getElementById('clienti-body').innerHTML = (data || []).map(r => `
+    <tr>
+      <td>${r.nome_cliente}</td>
+      <td><span class="badge badge-active">${r.chiave}</span></td>
+      <td><div class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openClienteModal('${escHtml(r.nome_cliente)}','${escHtml(r.chiave)}')">✎</button>
+        <button class="btn btn-danger btn-sm" onclick="openClienteDelete('${escHtml(r.nome_cliente)}','${escHtml(r.chiave)}')">✕</button>
+      </div></td>
+    </tr>
+  `).join('') || '<tr><td colspan="3"><div class="empty">Nessun cliente</div></td></tr>';
+}
+
+
+function openClienteModal(nome, chiave) {
+  clienteEditingKey = nome || null;
+  document.getElementById('cliente-modal-title').textContent = nome ? 'Modifica Cliente' : 'Nuovo Cliente';
+  document.getElementById('cliente-nome').value = nome || '';
+  document.getElementById('cliente-nome').readOnly = !!nome;
+  document.getElementById('cliente-nome').style.opacity = nome ? '0.5' : '1';
+  document.getElementById('cliente-chiave').value = chiave || '';
+  document.getElementById('cliente-modal').classList.add('open');
+}
+
+function closeClienteModal() {
+  document.getElementById('cliente-modal').classList.remove('open');
+  clienteEditingKey = null;
+}
+
+async function saveCliente() {
+  const nome = document.getElementById('cliente-nome').value.trim();
+  const chiave = document.getElementById('cliente-chiave').value.trim();
+  if (!nome || !chiave) { showToast('Compila tutti i campi', 'error'); return; }
+  const btn = document.getElementById('btn-save-cliente');
+  btn.disabled = true;
+  const { error } = await db.from('clienti_chiave').upsert({ nome_cliente: nome, chiave }, { onConflict: 'nome_cliente' });
+  btn.disabled = false;
+  if (error) { showToast('Errore: ' + error.message, 'error'); return; }
+  showToast(clienteEditingKey ? 'Cliente aggiornato' : 'Cliente aggiunto', 'success');
+  closeClienteModal();
+  loadClienti();
+}
+
+function openClienteDelete(nome, chiave) {
+  document.getElementById('delete-label').textContent = nome;
+  document.getElementById('delete-detail').innerHTML =
+    `Tipo: <strong>Cliente Chiave</strong><br>Chiave associata: <strong>${chiave}</strong><br>Tutti gli apparati di questo cliente perderanno la chiave derivata.`;
+  document.getElementById('delete-modal').dataset.mode = 'cliente';
+  document.getElementById('delete-modal').dataset.clienteKey = nome;
+  document.getElementById('delete-modal').classList.add('open');
+}
+
+// ─── CLIENTI SENZA CHIAVE ─────────────────────────────────────────────────────
+async function loadClientiSenzaChiave() {
+  const el = document.getElementById('clienti-senza-chiave-body');
+  el.innerHTML = `<div class="loading"><div class="spinner"></div></div>`;
+
+  const { data: risultati, error } = await db.from('clienti_senza_chiave')
+    .select('piattaforma_supportata')
+    .order('piattaforma_supportata');
+  if (error) { el.innerHTML = `<div class="empty" style="color:var(--danger)">Errore: ${error.message}</div>`; return; }
+
+  if (!risultati.length) {
+    el.innerHTML = `<div class="empty" style="padding:20px;color:var(--accent);">✓ Tutti i clienti Mercato Esterno hanno una chiave mappata</div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Nome Cliente</th><th style="width:120px;"></th></tr></thead>
+        <tbody>
+          ${risultati.map(r => `
+            <tr>
+              <td style="font-size:12px;">${r.piattaforma_supportata}</td>
+              <td><button class="btn btn-primary btn-sm" onclick="openClienteModal('${escHtml(r.piattaforma_supportata)}','')">+ Mappa</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--text-muted);">${risultati.length} clienti senza chiave</div>
+  `;
+}
+
+// ─── CHIAVI RIUTILIZZABILI ────────────────────────────────────────────────────
+async function loadChiaviRiutilizzabili() {
+  const el = document.getElementById('chiavi-riutilizzabili-body');
+  el.innerHTML = `<div class="loading"><div class="spinner"></div></div>`;
+
+  const { data: risultati, error } = await db.from('chiavi_riutilizzabili').select('*');
+  if (error) { el.innerHTML = `<div class="empty" style="color:var(--danger)">Errore: ${error.message}</div>`; return; }
+
+  if (!risultati.length) {
+    el.innerHTML = `<div class="empty" style="padding:20px;color:var(--accent);">✓ Nessuna chiave riutilizzabile — tutti i clienti hanno apparati in sala</div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Nome Cliente</th><th>Chiave</th><th>Apparati in sala</th></tr></thead>
+        <tbody>
+          ${risultati.map(r => `
+            <tr>
+              <td style="font-size:12px;">${r.nome_cliente}</td>
+              <td><span class="badge badge-active">${r.chiave}</span></td>
+              <td><span style="color:var(--accent);font-family:var(--mono);font-size:11px;">0 — potenzialmente libera</span></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--text-muted);">${risultati.length} chiavi potenzialmente riutilizzabili</div>
+  `;
+}
+
+// ─── CHIAVI C LIBERE ──────────────────────────────────────────────────────────
+async function loadChiaviCLibere() {
+  const el = document.getElementById('chiavi-c-libere-body');
+  el.innerHTML = `<div class="loading"><div class="spinner"></div></div>`;
+
+  const { data, error } = await db.from('chiavi_c_libere').select('chiave').order('chiave');
+  if (error) { el.innerHTML = `<div class="empty" style="color:var(--danger)">Errore: ${error.message}</div>`; return; }
+
+  if (!data.length) {
+    el.innerHTML = `<div class="empty" style="padding:20px;color:var(--accent);">✓ Nessuna chiave libera — tutte le chiavi nell'intervallo sono assegnate</div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0;">
+      ${data.map(r => `<span class="badge badge-default" style="font-size:12px;padding:4px 10px;">${r.chiave}</span>`).join('')}
+    </div>
+    <div style="margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--text-muted);">${data.length} chiavi libere</div>
+  `;
+}
+
+// ─── CHIAVI C CONDIVISE ───────────────────────────────────────────────────────
+async function loadChiaviCCondivise() {
+  const el = document.getElementById('chiavi-c-condivise-body');
+  el.innerHTML = `<div class="loading"><div class="spinner"></div></div>`;
+
+  const { data, error } = await db.from('chiavi_c_condivise').select('chiave,nome_cliente');
+  if (error) { el.innerHTML = `<div class="empty" style="color:var(--danger)">Errore: ${error.message}</div>`; return; }
+
+  if (!data.length) {
+    el.innerHTML = `<div class="empty" style="padding:20px;color:var(--accent);">✓ Nessuna chiave condivisa tra più clienti con apparati in sala</div>`;
+    return;
+  }
+
+  // Raggruppa per chiave
+  const grouped = {};
+  data.forEach(r => {
+    if (!grouped[r.chiave]) grouped[r.chiave] = [];
+    grouped[r.chiave].push(r.nome_cliente);
+  });
+
+  el.innerHTML = `
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>Chiave</th><th>Clienti</th></tr></thead>
+        <tbody>
+          ${Object.entries(grouped).map(([chiave, clienti]) => `
+            <tr>
+              <td><span class="badge badge-active">${chiave}</span></td>
+              <td style="font-size:12px;">${clienti.join(', ')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--text-muted);">${Object.keys(grouped).length} chiavi condivise</div>
+  `;
+}
+
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
+function showApp(user) {
+  document.getElementById('login-screen').classList.remove('active');
+  document.getElementById('user-email').textContent = user.email;
+  document.getElementById('btn-logout').style.display = 'block';
+}
+
+function showLogin() {
+  document.getElementById('login-screen').classList.add('active');
+  document.getElementById('user-email').textContent = '';
+  document.getElementById('btn-logout').style.display = 'none';
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn = document.getElementById('btn-login');
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Accesso...';
+
+  const { data, error } = await db.auth.signInWithPassword({ email, password });
+
+  btn.disabled = false;
+  btn.textContent = 'Accedi';
+
+  if (error) {
+    errEl.style.display = 'block';
+    return;
+  }
+  showApp(data.user);
+  buildTableHead();
+  loadFilters();
+  loadData();
+}
+
+async function doLogout() {
+  await db.auth.signOut();
+  showLogin();
+}
+
+// Controlla sessione esistente all'avvio
+db.auth.getSession().then(({ data: { session } }) => {
+  if (session) {
+    showApp(session.user);
+    buildTableHead();
+    loadFilters();
+    loadData();
+  }
+  // se non c'è sessione, la login screen è già visibile (class active di default)
+});
+
+// ─── CLOSE MODAL ON OVERLAY CLICK ────────────────────────────────────────────
+document.getElementById('record-modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+document.getElementById('detail-modal').addEventListener('click', function(e) { if (e.target === this) closeDetailModal(); });
+document.getElementById('delete-modal').addEventListener('click', function(e) { if (e.target === this) closeDeleteModal(); });
+document.getElementById('lookup-modal').addEventListener('click', function(e) { if (e.target === this) closeLookupModal(); });
+document.getElementById('cliente-modal').addEventListener('click', function(e) { if (e.target === this) closeClienteModal(); });
+</script>
+</body>
+</html>
