@@ -317,7 +317,7 @@
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="snCercaIncident()">Cerca Incident</button>
         <button class="btn btn-primary" onclick="snCercaAsset()">Cerca Asset</button>
-        <button class="btn btn-secondary" onclick="snCercaMoncall()">Cerca MONCALL</button>
+        <button class="btn btn-primary" onclick="snCercaMoncall()">Cerca MONCALL</button>
       </div>
     </div>
   </div>
@@ -533,18 +533,24 @@
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;">
           <div class="form-group">
             <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Proprietario <span style="color:var(--text-muted);font-size:9px;">(opzionale)</span></label>
-            <input type="text" id="bolla-proprietario" list="bolla-proprietario-list" placeholder="Cerca o scrivi...">
-            <datalist id="bolla-proprietario-list"></datalist>
+            <div style="display:flex;gap:6px;">
+              <select id="bolla-proprietario" style="flex:1;"><option value="">— nessuno —</option></select>
+              <button class="btn btn-secondary btn-sm" onclick="openAnagraficaModal()" title="Nuova anagrafica">+</button>
+            </div>
           </div>
           <div class="form-group">
             <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Cessionario <span style="color:var(--accent)">*</span></label>
-            <input type="text" id="bolla-cessionario" list="bolla-cessionario-list" placeholder="Cerca o scrivi...">
-            <datalist id="bolla-cessionario-list"></datalist>
+            <div style="display:flex;gap:6px;">
+              <select id="bolla-cessionario" style="flex:1;"><option value="">— seleziona —</option></select>
+              <button class="btn btn-secondary btn-sm" onclick="openAnagraficaModal()" title="Nuova anagrafica">+</button>
+            </div>
           </div>
           <div class="form-group">
             <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Luogo Destinazione <span style="color:var(--text-muted);font-size:9px;">(opzionale)</span></label>
-            <input type="text" id="bolla-destinazione" list="bolla-destinazione-list" placeholder="Cerca o scrivi...">
-            <datalist id="bolla-destinazione-list"></datalist>
+            <div style="display:flex;gap:6px;">
+              <select id="bolla-destinazione" style="flex:1;"><option value="">— nessuno —</option></select>
+              <button class="btn btn-secondary btn-sm" onclick="openAnagraficaModal()" title="Nuova anagrafica">+</button>
+            </div>
           </div>
         </div>
 
@@ -573,28 +579,29 @@
             </tbody>
           </table>
         </div>
-        <!-- Banner bolla non salvata -->
-        <div id="bolla-unsaved-banner" style="display:none;background:rgba(255,184,0,0.1);border:1px solid var(--warning);border-radius:8px;padding:12px 16px;margin-bottom:16px;display:none;align-items:center;justify-content:space-between;gap:12px;">
-          <div style="font-size:12px;color:var(--warning);">⚠ Bolla generata ma non ancora salvata.</div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn btn-secondary btn-sm" onclick="bollaRiaprPDF()">↗ Riapri PDF</button>
-            <button class="btn btn-primary btn-sm" onclick="bollaSalva()">✓ Salva e vai all'archivio</button>
-          </div>
-        </div>
 
-        <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:12px;">
           <button class="btn btn-secondary" onclick="bollaReset()">↺ Svuota</button>
           <button class="btn btn-primary" onclick="bollaGenera()">⬇ Genera Bolla</button>
+        </div>
+
+        <!-- Banner bolla non salvata — appare dopo Genera -->
+        <div id="bolla-unsaved-banner" style="display:none;background:rgba(255,184,0,0.1);border:1px solid var(--warning);border-radius:8px;padding:12px 16px;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="font-size:12px;color:var(--warning);" id="bolla-banner-msg">⚠ Bolla generata ma non ancora salvata.</div>
+          <button class="btn btn-primary btn-sm" onclick="bollaSalva()">✓ Salva e vai all'archivio</button>
         </div>
       </div>
 
       <!-- ── ARCHIVIO ── -->
       <div id="bpanel-archivio" style="display:none;">
-        <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;">
-          <div class="search-box" style="max-width:320px;">
-            <input type="text" id="archivio-search" placeholder="Cerca numero, cessionario..." oninput="onArchivioSearch()">
+        <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div class="search-box" style="max-width:280px;">
+            <input type="text" id="archivio-search" placeholder="Cerca cessionario..." oninput="onArchivioSearch()">
           </div>
-          <button class="btn btn-secondary" onclick="loadArchivio()">↺ Aggiorna</button>
+          <select id="archivio-mese" onchange="archivioPage=0;loadArchivio()" style="min-width:140px;">
+            <option value="">Tutti i mesi</option>
+          </select>
+          <button class="btn btn-secondary" onclick="archivioPage=0;loadArchivio()">↺ Aggiorna</button>
         </div>
         <div class="table-wrapper scrollable">
           <table>
@@ -610,7 +617,13 @@
             </tbody>
           </table>
         </div>
-        <div style="margin-top:8px;"><span class="pagination-info" id="archivio-info"></span></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+          <span class="pagination-info" id="archivio-info"></span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-secondary btn-sm" id="archivio-prev" onclick="archivioPage--;loadArchivio()" disabled>← Prec</button>
+            <button class="btn btn-secondary btn-sm" id="archivio-next" onclick="archivioPage++;loadArchivio()" disabled>Succ →</button>
+          </div>
+        </div>
       </div>
 
       <!-- ── ANAGRAFICHE ── -->
@@ -2311,16 +2324,17 @@ async function initNuovaBolla() {
 }
 
 async function loadAnagraficheCache() {
-  const { data } = await db.from('anagrafiche').select('nome,indirizzo').order('nome');
+  const { data } = await db.from('anagrafiche').select('id,nome,indirizzo').order('nome');
   anagraficheCache = data || [];
-  ['bolla-proprietario-list','bolla-cessionario-list','bolla-destinazione-list'].forEach(id => {
-    const dl = document.getElementById(id);
-    if (!dl) return;
-    dl.innerHTML = anagraficheCache.map(a => {
-      const label = a.indirizzo ? `${a.nome} — ${a.indirizzo.split('\n')[0]}` : a.nome;
-      return `<option value="${label.replace(/"/g,'&quot;')}">`;
-    }).join('');
-  });
+  const optNone = '<option value="">— nessuno —</option>';
+  const optSel  = '<option value="">— seleziona —</option>';
+  const opts = anagraficheCache.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
+  const sel = document.getElementById('bolla-proprietario');
+  if (sel) sel.innerHTML = optNone + opts;
+  const sel2 = document.getElementById('bolla-cessionario');
+  if (sel2) sel2.innerHTML = optSel + opts;
+  const sel3 = document.getElementById('bolla-destinazione');
+  if (sel3) sel3.innerHTML = optNone + opts;
 }
 
 // ── APPARATI ─────────────────────────────────────────────────────────────────
@@ -2375,23 +2389,35 @@ function bollaReset() {
   bollaUnsavedData = null;
   archivioEditingId = null;
   bollaRenderApparati();
-  document.getElementById('bolla-proprietario').value = '';
-  document.getElementById('bolla-cessionario').value = '';
-  document.getElementById('bolla-destinazione').value = '';
+  ['bolla-proprietario','bolla-cessionario','bolla-destinazione'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.selectedIndex = 0;
+  });
   document.getElementById('bolla-unsaved-banner').style.display = 'none';
   initNuovaBolla();
 }
 
 // ── GENERA (solo PDF, niente salvataggio) ─────────────────────────────────────
+function _anagraficaById(id) {
+  // Ritorna "nome\nindirizzo" oppure solo "nome" se nessun indirizzo
+  const a = anagraficheCache.find(x => String(x.id) === String(id));
+  if (!a) return '';
+  return a.indirizzo ? a.nome + '\n' + a.indirizzo : a.nome;
+}
+
 function bollaGenera() {
   const numero = document.getElementById('bolla-numero').value.trim();
   const dataVal = document.getElementById('bolla-data').value;
-  const cessionario = document.getElementById('bolla-cessionario').value.trim();
-  if (!numero || !dataVal || !cessionario) { showToast('Numero, data e cessionario sono obbligatori', 'error'); return; }
+  const cessionarioId = document.getElementById('bolla-cessionario').value;
+  if (!numero || !dataVal || !cessionarioId) { showToast('Numero, data e cessionario sono obbligatori', 'error'); return; }
   if (!bollaApparati.length) { showToast('Aggiungi almeno un apparato', 'error'); return; }
 
-  const proprietario = document.getElementById('bolla-proprietario').value.trim();
-  const destinazione = document.getElementById('bolla-destinazione').value.trim();
+  const proprietarioId = document.getElementById('bolla-proprietario').value;
+  const destinazioneId = document.getElementById('bolla-destinazione').value;
+
+  const cessionario   = _anagraficaById(cessionarioId);
+  const proprietario  = proprietarioId ? _anagraficaById(proprietarioId) : null;
+  const destinazione  = destinazioneId ? _anagraficaById(destinazioneId) : null;
 
   bollaUnsavedData = {
     numero,
@@ -2406,11 +2432,7 @@ function bollaGenera() {
   _apriDDT(bollaUnsavedData);
   const banner = document.getElementById('bolla-unsaved-banner');
   banner.style.display = 'flex';
-  banner.querySelector('div').textContent = '⚠ Bolla generata ma non ancora salvata.';
-}
-
-function bollaRiaprPDF() {
-  if (bollaUnsavedData) _apriDDT(bollaUnsavedData);
+  document.getElementById('bolla-banner-msg').textContent = '⚠ Bolla generata ma non ancora salvata.';
 }
 
 function _apriDDT(d) {
@@ -2446,32 +2468,52 @@ async function bollaSalva() {
   bollaUnsavedData = null;
   archivioEditingId = null;
   document.getElementById('bolla-unsaved-banner').style.display = 'none';
+  _resetArchivioMesiCache();
   switchBolleTab('archivio');
 }
 
 // ── ARCHIVIO ──────────────────────────────────────────────────────────────────
 let archivioSearch = '';
 
+let archivioPage = 0;
+const ARCHIVIO_PAGE_SIZE = 50;
+
 function onArchivioSearch() {
   clearTimeout(archivioSearchTimeout);
   archivioSearchTimeout = setTimeout(() => {
     archivioSearch = document.getElementById('archivio-search').value.trim();
+    archivioPage = 0;
     loadArchivio();
   }, 300);
 }
 
 async function loadArchivio() {
   document.getElementById('archivio-body').innerHTML = '<tr><td colspan="5"><div class="loading"><div class="spinner"></div></div></td></tr>';
+
+  // Popola il select mese/anno al primo caricamento
+  await _loadArchivioMesi();
+
+  const meseFilter = document.getElementById('archivio-mese').value;
   let q = db.from('bolle_ddt').select('*', { count: 'exact' }).order('data_bolla', { ascending: false });
-  if (archivioSearch) q = q.or(`numero.ilike.%${archivioSearch}%,cessionario.ilike.%${archivioSearch}%`);
+  if (archivioSearch) q = q.ilike('cessionario', `%${archivioSearch}%`);
+  if (meseFilter)     q = q.eq('mese_anno', meseFilter);
+  q = q.range(archivioPage * ARCHIVIO_PAGE_SIZE, (archivioPage + 1) * ARCHIVIO_PAGE_SIZE - 1);
+
   const { data, count, error } = await q;
   if (error) { document.getElementById('archivio-body').innerHTML = `<tr><td colspan="5"><div class="empty" style="color:var(--danger)">Errore: ${error.message}</div></td></tr>`; return; }
-  document.getElementById('archivio-info').textContent = `${count || 0} bolle`;
+
+  const total = count || 0;
+  const from = archivioPage * ARCHIVIO_PAGE_SIZE + 1;
+  const to = Math.min((archivioPage + 1) * ARCHIVIO_PAGE_SIZE, total);
+  document.getElementById('archivio-info').textContent = total ? `${from}–${to} di ${total}` : '0 bolle';
+  document.getElementById('archivio-prev').disabled = archivioPage === 0;
+  document.getElementById('archivio-next').disabled = to >= total;
+
   document.getElementById('archivio-body').innerHTML = (data || []).map(r => `
     <tr>
       <td><span class="badge badge-active" style="font-family:var(--mono);">${r.numero}</span></td>
       <td>${new Date(r.data_bolla).toLocaleDateString('it-IT')}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${r.cessionario}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${r.cessionario.split('\n')[0]}</td>
       <td>${(r.apparati || []).length}</td>
       <td><div class="td-actions">
         <button class="btn btn-secondary btn-sm" onclick="archivioRiapri(${r.id})">⬇ PDF</button>
@@ -2480,6 +2522,28 @@ async function loadArchivio() {
       </div></td>
     </tr>
   `).join('') || '<tr><td colspan="5"><div class="empty">Nessuna bolla</div></td></tr>';
+}
+
+async function _loadArchivioMesi() {
+  const sel = document.getElementById('archivio-mese');
+  if (sel.dataset.loaded) return; // carica una sola volta per sessione
+  const { data } = await db.from('bolle_ddt').select('mese_anno').order('mese_anno', { ascending: false });
+  if (!data) return;
+  const unici = [...new Set(data.map(r => r.mese_anno))];
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Tutti i mesi</option>' + unici.map(m => {
+    const [y, mo] = m.split('-');
+    const label = new Date(+y, +mo - 1, 1).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+    return `<option value="${m}">${label}</option>`;
+  }).join('');
+  if (current) sel.value = current;
+  sel.dataset.loaded = '1';
+}
+
+// Forza ricarica del select mesi dopo salvataggio nuova bolla
+function _resetArchivioMesiCache() {
+  const sel = document.getElementById('archivio-mese');
+  if (sel) delete sel.dataset.loaded;
 }
 
 async function archivioRiapri(id) {
@@ -2496,15 +2560,23 @@ async function archivioModifica(id) {
   await loadAnagraficheCache();
   document.getElementById('bolla-numero').value = data.numero;
   document.getElementById('bolla-data').value = data.data_bolla;
-  document.getElementById('bolla-proprietario').value = data.proprietario || '';
-  document.getElementById('bolla-cessionario').value = data.cessionario;
-  document.getElementById('bolla-destinazione').value = data.luogo_destinazione || '';
+  // Imposta i select cercando per nome nella cache
+  function _setSelectByNome(selId, nomeConAddr) {
+    const nome = (nomeConAddr || '').split('\n')[0];
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    const found = anagraficheCache.find(a => a.nome === nome);
+    sel.value = found ? found.id : '';
+  }
+  _setSelectByNome('bolla-proprietario', data.proprietario);
+  _setSelectByNome('bolla-cessionario', data.cessionario);
+  _setSelectByNome('bolla-destinazione', data.luogo_destinazione);
   bollaApparati = (data.apparati || []).map(b => ({ ...b }));
   bollaRenderApparati();
   bollaUnsavedData = { ...data };
   const banner = document.getElementById('bolla-unsaved-banner');
   banner.style.display = 'flex';
-  banner.querySelector('div').textContent = '✎ Stai modificando una bolla esistente — genera il PDF e poi salva.';
+  document.getElementById('bolla-banner-msg').textContent = '✎ Stai modificando una bolla esistente — genera il PDF e poi salva.';
 }
 
 async function archivioElimina(id, numero) {
