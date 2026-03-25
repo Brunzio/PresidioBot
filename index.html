@@ -59,6 +59,7 @@
   .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
   .search-box { position: relative; flex: 1; min-width: 200px; }
   .search-box input { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 12px 8px 36px; border-radius: 6px; font-family: var(--sans); font-size: 13px; outline: none; transition: border .2s; }
+  .search-box input[type="text"] { padding-left: 30px; }
   .search-box input:focus { border-color: var(--accent); }
   .search-box::before { content: '⌕'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 16px; pointer-events: none; }
   

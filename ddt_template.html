@@ -11,50 +11,49 @@ body{background:#e0e0e0;font-family:Calibri,Arial,sans-serif;font-size:10pt;padd
 .toolbar button:hover{background:#1e40af;}
 .page{width:210mm;min-height:297mm;background:#fff;margin:0 auto;padding:8mm 7mm 6mm 7mm;box-shadow:0 2px 16px rgba(0,0,0,.18);display:flex;flex-direction:column;}
 .two-col{display:flex;align-items:flex-start;margin-bottom:3mm;}
-.col-left{flex:0 0 38%;width:38%;}
+.col-left{flex:0 0 50%;width:50%;}
 .col-right{flex:1;}
-.logo-img{height:36px;display:block;}
-.noovle-info{font-size:8.5pt;font-weight:700;line-height:1.5;margin-top:3px;}
-.doc-title{font-size:11pt;font-weight:400;margin-bottom:1px;}
+.logo-img{width:90mm;display:block;}
+.noovle-info{font-size:10pt;font-weight:700;line-height:1.1;margin-top:3px;}
+.doc-title{font-size:11pt;font-weight:400;margin-bottom:5px;}
 .doc-norm{font-size:8pt;font-style:italic;line-height:1.4;margin-bottom:4px;}
 .bolla-line{display:flex;align-items:baseline;gap:5px;font-size:10.5pt;}
 .bolla-label{font-weight:700;}
 .mezzo-wrap{display:flex;align-items:flex-start;margin-bottom:3mm;}
-.mezzo-spacer{flex:0 0 38%;width:38%;}
+.mezzo-spacer{flex:0 0 50%;width:50%;}
 .mezzo-right{flex:1;display:flex;flex-direction:column;gap:3px;}
-.mezzo-label-row{font-size:9pt;font-weight:700;}
+.mezzo-label-row{font-size:10pt;}
 .mezzo-boxes{display:flex;gap:16px;}
 .mezzo-box{display:flex;align-items:center;gap:6px;font-size:9pt;}
 .checkbox-lg{width:14px;height:14px;border:1px solid #000;display:inline-block;flex-shrink:0;}
 .section-table{width:100%;border-collapse:collapse;margin-bottom:2mm;}
-.section-table td{border:1px solid #000;padding:0;vertical-align:top;}
+.section-table td{padding:0;vertical-align:top;}
 .cell-header{padding:3px 5px;border-bottom:1px solid #000;}
-.lbl{font-size:8.5pt;}
+.lbl{font-size:11pt;}
 .sublbl{font-size:7.5pt;color:#555;}
 .cell-body{padding:4px 5px;min-height:50px;font-size:9.5pt;white-space:pre-line;}
 .cell-body-centered{padding:4px 5px;min-height:50px;font-size:9.5pt;white-space:pre-line;text-align:center;display:flex;align-items:center;justify-content:center;}
-.w50{width:50%;}
+.w50{border:1px solid #000;width:49%;}
+.gap{width:2%;}
 .causale{display:flex;border:1px solid #000;margin-bottom:2mm;font-size:9pt;min-height:22px;align-items:center;}
-.causale-lbl{padding:2px 8px;font-weight:700;border-right:1px solid #000;white-space:nowrap;width:150px;}
+.causale-lbl{padding:2px 8px;font-weight:700;white-space:nowrap;width:150px;}
 .causale-val{padding:2px 8px;flex:1;}
-.vettori-table{width:100%;border-collapse:collapse;margin-bottom:2mm;font-size:8.5pt;}
-.vettori-table td,.vettori-table th{border:1px solid #000;padding:2px 4px;vertical-align:middle;}
-.vettori-table th{font-weight:700;text-align:center;background:#fff;}
-.v-cell{width:18px;padding:0!important;text-align:center;vertical-align:middle;border:1px solid #000;}
-.v-inner{writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);font-weight:700;letter-spacing:3px;font-size:8.5pt;display:block;text-align:center;padding:4px 2px;}
-.th-sub{font-size:8pt;font-weight:700;padding:1px 3px!important;line-height:1;white-space:nowrap;}
-tr.sub-header th{height:14px;}
-.vettori-table tbody tr td{border-left:1px solid #000;border-right:1px solid #000;border-top:none;border-bottom:none;height:14px;}
-.vettori-table tbody tr:first-child td{border-top:1px solid #000;}
-.vettori-table tbody tr:last-child td{border-bottom:1px solid #000;}
-.td-data{text-align:center;font-size:8.5pt;}
-.beni-table{width:100%;border-collapse:collapse;font-size:9pt;}
-.beni-table th{border:1px solid #000;padding:2px 3px;text-align:center;font-weight:700;font-size:8.5pt;vertical-align:middle;background:#fff;}
-.beni-table td{border:1px solid #000;padding:2px 3px;vertical-align:middle;}
+.vettori-table{width:100%;border-collapse:collapse;margin-bottom:2mm;}
+.vettori-table td{font-size:10pt;border:1px solid #000;text-align:center;}
+.v-cell{width:18px;padding:0!important;text-align:center;vertical-align:middle;}
+.v-inner{writing-mode:vertical-lr;text-orientation:upright;font-weight:700;letter-spacing:3px;font-size:8.5pt;display:block;text-align:center;padding:4px 2px;}
+tr.sub-header td{height:14px!important;}
+tr.nrm-header td{height:30px;}
+.td-data{height:auto;}
+.beni-table{width:100%;border-collapse:collapse;}
+.beni-table th{border:1px solid #000;padding:2px 3px;vertical-align:middle;}
+.beni-table td{border:1px solid #000;padding:2px 3px;text-align:center;font-size:10pt;vertical-align:middle;}
 .beni-table tbody tr{height:18px;}
 .c{text-align:center;}
 .fs8{font-size:8pt;}
-.th-ddt{font-size:7pt;}
+.fs10{font-size:10pt;}
+.th-ddt{font-size:7pt!important;}
+.th-peso{font-size:8pt!important;}
 .col-qty{width:28px;}
 .col-asset{width:80px;}
 .col-sn{width:90px;}
@@ -62,8 +61,8 @@ tr.sub-header th{height:14px;}
 .col-colli{width:56px;}
 .col-peso{width:56px;}
 .totali-row{display:flex;border-left:1px solid #000;border-right:1px solid #000;border-bottom:1px solid #000;font-size:9pt;}
-.totali-lbl{flex:1;text-align:right;padding:2px 6px;font-weight:700;border-right:1px solid #000;}
-.totali-colli{width:56px;text-align:center;padding:2px 3px;border-right:1px solid #000;font-weight:700;}
+.totali-lbl{flex:1;text-align:right;padding:2px 6px;font-weight:700;}
+.totali-colli{text-align:center;padding:2px 3px;font-weight:700;}
 .totali-peso{width:56px;padding:2px 3px;}
 .acp{display:flex;border:1px solid #000;font-size:8.5pt;}
 .acp-cell{border-right:1px solid #000;padding:3px 5px;}
@@ -79,10 +78,12 @@ tr.sub-header th{height:14px;}
 .footer-copie-label{font-weight:700;text-decoration:underline;}
 .copia-item{display:flex;align-items:center;gap:5px;font-size:9pt;}
 .footer-watermark{text-align:center;font-size:7.5pt;color:#555;font-style:italic;margin-top:2mm;}
+.page-extra{margin-top:20px;}
 @media print{
   body{background:#fff;padding:0;}
   .toolbar{display:none!important;}
-  .page{box-shadow:none;padding:6mm 6mm 5mm 6mm;width:210mm;min-height:297mm;margin:0;}
+  .page{box-shadow:none;padding:6mm 6mm 5mm 6mm;width:210mm;min-height:297mm;margin:0;page-break-after:always;}
+  .page:last-of-type{page-break-after:auto;}
   @page{size:A4 portrait;margin:0;}
 }
 </style>
@@ -105,7 +106,7 @@ tr.sub-header th{height:14px;}
     <div class="col-right">
       <div class="doc-title">DOCUMENTO DI TRASPORTO (D.d.t.)</div>
       <div class="doc-norm">DOCUMENTO VALIDO AI SENSI DEL D.M. 30/6/2009<br><em>n. 554 Pubblicato in G.U. n. 153 del 4/7/2009</em></div>
-      <div class="bolla-line" style="margin-top:5px;">
+      <div class="bolla-line" style="margin-top:20px;">
         <span class="bolla-label">N&deg;</span>
         <span id="f-numero" style="min-width:40px;"></span>
         <span class="bolla-label">Del:</span>
@@ -135,6 +136,7 @@ tr.sub-header th{height:14px;}
         </div>
         <div class="cell-body-centered" id="f-proprietario"></div>
       </td>
+      <td class="gap"></td>
       <td class="w50">
         <div class="cell-header">
           <div class="lbl">Luogo di partenza della merce</div>
@@ -150,9 +152,11 @@ tr.sub-header th{height:14px;}
       <td class="w50">
         <div class="cell-header">
           <div class="lbl">Cessionario (Ditta, Dipendenza, Domicilio o Residenza)</div>
+          <div class="sublbl">&nbsp;</div>
         </div>
         <div class="cell-body-centered" id="f-cessionario"></div>
       </td>
+      <td class="gap"></td>
       <td class="w50">
         <div class="cell-header">
           <div class="lbl">Luogo di destinazione</div>
@@ -165,34 +169,24 @@ tr.sub-header th{height:14px;}
 
   <div class="causale">
     <div class="causale-lbl">Causale del trasporto:</div>
-    <div class="causale-val"></div>
   </div>
 
   <table class="vettori-table">
-    <colgroup>
-      <col style="width:18px;"><col><col style="width:72px;"><col style="width:52px;"><col style="width:112px;">
-    </colgroup>
-    <thead>
-      <tr>
-        <th rowspan="7" class="v-cell"><span class="v-inner">VETTORI</span></th>
-        <th>RAGIONE SOCIALE, RESIDENZA O DOMICILIO</th>
-        <th colspan="2">INIZIO TRASPORTO</th>
-        <th>FIRMA CONDUCENTE</th>
-      </tr>
-      <tr class="sub-header">
-        <th></th>
-        <th class="th-sub">DATA</th>
-        <th class="th-sub">ORA</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td></td><td class="td-data" id="f-data-vettori"></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td></tr>
-    </tbody>
+    <tr class="nrm-header">
+      <td rowspan="3" class="v-cell"><span class="v-inner">VETTORI</span></th>
+      <td>RAGIONE SOCIALE, RESIDENZA O DOMICILIO</td>
+      <td colspan="2">INIZIO TRASPORTO</td>
+      <td>FIRMA CONDUCENTE</td>
+    </tr>
+    <tr class="sub-header">
+      <td rowspan="2"></td>
+      <td class="th-sub">DATA</td>
+      <td class="th-sub">ORA</td>
+      <td rowspan="2"></td>
+    </tr>
+    <tr class="td-data">
+      <td id="f-data-vettori"></td><td></td></tr>
+    </tr>
   </table>
 
   <table class="beni-table">
@@ -200,25 +194,18 @@ tr.sub-header th{height:14px;}
       <col class="col-qty"><col><col class="col-asset"><col class="col-sn">
       <col class="col-ddt"><col class="col-colli"><col class="col-peso">
     </colgroup>
-    <thead>
-      <tr>
-        <th>Qt</th>
-        <th>DESCRIZIONE DEI BENI (natura o qualit&agrave;)</th>
-        <th>ASSET TIM</th>
-        <th>s/n</th>
-        <th class="th-ddt">DDT<br>TIM</th>
-        <th>N&deg; COLLI</th>
-        <th>PESO KG.</th>
-      </tr>
-    </thead>
+    <tr>
+      <td>Qt</td>
+      <td>DESCRIZIONE DEI BENI (natura o qualit&agrave;)</td>
+      <td>ASSET TIM</td>
+      <td>s/n</td>
+      <td class="th-ddt">DDT<br>TIM</td>
+      <td>N&deg; COLLI</td>
+      <td class="th-peso">PESO KG.</td>
+    </tr>
     <tbody id="f-beni"></tbody>
+    <tr><td colspan="5"><div class="totali-lbl">TOTALI</div></td><td><div class="totali-colli" id="f-tot-colli"></div></td><td></td></tr>
   </table>
-
-  <div class="totali-row">
-    <div class="totali-lbl">TOTALI</div>
-    <div class="totali-colli" id="f-tot-colli"></div>
-    <div class="totali-peso"></div>
-  </div>
 
   <div class="acp">
     <div class="acp-cell flex1">ASPETTO ESTERIORE DEI BENI</div>
@@ -265,7 +252,9 @@ tr.sub-header th{height:14px;}
 //   ]
 // }
 
-const N_RIGHE = 10;
+// Righe apparati per pagina (con margine di sicurezza)
+const N_PAG1  = 17;  // prima pagina (con intestazione completa)
+const N_PAGSEG = 35; // pagine successive (intestazione leggera)
 
 function esc(s) {
   return String(s || '')
@@ -273,46 +262,194 @@ function esc(s) {
     .replace(/\n/g,'<br>');
 }
 
-function render(dati) {
-  document.getElementById('f-numero').textContent = dati.numero || '';
-  document.getElementById('f-data').textContent = dati.data || '';
-  document.getElementById('f-data-vettori').textContent = dati.data || '';
-
-  // campi con pre-wrap via innerHTML
-  const setPreWrap = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = esc(val);
-  };
-  setPreWrap('f-proprietario', dati.proprietario);
-  setPreWrap('f-cessionario', dati.cessionario);
-  setPreWrap('f-destinazione', dati.destinazione);
-
-  // tabella beni
-  const tbody = document.getElementById('f-beni');
+// Genera le righe HTML per un chunk di beni, riempiendo fino a minRighe
+function righeHTML(chunk, minRighe, isLastPage, totaleColli) {
   let rows = '';
-  const beni = dati.beni || [];
-  beni.forEach(b => {
+  chunk.forEach(b => {
     rows += `<tr>
       <td class="c">${esc(b.qty)}</td>
       <td>${esc(b.desc)}</td>
-      <td class="fs8 c">${esc(b.asset)}</td>
+      <td class="fs10 c">${esc(b.asset)}</td>
       <td class="fs8 c">${esc(b.sn)}</td>
       <td></td>
       <td class="c">${esc(b.colli)}</td>
       <td></td>
     </tr>`;
   });
-  for (let i = beni.length; i < N_RIGHE; i++) {
+  for (let i = chunk.length; i < minRighe; i++) {
     rows += '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
   }
-  tbody.innerHTML = rows;
+  // Riga TOTALI: valorizzata solo sull'ultima pagina
+  if (isLastPage && totaleColli > 0) {
+    rows += `<tr>
+      <td colspan="5"><div class="totali-lbl">TOTALI</div></td>
+      <td><div class="totali-colli">${totaleColli}</div></td>
+      <td></td>
+    </tr>`;
+  }
+  return rows;
+}
 
-  // totali
-  const tot = beni.reduce((s, b) => s + (parseInt(b.colli) || 0), 0);
-  document.getElementById('f-tot-colli').textContent = tot > 0 ? tot : '';
+// HTML della tabella beni (colgroup + header + tbody)
+function tabellaHTML(chunk, minRighe, isLastPage, totaleColli) {
+  return `
+  <table class="beni-table">
+    <colgroup>
+      <col class="col-qty"><col><col class="col-asset"><col class="col-sn">
+      <col class="col-ddt"><col class="col-colli"><col class="col-peso">
+    </colgroup>
+    <tr>
+      <td>Qt</td>
+      <td>DESCRIZIONE DEI BENI (natura o qualit&agrave;)</td>
+      <td>ASSET TIM</td>
+      <td>s/n</td>
+      <td class="th-ddt">DDT<br>TIM</td>
+      <td>N&deg; COLLI</td>
+      <td class="th-peso">PESO KG.</td>
+    </tr>
+    <tbody>${righeHTML(chunk, minRighe, isLastPage, totaleColli)}</tbody>
+  </table>`;
+}
+
+// HTML dei div post-tabella (uguali su tutte le pagine)
+const postTabella = `
+  <div class="acp">
+    <div class="acp-cell flex1">ASPETTO ESTERIORE DEI BENI</div>
+    <div class="acp-cell" style="width:160px;">CAUSALE DEL TRASPORTO</div>
+    <div class="acp-cell" style="width:90px;">PORTO</div>
+  </div>
+  <div class="acp-bottom">
+    <div class="acp-cell flex1"></div>
+    <div class="acp-cell" style="width:160px;"></div>
+    <div class="acp-cell" style="width:90px;"></div>
+  </div>
+  <div class="note-firma">
+    <div class="note-box">NOTE e/o OSSERVAZIONI<br><br><br></div>
+    <div class="firma-box">FIRMA DESTINATARIO<br><br><br></div>
+  </div>`;
+
+// HTML del footer con numero pagina
+function footerHTML(pag, totPag) {
+  return `
+  <div class="footer">
+    <div>Pagina &nbsp; ${pag}/${totPag}</div>
+    <div class="footer-right">
+      <span class="footer-copie-label">COPIA PER IL:</span>
+      <div class="copia-item"><span class="checkbox-lg"></span> Mittente</div>
+      <div class="copia-item"><span class="checkbox-lg"></span> Vettore</div>
+      <div class="copia-item"><span class="checkbox-lg"></span> Destinatario</div>
+    </div>
+  </div>
+  <div class="footer-watermark">Gruppo TIM - Uso Interno - Tutti i diritti riservati.</div>`;
+}
+
+// Logo Noovle (base64 condiviso)
+const LOGO_SRC = document.querySelector('.logo-img').src;
+
+// HTML intestazione leggera per pagine dalla 2 in poi
+function intestazioneLeggera(numero, data) {
+  return `
+  <div class="two-col" style="margin-bottom:2mm;">
+    <div class="col-left">
+      <img class="logo-img" src="${LOGO_SRC}" alt="Noovle">
+    </div>
+    <div class="col-right">
+      <div class="doc-title">DOCUMENTO DI TRASPORTO (D.d.t.) — segue</div>
+      <div class="bolla-line" style="margin-top:6px;">
+        <span class="bolla-label">N&deg;</span>
+        <span style="min-width:40px;">${esc(numero)}</span>
+        <span class="bolla-label">Del:</span>
+        <span>${esc(data)}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function render(dati) {
+  const beni = dati.beni || [];
+  const numero = dati.numero || '';
+  const data = dati.data || '';
+  const totaleColli = beni.reduce((s, b) => s + (parseInt(b.colli) || 0), 0);
+
+  // Calcola i chunk
+  const chunks = [];
+  if (beni.length <= N_PAG1) {
+    chunks.push(beni);
+  } else {
+    chunks.push(beni.slice(0, N_PAG1));
+    let offset = N_PAG1;
+    while (offset < beni.length) {
+      chunks.push(beni.slice(offset, offset + N_PAGSEG));
+      offset += N_PAGSEG;
+    }
+  }
+  const totPag = chunks.length;
 
   // titolo tab
-  document.title = `DDT ${dati.numero || ''} – ${dati.data || ''}`;
+  document.title = `DDT ${numero} – ${data}`;
+
+  if (totPag === 1) {
+    // ── Pagina singola: aggiorna la pagina esistente nell'HTML ──
+    document.getElementById('f-numero').textContent = numero;
+    document.getElementById('f-data').textContent = data;
+    document.getElementById('f-data-vettori').textContent = data;
+    document.getElementById('f-proprietario').innerHTML = esc(dati.proprietario);
+    document.getElementById('f-cessionario').innerHTML = esc(dati.cessionario);
+    document.getElementById('f-destinazione').innerHTML = esc(dati.luogo_destinazione || dati.destinazione || '');
+
+    // Ricostruisce il tbody includendo la riga TOTALI integrata
+    let rows = '';
+    beni.forEach(b => {
+      rows += `<tr>
+        <td class="c">${esc(b.qty)}</td>
+        <td>${esc(b.desc)}</td>
+        <td class="fs10 c">${esc(b.asset)}</td>
+        <td class="fs8 c">${esc(b.sn)}</td>
+        <td></td>
+        <td class="c">${esc(b.colli)}</td>
+        <td></td>
+      </tr>`;
+    });
+    for (let i = beni.length; i < N_PAG1; i++) {
+      rows += '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+    }
+    document.getElementById('f-beni').innerHTML = rows;
+    document.getElementById('f-tot-colli').textContent = totaleColli > 0 ? totaleColli : '';
+    document.querySelector('.footer div').textContent = `Pagina  1/1`;
+
+  } else {
+    // ── Multi-pagina: ricostruisce il body ──
+
+    // Prima pagina: usa la struttura HTML esistente, la aggiorna
+    document.getElementById('f-numero').textContent = numero;
+    document.getElementById('f-data').textContent = data;
+    document.getElementById('f-data-vettori').textContent = data;
+    document.getElementById('f-proprietario').innerHTML = esc(dati.proprietario);
+    document.getElementById('f-cessionario').innerHTML = esc(dati.cessionario);
+    document.getElementById('f-destinazione').innerHTML = esc(dati.luogo_destinazione || dati.destinazione || '');
+    document.getElementById('f-beni').innerHTML = righeHTML(chunks[0], N_PAG1, false, totaleColli);
+    // document.getElementById('f-tot-colli'); // già nel righeHTML
+    document.querySelector('.footer div').textContent = `Pagina  1/${totPag}`;
+
+    // Pagine dalla 2 in poi: generate dinamicamente e inserite dopo .page esistente
+    const container = document.querySelector('.page').parentNode;
+    const primaPage = document.querySelector('.page');
+
+    // Rimuove eventuali pagine extra già generate (riesecuzione)
+    document.querySelectorAll('.page-extra').forEach(el => el.remove());
+
+    for (let i = 1; i < chunks.length; i++) {
+      const isLastPage = (i === chunks.length - 1);
+      const pageDiv = document.createElement('div');
+      pageDiv.className = 'page page-extra';
+      pageDiv.innerHTML =
+        intestazioneLeggera(numero, data) +
+        tabellaHTML(chunks[i], N_PAGSEG, isLastPage, totaleColli) +
+        postTabella +
+        footerHTML(i + 1, totPag);
+      container.appendChild(pageDiv);
+    }
+  }
 }
 
 // Carica da sessionStorage
