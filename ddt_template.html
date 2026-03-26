@@ -386,7 +386,7 @@ function render(dati) {
   const totPag = chunks.length;
 
   // titolo tab
-  document.title = `DDT ${numero} – ${data}`;
+  document.title = `DDT_${dati.cessionario.split('\n')[0]}_${data.split('/')[2]}_${data.split('/')[1]}_${data.split('/')[0]}`;
 
   if (totPag === 1) {
     // ── Pagina singola: aggiorna la pagina esistente nell'HTML ──

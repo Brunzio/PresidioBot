@@ -216,6 +216,7 @@
   <div class="tab" onclick="switchTab('ricercasn')">Ricerca SN</div>
   <div class="tab" onclick="switchTab('clienti')">Clienti</div>
   <div class="tab" onclick="switchTab('bolle')">Bolle</div>
+  <div class="tab" onclick="switchTab('site')">Site</div>
   <div class="tab" onclick="switchTab('admin')">Admin</div>
 </div>
 
@@ -583,6 +584,7 @@
 
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:12px;">
           <button class="btn btn-secondary" onclick="bollaReset()">↺ Svuota</button>
+          <button class="btn btn-secondary" onclick="bollaCompilasite()">📋 Compila Site</button>
           <button class="btn btn-primary" onclick="bollaGenera()">⬇ Genera Bolla</button>
         </div>
 
@@ -648,6 +650,146 @@
           </table>
         </div>
         <div style="margin-top:8px;"><span class="pagination-info" id="anagrafiche-info"></span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SITE PANEL -->
+  <div class="panel" id="panel-site">
+    <div style="max-width:960px;">
+
+      <!-- SOTTO-TAB SITE -->
+      <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px;">
+        <div class="tab active" id="stab-nuova" onclick="switchSiteTab('nuova')" style="padding:8px 16px;">Nuova Site</div>
+        <div class="tab" id="stab-archivio" onclick="switchSiteTab('archivio')" style="padding:8px 16px;">Archivio</div>
+      </div>
+
+      <!-- ── NUOVA SITE ── -->
+      <div id="spanel-nuova">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:18px;">
+          <div class="form-group">
+            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Tipo <span style="color:var(--accent)">*</span></label>
+            <select id="site-tipo">
+              <option value="Rimozione">Rimozione</option>
+              <option value="Installazione">Installazione</option>
+              <option value="Spostamento">Spostamento</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Data <span style="color:var(--accent)">*</span></label>
+            <input type="date" id="site-data">
+          </div>
+          <div class="form-group">
+            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Incident</label>
+            <input type="text" id="site-incident" placeholder="es. INC000007256308">
+          </div>
+          <div class="form-group">
+            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Cliente <span style="color:var(--accent)">*</span></label>
+            <div style="display:flex;gap:6px;">
+              <select id="site-cliente" style="flex:1;"><option value="">— seleziona —</option></select>
+              <button class="btn btn-secondary btn-sm" onclick="openAnagraficaModal()" title="Nuova anagrafica">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">Apparati</div>
+        <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+          <div class="search-box" style="max-width:360px;">
+            <input type="text" id="site-cerca-apparato" placeholder="Etichetta o seriale..." onkeydown="if(event.key==='Enter')siteAggiungiDaRicerca()">
+          </div>
+          <button class="btn btn-secondary" onclick="siteAggiungiDaRicerca()">Cerca e aggiungi</button>
+          <button class="btn btn-secondary" onclick="siteAggiungiManuale()">+ Riga manuale</button>
+        </div>
+        <div class="table-wrapper" style="margin-bottom:16px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Tipologia</th>
+                <th>Marca – Modello</th>
+                <th style="width:70px;">Rack [S/N]</th>
+                <th style="width:130px;">Serial Number</th>
+                <th style="width:100px;">Asset</th>
+                <th style="width:100px;">Rack</th>
+                <th style="width:40px;"></th>
+              </tr>
+            </thead>
+            <tbody id="site-apparati-body">
+              <tr><td colspan="7"><div class="empty">Nessun apparato aggiunto</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Sezione bolla in fondo -->
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px;display:grid;grid-template-columns:160px 160px 1fr;gap:14px;align-items:end;">
+          <div class="form-group">
+            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Bolla d'uscita n°</label>
+            <input type="text" id="site-bolla-numero" placeholder="es. P6">
+          </div>
+          <div class="form-group">
+            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Del</label>
+            <input type="date" id="site-bolla-data">
+          </div>
+          <div></div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:12px;align-items:center;">
+          <button class="btn btn-secondary" onclick="siteReset()">↺ Svuota</button>
+          <button class="btn btn-secondary" onclick="siteCompilaDDT()">📋 Compila DDT</button>
+          <select id="site-layout" style="font-size:11px;padding:6px 10px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px;">
+            <option value="colonne">Layout colonne (5xPagina)</option>
+            <option value="righe">Layout righe (18xPagina)</option>
+          </select>
+          <button class="btn btn-primary" onclick="siteGenera()">⬇ Genera Site</button>
+        </div>
+
+        <!-- Banner site non salvata -->
+        <div id="site-unsaved-banner" style="display:none;background:rgba(255,184,0,0.1);border:1px solid var(--warning);border-radius:8px;padding:12px 16px;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="font-size:12px;color:var(--warning);" id="site-banner-msg">⚠ Site generata ma non ancora salvata.</div>
+          <button class="btn btn-primary btn-sm" onclick="siteSalva()">✓ Salva e vai all'archivio</button>
+        </div>
+      </div>
+
+      <!-- ── ARCHIVIO SITE ── -->
+      <div id="spanel-archivio" style="display:none;">
+        <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div class="search-box" style="max-width:260px;">
+            <input type="text" id="site-archivio-search" placeholder="Cerca cliente o incident..." oninput="onSiteArchivioSearch()">
+          </div>
+          <select id="site-archivio-tipo" onchange="siteArchivioPage=0;loadSiteArchivio()" style="min-width:130px;">
+            <option value="">Tutti i tipi</option>
+            <option value="Rimozione">Rimozione</option>
+            <option value="Installazione">Installazione</option>
+            <option value="Spostamento">Spostamento</option>
+          </select>
+          <select id="site-archivio-mese" onchange="siteArchivioPage=0;loadSiteArchivio()" style="min-width:140px;">
+            <option value="">Tutti i mesi</option>
+          </select>
+          <button class="btn btn-secondary" onclick="siteArchivioPage=0;loadSiteArchivio()">↺ Aggiorna</button>
+        </div>
+        <div class="table-wrapper scrollable">
+          <table>
+            <thead><tr>
+              <th>Tipo</th>
+              <th>Data</th>
+              <th>Cliente</th>
+              <th>Incident</th>
+              <th>N° App.</th>
+              <th>Bolla</th>
+              <th style="width:160px;"></th>
+            </tr></thead>
+            <tbody id="site-archivio-body">
+              <tr><td colspan="7"><div class="empty">Clicca Aggiorna per caricare</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+          <span class="pagination-info" id="site-archivio-info"></span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-secondary btn-sm" id="site-archivio-prev" onclick="siteArchivioPage--;loadSiteArchivio()" disabled>← Prec</button>
+            <button class="btn btn-secondary btn-sm" id="site-archivio-next" onclick="siteArchivioPage++;loadSiteArchivio()" disabled>Succ →</button>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -857,13 +999,14 @@ let parsedRows = [];
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function switchTab(name) {
-  const tabs = ['browse','chiave','ricercasn','clienti','bolle','admin'];
+  const tabs = ['browse','chiave','ricercasn','clienti','bolle','site','admin'];
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
   if (name === 'admin') loadAdminTables();
   if (name === 'clienti') loadClienti();
   if (name === 'bolle') { switchBolleTab('nuova'); initNuovaBolla(); }
+  if (name === 'site') { switchSiteTab('nuova'); initNuovaSite(); }
 }
 
 // ─── CERCA CHIAVE ─────────────────────────────────────────────────────────────
@@ -2336,6 +2479,9 @@ async function loadAnagraficheCache() {
   if (sel2) sel2.innerHTML = optSel + opts;
   const sel3 = document.getElementById('bolla-destinazione');
   if (sel3) sel3.innerHTML = optNone + opts;
+  // Popola anche il select cliente della tab Site
+  const sel4 = document.getElementById('site-cliente');
+  if (sel4) { const cv = sel4.value; sel4.innerHTML = optSel + opts; if (cv) sel4.value = cv; }
 }
 
 // ── APPARATI ─────────────────────────────────────────────────────────────────
@@ -2675,6 +2821,328 @@ async function deleteAnagrafica(id) {
   loadAnagrafiche();
   loadAnagraficheCache();
 }
+// ── BOLLA → SITE ──────────────────────────────────────────────────────────────
+function bollaCompilasite() {
+  if (!bollaApparati.length) { showToast('Aggiungi almeno un apparato', 'error'); return; }
+  siteFromBolla = bollaApparati.map(b => ({
+    tipologia: '',
+    modello: b.desc || '',
+    rack_mount: '',
+    serial_number: b.sn || '',
+    asset: b.asset || '',
+    rack: ''
+  }));
+  switchTab('site');
+}
+
+// ─── TAB SITE ─────────────────────────────────────────────────────────────────
+
+let siteApparati = [];
+let siteUnsavedData = null;
+let siteFromBolla = null;
+let siteEditingId = null;
+let siteArchivioPage = 0;
+let siteArchivioSearch = '';
+let siteArchivioSearchTimeout = null;
+const SITE_PAGE_SIZE = 50;
+
+function switchSiteTab(name) {
+  ['nuova','archivio'].forEach(t => {
+    document.getElementById('stab-' + t).classList.toggle('active', t === name);
+    document.getElementById('spanel-' + t).style.display = t === name ? 'block' : 'none';
+  });
+  if (name === 'archivio') loadSiteArchivio();
+}
+
+async function initNuovaSite() {
+  document.getElementById('site-data').value = new Date().toISOString().split('T')[0];
+  await loadAnagraficheCache();
+  if (siteFromBolla) {
+    siteApparati = siteFromBolla;
+    siteFromBolla = null;
+    siteRenderApparati();
+  }
+}
+
+// ── APPARATI SITE ─────────────────────────────────────────────────────────────
+async function siteAggiungiDaRicerca() {
+  const q = document.getElementById('site-cerca-apparato').value.trim();
+  if (!q) return;
+  const { data } = await db.from('sn_main')
+    .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn,rack,asset_subcategory')
+    .or(`etichetta_asset.eq.${q},numero_di_serie.ilike.%${q}%,asset_sn.ilike.%${q}%`)
+    .limit(5);
+  if (!data || !data.length) { showToast('Nessun apparato trovato', 'error'); return; }
+  data.forEach(r => {
+    siteApparati.push({
+      tipologia: r.asset_subcategory || '',
+      modello: [r.produttore, r.asset_model].filter(Boolean).join(' '),
+      rack_mount: r.rack ? 'S' : 'N',
+      serial_number: r.numero_di_serie || r.asset_sn || '',
+      asset: r.etichetta_asset || '',
+      rack: r.rack || ''
+    });
+  });
+  document.getElementById('site-cerca-apparato').value = '';
+  siteRenderApparati();
+  if (data.length > 1) showToast(`${data.length} apparati aggiunti`, 'success');
+}
+
+function siteAggiungiManuale() {
+  siteApparati.push({ tipologia: '', modello: '', rack_mount: '', serial_number: '', asset: '', rack: '' });
+  siteRenderApparati();
+}
+
+function siteRimuovi(idx) {
+  siteApparati.splice(idx, 1);
+  siteRenderApparati();
+}
+
+function siteRenderApparati() {
+  const tbody = document.getElementById('site-apparati-body');
+  if (!siteApparati.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty">Nessun apparato aggiunto</div></td></tr>';
+    return;
+  }
+  const inp = (val, field, idx, ph='', w='100%') =>
+    `<input type="text" value="${escHtml(val)}" onchange="siteApparati[${idx}].${field}=this.value" placeholder="${ph}" style="width:${w};background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:11px;">`;
+  tbody.innerHTML = siteApparati.map((b, i) => `
+    <tr>
+      <td>${inp(b.tipologia,'tipologia',i,'es. Apparati di rete')}</td>
+      <td>${inp(b.modello,'modello',i,'es. AudioCodes MEDIANT 800')}</td>
+      <td style="text-align:center;">${inp(b.rack_mount,'rack_mount',i,'S/N','44px')}</td>
+      <td>${inp(b.serial_number,'serial_number',i,'S/N')}</td>
+      <td><span style="font-family:var(--mono);font-size:11px;">${escHtml(b.asset)||'—'}</span></td>
+      <td><span style="font-family:var(--mono);font-size:11px;">${escHtml(b.rack)||'—'}</span></td>
+      <td><button class="btn btn-danger btn-sm" onclick="siteRimuovi(${i})">✕</button></td>
+    </tr>
+  `).join('');
+}
+
+function siteReset() {
+  siteApparati = [];
+  siteUnsavedData = null;
+  siteEditingId = null;
+  siteRenderApparati();
+  document.getElementById('site-tipo').value = 'Rimozione';
+  document.getElementById('site-data').value = new Date().toISOString().split('T')[0];
+  document.getElementById('site-incident').value = '';
+  document.getElementById('site-cliente').value = '';
+  document.getElementById('site-bolla-numero').value = '';
+  document.getElementById('site-bolla-data').value = '';
+  document.getElementById('site-unsaved-banner').style.display = 'none';
+}
+
+// ── GENERA SITE ───────────────────────────────────────────────────────────────
+function siteGenera() {
+  const tipo      = document.getElementById('site-tipo').value;
+  const dataVal   = document.getElementById('site-data').value;
+  const clienteId = document.getElementById('site-cliente').value;
+  if (!dataVal || !clienteId) { showToast('Data e cliente sono obbligatori', 'error'); return; }
+  if (!siteApparati.length)  { showToast('Aggiungi almeno un apparato', 'error'); return; }
+
+  const clienteNome  = anagraficheCache.find(a => String(a.id) === String(clienteId))?.nome || '';
+  const incident     = document.getElementById('site-incident').value.trim();
+  const bollaNumero  = document.getElementById('site-bolla-numero').value.trim();
+  const bollaData    = document.getElementById('site-bolla-data').value;
+  const layout       = document.getElementById('site-layout').value;
+
+  siteUnsavedData = {
+    tipo,
+    data_site:    dataVal,
+    mese_anno:    dataVal.slice(0, 7),
+    cliente:      clienteNome,
+    incident:     incident || null,
+    numero_bolla: bollaNumero || null,
+    data_bolla:   bollaData || null,
+    apparati:     siteApparati.map(b => ({ ...b }))
+  };
+
+  _apriSite(siteUnsavedData, layout);
+  document.getElementById('site-unsaved-banner').style.display = 'flex';
+  document.getElementById('site-banner-msg').textContent = '⚠ Site generata ma non ancora salvata.';
+}
+
+function _apriSite(d, layout) {
+  sessionStorage.setItem('site_data', JSON.stringify({ ...d, layout: layout || 'colonne' }));
+  window.open('site_template.html', '_blank');
+}
+
+// ── SALVA SITE ────────────────────────────────────────────────────────────────
+async function siteSalva() {
+  if (!siteUnsavedData) return;
+  const btn = document.querySelector('[onclick="siteSalva()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvo...'; }
+
+  let error;
+  if (siteEditingId) {
+    ({ error } = await db.from('site_report').update(siteUnsavedData).eq('id', siteEditingId));
+  } else {
+    ({ error } = await db.from('site_report').insert(siteUnsavedData));
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = "✓ Salva e vai all'archivio"; }
+  if (error) { showToast('Errore salvataggio: ' + error.message, 'error'); return; }
+
+  showToast(siteEditingId ? 'Site aggiornata' : 'Site salvata', 'success');
+  siteUnsavedData = null;
+  siteEditingId = null;
+  document.getElementById('site-unsaved-banner').style.display = 'none';
+  _resetSiteArchivioMesiCache();
+  switchSiteTab('archivio');
+}
+
+// ── SITE → BOLLA ──────────────────────────────────────────────────────────────
+function siteCompilaDDT() {
+  if (!siteApparati.length) { showToast('Aggiungi almeno un apparato', 'error'); return; }
+  const bollaNumero = document.getElementById('site-bolla-numero').value.trim();
+  const bollaData   = document.getElementById('site-bolla-data').value;
+
+  bollaApparati = siteApparati.map(b => ({
+    qty:   1,
+    desc:  b.modello || '',
+    asset: b.asset   || '',
+    sn:    b.serial_number || '',
+    colli: 1
+  }));
+
+  switchTab('bolle');
+  setTimeout(() => {
+    if (bollaNumero) document.getElementById('bolla-numero').value = bollaNumero;
+    if (bollaData)   document.getElementById('bolla-data').value   = bollaData;
+    bollaRenderApparati();
+  }, 250);
+}
+
+// ── ARCHIVIO SITE ─────────────────────────────────────────────────────────────
+function onSiteArchivioSearch() {
+  clearTimeout(siteArchivioSearchTimeout);
+  siteArchivioSearchTimeout = setTimeout(() => {
+    siteArchivioSearch = document.getElementById('site-archivio-search').value.trim();
+    siteArchivioPage = 0;
+    loadSiteArchivio();
+  }, 300);
+}
+
+async function loadSiteArchivio() {
+  document.getElementById('site-archivio-body').innerHTML =
+    '<tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr>';
+  await _loadSiteArchivioMesi();
+
+  const meseFilter = document.getElementById('site-archivio-mese').value;
+  const tipoFilter = document.getElementById('site-archivio-tipo').value;
+
+  let q = db.from('site_report').select('*', { count: 'exact' }).order('data_site', { ascending: false });
+  if (siteArchivioSearch) q = q.or(`cliente.ilike.%${siteArchivioSearch}%,incident.ilike.%${siteArchivioSearch}%`);
+  if (meseFilter) q = q.eq('mese_anno', meseFilter);
+  if (tipoFilter) q = q.eq('tipo', tipoFilter);
+  q = q.range(siteArchivioPage * SITE_PAGE_SIZE, (siteArchivioPage + 1) * SITE_PAGE_SIZE - 1);
+
+  const { data, count, error } = await q;
+  if (error) {
+    document.getElementById('site-archivio-body').innerHTML =
+      `<tr><td colspan="7"><div class="empty" style="color:var(--danger)">Errore: ${error.message}</div></td></tr>`;
+    return;
+  }
+
+  const total = count || 0;
+  const from  = siteArchivioPage * SITE_PAGE_SIZE + 1;
+  const to    = Math.min((siteArchivioPage + 1) * SITE_PAGE_SIZE, total);
+  document.getElementById('site-archivio-info').textContent = total ? `${from}–${to} di ${total}` : '0 site';
+  document.getElementById('site-archivio-prev').disabled = siteArchivioPage === 0;
+  document.getElementById('site-archivio-next').disabled = to >= total;
+
+  const tipoBadge = { 'Rimozione':'badge-inactive', 'Installazione':'badge-active', 'Spostamento':'badge-default' };
+  document.getElementById('site-archivio-body').innerHTML = (data || []).map(r => `
+    <tr>
+      <td><span class="badge ${tipoBadge[r.tipo]||'badge-default'}">${r.tipo}</span></td>
+      <td>${new Date(r.data_site+'T00:00:00').toLocaleDateString('it-IT')}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;">${escHtml(r.cliente||'—')}</td>
+      <td style="font-family:var(--mono);font-size:11px;">${escHtml(r.incident||'—')}</td>
+      <td style="text-align:center;">${(r.apparati||[]).length}</td>
+      <td style="font-family:var(--mono);font-size:11px;">${escHtml(r.numero_bolla||'—')}</td>
+      <td><div class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="siteArchivioRiapri(${r.id})">⬇ PDF</button>
+        <button class="btn btn-secondary btn-sm" onclick="siteArchivioModifica(${r.id})">✎</button>
+        <button class="btn btn-danger btn-sm" onclick="siteArchivioElimina(${r.id},'${escHtml(r.cliente||'')}')">✕</button>
+      </div></td>
+    </tr>
+  `).join('') || '<tr><td colspan="7"><div class="empty">Nessuna site</div></td></tr>';
+}
+
+async function _loadSiteArchivioMesi() {
+  const sel = document.getElementById('site-archivio-mese');
+  if (sel.dataset.loaded) return;
+  const { data } = await db.from('site_report').select('mese_anno').order('mese_anno', { ascending: false });
+  if (!data) return;
+  const unici = [...new Set(data.map(r => r.mese_anno))];
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Tutti i mesi</option>' + unici.map(m => {
+    const [y, mo] = m.split('-');
+    const label = new Date(+y, +mo - 1, 1).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+    return `<option value="${m}">${label}</option>`;
+  }).join('');
+  if (current) sel.value = current;
+  sel.dataset.loaded = '1';
+}
+
+function _resetSiteArchivioMesiCache() {
+  const sel = document.getElementById('site-archivio-mese');
+  if (sel) delete sel.dataset.loaded;
+}
+
+async function siteArchivioRiapri(id) {
+  const { data } = await db.from('site_report').select('*').eq('id', id).single();
+  if (!data) { showToast('Site non trovata', 'error'); return; }
+  const layout = document.getElementById('site-layout')?.value || 'colonne';
+  _apriSite(data, layout);
+}
+
+async function siteArchivioModifica(id) {
+  const { data } = await db.from('site_report').select('*').eq('id', id).single();
+  if (!data) return;
+  siteEditingId = id;
+  switchSiteTab('nuova');
+  await loadAnagraficheCache();
+  document.getElementById('site-tipo').value    = data.tipo || 'Rimozione';
+  document.getElementById('site-data').value    = data.data_site;
+  document.getElementById('site-incident').value = data.incident || '';
+  document.getElementById('site-bolla-numero').value = data.numero_bolla || '';
+  document.getElementById('site-bolla-data').value   = data.data_bolla || '';
+  const found = anagraficheCache.find(a => a.nome === data.cliente);
+  document.getElementById('site-cliente').value = found ? found.id : '';
+  siteApparati = (data.apparati || []).map(b => ({ ...b }));
+  siteRenderApparati();
+  siteUnsavedData = { ...data };
+  document.getElementById('site-unsaved-banner').style.display = 'flex';
+  document.getElementById('site-banner-msg').textContent = '✎ Stai modificando una site esistente — genera il PDF e poi salva.';
+}
+
+async function siteArchivioElimina(id, cliente) {
+  document.getElementById('delete-label').textContent = `Site — ${cliente}`;
+  document.getElementById('delete-detail').textContent = 'La site verrà eliminata definitivamente dall\'archivio.';
+  document.getElementById('delete-modal').dataset.mode = 'site';
+  document.getElementById('delete-modal').dataset.siteId = id;
+  document.getElementById('delete-modal').classList.add('open');
+}
+
+// Estendi confirmDelete per le site (pattern già usato per bolle)
+const _origConfirmDeleteSite = confirmDelete;
+confirmDelete = async function() {
+  const mode = document.getElementById('delete-modal').dataset.mode;
+  if (mode === 'site') {
+    const id = document.getElementById('delete-modal').dataset.siteId;
+    const { error } = await db.from('site_report').delete().eq('id', id);
+    if (error) { showToast('Errore: ' + error.message, 'error'); return; }
+    showToast('Site eliminata', 'success');
+    closeDeleteModal();
+    loadSiteArchivio();
+  } else {
+    _origConfirmDeleteSite();
+  }
+};
+
+
 </script>
 </body>
 </html>
