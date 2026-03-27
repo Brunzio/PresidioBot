@@ -670,7 +670,7 @@
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:18px;">
           <div class="form-group">
             <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Tipo <span style="color:var(--accent)">*</span></label>
-            <select id="site-tipo">
+            <select id="site-tipo" onchange="switchSiteType()">
               <option value="Rimozione">Rimozione</option>
               <option value="Installazione">Installazione</option>
               <option value="Spostamento">Spostamento</option>
@@ -721,9 +721,9 @@
         </div>
 
         <!-- Sezione bolla in fondo -->
-        <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px;display:grid;grid-template-columns:160px 160px 1fr;gap:14px;align-items:end;">
+        <div id="bolla-site" style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px;display:grid;grid-template-columns:160px 160px 1fr;gap:14px;align-items:end;">
           <div class="form-group">
-            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Bolla d'uscita n°</label>
+            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Bolla d'<span id="bolla-site-dir">uscita</span> n°</label>
             <input type="text" id="site-bolla-numero" placeholder="es. P6">
           </div>
           <div class="form-group">
@@ -2846,6 +2846,21 @@ let siteArchivioSearch = '';
 let siteArchivioSearchTimeout = null;
 const SITE_PAGE_SIZE = 50;
 
+function switchSiteType() {
+  const tipoSite=document.getElementById('site-tipo').value;
+  if (tipoSite === 'Rimozione') {
+    document.getElementById('bolla-site').style.display = 'grid';
+    document.getElementById('bolla-site-dir').innerHTML = 'USCITA';
+  }
+  if (tipoSite === 'Installazione') {
+    document.getElementById('bolla-site').style.display = 'grid';
+    document.getElementById('bolla-site-dir').innerHTML = 'INGRESSO';
+  }
+  if (tipoSite === 'Spostamento') {
+    document.getElementById('bolla-site').style.display = 'none';
+  }
+}
+
 function switchSiteTab(name) {
   ['nuova','archivio'].forEach(t => {
     document.getElementById('stab-' + t).classList.toggle('active', t === name);
@@ -2924,7 +2939,7 @@ function siteReset() {
   siteUnsavedData = null;
   siteEditingId = null;
   siteRenderApparati();
-  document.getElementById('site-tipo').value = 'Rimozione';
+  // document.getElementById('site-tipo').value = 'Rimozione';
   document.getElementById('site-data').value = new Date().toISOString().split('T')[0];
   document.getElementById('site-incident').value = '';
   document.getElementById('site-cliente').value = '';
@@ -3033,7 +3048,7 @@ async function loadSiteArchivio() {
   const tipoFilter = document.getElementById('site-archivio-tipo').value;
 
   let q = db.from('site_report').select('*', { count: 'exact' }).order('data_site', { ascending: false });
-  if (siteArchivioSearch) q = q.or(`cliente.ilike.%${siteArchivioSearch}%,incident.ilike.%${siteArchivioSearch}%`);
+  if (siteArchivioSearch) q = q.or(`cliente.ilike.%${siteArchivioSearch}%,incident.ilike.%${siteArchivioSearch}%,apparati.cs.[{"asset":"${siteArchivioSearch}"}],apparati.cs.[{"serial_number":"${siteArchivioSearch}"}]`);
   if (meseFilter) q = q.eq('mese_anno', meseFilter);
   if (tipoFilter) q = q.eq('tipo', tipoFilter);
   q = q.range(siteArchivioPage * SITE_PAGE_SIZE, (siteArchivioPage + 1) * SITE_PAGE_SIZE - 1);
@@ -3112,6 +3127,7 @@ async function siteArchivioModifica(id) {
   const found = anagraficheCache.find(a => a.nome === data.cliente);
   document.getElementById('site-cliente').value = found ? found.id : '';
   siteApparati = (data.apparati || []).map(b => ({ ...b }));
+  switchSiteType();
   siteRenderApparati();
   siteUnsavedData = { ...data };
   document.getElementById('site-unsaved-banner').style.display = 'flex';

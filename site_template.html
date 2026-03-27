@@ -108,7 +108,8 @@ function headerHTML(d, pag, totPag) {
 function bollaFooterHTML(d) {
   const num   = d.numero_bolla || 'Px';
   const datab = d.data_bolla ? new Date(d.data_bolla).toLocaleDateString('it-IT') : '??/??/????';
-  const txt   = num ? `Bolla d\u2019uscita n\u00b0 ${esc(num)} del ${esc(datab)}` : '';
+  const inout = (d.tipo==='Rimozione') ? 'uscita' : 'ingresso'
+  const txt   = (d.tipo==='Spostamento') ? '' : num ? `Bolla d\u2019${inout} n\u00b0 ${esc(num)} del ${esc(datab)}` : '';
   return `
   <div class="bolla-footer">
     <div class="bolla-txt">${txt}<br><br>&nbsp;</div>
