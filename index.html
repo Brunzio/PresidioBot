@@ -176,7 +176,7 @@
   #login-screen .logo { margin-bottom: 8px; }
   #login-screen .subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 32px; }
   #login-error { display: none; color: var(--danger); font-size: 12px; margin-bottom: 14px; font-family: var(--mono); }
-  #btn-login { width: 100%; }
+  #btn-login { width: 100%; margin-top: 14px; }
 </style>
 </head>
 <body>
@@ -599,7 +599,7 @@
       <div id="bpanel-archivio" style="display:none;">
         <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <div class="search-box" style="max-width:280px;">
-            <input type="text" id="archivio-search" placeholder="Cerca cessionario..." oninput="onArchivioSearch()">
+            <input type="text" id="archivio-search" placeholder="Cerca cessionario seriale o asset..." oninput="onArchivioSearch()">
           </div>
           <select id="archivio-mese" onchange="archivioPage=0;loadArchivio()" style="min-width:140px;">
             <option value="">Tutti i mesi</option>
@@ -674,6 +674,7 @@
               <option value="Rimozione">Rimozione</option>
               <option value="Installazione">Installazione</option>
               <option value="Spostamento">Spostamento</option>
+              <option value="Sostituzione">Sostituzione</option>
             </select>
           </div>
           <div class="form-group">
@@ -704,10 +705,9 @@
         <div class="table-wrapper" style="margin-bottom:16px;">
           <table>
             <thead>
-              <tr>
+              <tr id="site-apparati-head">
                 <th>Tipologia</th>
                 <th>Marca – Modello</th>
-                <th style="width:70px;">Rack [S/N]</th>
                 <th style="width:130px;">Serial Number</th>
                 <th style="width:100px;">Asset</th>
                 <th style="width:100px;">Rack</th>
@@ -715,22 +715,45 @@
               </tr>
             </thead>
             <tbody id="site-apparati-body">
-              <tr><td colspan="7"><div class="empty">Nessun apparato aggiunto</div></td></tr>
+              <tr><td colspan="6"><div class="empty">Nessun apparato aggiunto</div></td></tr>
             </tbody>
           </table>
         </div>
 
-        <!-- Sezione bolla in fondo -->
-        <div id="bolla-site" style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px;display:grid;grid-template-columns:160px 160px 1fr;gap:14px;align-items:end;">
-          <div class="form-group">
-            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Bolla d'<span id="bolla-site-dir">uscita</span> n°</label>
-            <input type="text" id="site-bolla-numero" placeholder="es. P6">
+        <!-- Sezione bolla in fondo — adattiva per tipo -->
+        <div id="bolla-site" style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px;">
+          <!-- Rimozione / Installazione: una riga -->
+          <div id="bolla-site-singola" style="display:grid;grid-template-columns:160px 160px 1fr;gap:14px;align-items:end;">
+            <div class="form-group">
+              <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Bolla d'<span id="bolla-site-dir">uscita</span> n°</label>
+              <input type="text" id="site-bolla-numero" placeholder="es. P6">
+            </div>
+            <div class="form-group">
+              <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Del</label>
+              <input type="date" id="site-bolla-data">
+            </div>
+            <div></div>
           </div>
-          <div class="form-group">
-            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Del</label>
-            <input type="date" id="site-bolla-data">
+          <!-- Sostituzione: due righe -->
+          <div id="bolla-site-doppia" style="display:none;grid-template-columns:160px 160px 160px 160px 1fr;gap:14px;align-items:end;">
+            <div class="form-group">
+              <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Bolla d'ingresso n°</label>
+              <input type="text" id="site-bolla-ingresso-numero" placeholder="es. P6">
+            </div>
+            <div class="form-group">
+              <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Del</label>
+              <input type="date" id="site-bolla-ingresso-data">
+            </div>
+            <div class="form-group">
+              <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Bolla d'uscita n°</label>
+              <input type="text" id="site-bolla-uscita-numero" placeholder="es. P7">
+            </div>
+            <div class="form-group">
+              <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Del</label>
+              <input type="date" id="site-bolla-uscita-data">
+            </div>
+            <div></div>
           </div>
-          <div></div>
         </div>
 
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:12px;align-items:center;">
@@ -738,7 +761,7 @@
           <button class="btn btn-secondary" onclick="siteCompilaDDT()">📋 Compila DDT</button>
           <select id="site-layout" style="font-size:11px;padding:6px 10px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px;">
             <option value="colonne">Layout colonne (5xPagina)</option>
-            <option value="righe">Layout righe (18xPagina)</option>
+            <option value="righe">Layout righe (16xPagina)</option>
           </select>
           <button class="btn btn-primary" onclick="siteGenera()">⬇ Genera Site</button>
         </div>
@@ -753,14 +776,15 @@
       <!-- ── ARCHIVIO SITE ── -->
       <div id="spanel-archivio" style="display:none;">
         <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-          <div class="search-box" style="max-width:260px;">
-            <input type="text" id="site-archivio-search" placeholder="Cerca cliente o incident..." oninput="onSiteArchivioSearch()">
+          <div class="search-box" style="max-width:300px;">
+            <input type="text" id="site-archivio-search" placeholder="Cerca cliente incident seriale o asset..." oninput="onSiteArchivioSearch()">
           </div>
           <select id="site-archivio-tipo" onchange="siteArchivioPage=0;loadSiteArchivio()" style="min-width:130px;">
             <option value="">Tutti i tipi</option>
             <option value="Rimozione">Rimozione</option>
             <option value="Installazione">Installazione</option>
             <option value="Spostamento">Spostamento</option>
+            <option value="Sostituzione">Sostituzione</option>
           </select>
           <select id="site-archivio-mese" onchange="siteArchivioPage=0;loadSiteArchivio()" style="min-width:140px;">
             <option value="">Tutti i mesi</option>
@@ -796,6 +820,92 @@
   </div>
 
 </main>
+
+<!-- MODAL APPARATO SITE -->
+<div class="modal-overlay" id="site-apparato-modal">
+  <div class="modal" style="width:680px;">
+    <div class="modal-header">
+      <h2 id="site-apparato-modal-title">Apparato</h2>
+      <button class="modal-close" onclick="closeSiteApparatoModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="site-apparato-idx">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div id="site-app-azione-row" class="form-group full" style="display:none;grid-column:1/-1;">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Azione</label>
+          <select id="site-app-azione">
+            <option value="I">Installazione</option>
+            <option value="R">Rimozione</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Tipologia</label>
+          <input type="text" id="site-app-tipologia" placeholder="es. Server X86">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Marca – Modello</label>
+          <input type="text" id="site-app-modello" placeholder="es. DELL PowerEdge R750">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Serial Number</label>
+          <input type="text" id="site-app-serial_number" placeholder="">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Asset</label>
+          <input type="text" id="site-app-asset" placeholder="">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Rack</label>
+          <input type="text" id="site-app-rack" placeholder="">
+        </div>
+        <div id="site-app-da_rack-row" class="form-group" style="display:none;">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Da Rack</label>
+          <input type="text" id="site-app-da_rack" placeholder="">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Montaggio a Rack [S/N]</label>
+          <input type="text" id="site-app-rack_mount" placeholder="S / N">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Peso [Kg]</label>
+          <input type="text" id="site-app-peso" placeholder="">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Dimensioni h×l×p [cm]</label>
+          <input type="text" id="site-app-dimensioni" placeholder="">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Assorbimento [Watt]</label>
+          <input type="text" id="site-app-assorbimento" placeholder="">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Tensione [Volt]</label>
+          <input type="text" id="site-app-tensione" placeholder="">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Doppia alimentazione [S/N]</label>
+          <input type="text" id="site-app-doppia_alimentazione" placeholder="S / N">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Sezione alimentazione (A/B/STS)</label>
+          <input type="text" id="site-app-sezione_alimentazione" placeholder="">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Livello Rack Unit</label>
+          <input type="text" id="site-app-livello_rack_unit" placeholder="">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Componente di</label>
+          <input type="text" id="site-app-componente_di" placeholder="">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeSiteApparatoModal()">Annulla</button>
+      <button class="btn btn-primary" onclick="saveSiteApparato()">Salva</button>
+    </div>
+  </div>
+</div>
 
 
 <!-- MODAL DETTAGLIO RECORD (sola lettura) -->
@@ -2642,7 +2752,7 @@ async function loadArchivio() {
 
   const meseFilter = document.getElementById('archivio-mese').value;
   let q = db.from('bolle_ddt').select('*', { count: 'exact' }).order('data_bolla', { ascending: false });
-  if (archivioSearch) q = q.ilike('cessionario', `%${archivioSearch}%`);
+  if (archivioSearch) q = q.or(`cessionario.ilike.%${archivioSearch}%,apparati.cs.[{"asset":"${archivioSearch}"}],apparati.cs.[{"sn":"${archivioSearch}"}]`);
   if (meseFilter)     q = q.eq('mese_anno', meseFilter);
   q = q.range(archivioPage * ARCHIVIO_PAGE_SIZE, (archivioPage + 1) * ARCHIVIO_PAGE_SIZE - 1);
 
@@ -2846,19 +2956,36 @@ let siteArchivioSearch = '';
 let siteArchivioSearchTimeout = null;
 const SITE_PAGE_SIZE = 50;
 
+// ── Mappa dichiarativa per tipo ───────────────────────────────────────────────
+const SITE_TYPE_CONFIG = {
+  Rimozione:     { bolla: 'singola', bollaDir: 'uscita',   colAzione: false, colDaRack: false },
+  Installazione: { bolla: 'singola', bollaDir: 'ingresso', colAzione: false, colDaRack: false },
+  Spostamento:   { bolla: 'nessuna', bollaDir: null,       colAzione: false, colDaRack: true  },
+  Sostituzione:  { bolla: 'doppia',  bollaDir: null,       colAzione: true,  colDaRack: false },
+};
+
 function switchSiteType() {
-  const tipoSite=document.getElementById('site-tipo').value;
-  if (tipoSite === 'Rimozione') {
-    document.getElementById('bolla-site').style.display = 'grid';
-    document.getElementById('bolla-site-dir').innerHTML = 'USCITA';
-  }
-  if (tipoSite === 'Installazione') {
-    document.getElementById('bolla-site').style.display = 'grid';
-    document.getElementById('bolla-site-dir').innerHTML = 'INGRESSO';
-  }
-  if (tipoSite === 'Spostamento') {
-    document.getElementById('bolla-site').style.display = 'none';
-  }
+  const cfg = SITE_TYPE_CONFIG[document.getElementById('site-tipo').value] || SITE_TYPE_CONFIG.Rimozione;
+
+  // sezione bolla
+  document.getElementById('bolla-site').style.display          = cfg.bolla !== 'nessuna' ? 'block' : 'none';
+  document.getElementById('bolla-site-singola').style.display  = cfg.bolla === 'singola' ? 'grid'  : 'none';
+  document.getElementById('bolla-site-doppia').style.display   = cfg.bolla === 'doppia'  ? 'grid'  : 'none';
+  if (cfg.bollaDir) document.getElementById('bolla-site-dir').textContent = cfg.bollaDir;
+
+  // intestazione tabella
+  const head = document.getElementById('site-apparati-head');
+  head.innerHTML =
+    (cfg.colAzione  ? '<th style="width:50px;">Az.</th>' : '') +
+    `<th>Tipologia</th>
+     <th>Marca – Modello</th>
+     <th style="width:130px;">Serial Number</th>
+     <th style="width:100px;">Asset</th>` +
+    (cfg.colDaRack  ? '<th style="width:100px;">Da Rack</th>' : '') +
+    `<th style="width:100px;">Rack</th>
+     <th style="width:40px;"></th>`;
+
+  siteRenderApparati();
 }
 
 function switchSiteTab(name) {
@@ -2872,6 +2999,7 @@ function switchSiteTab(name) {
 async function initNuovaSite() {
   document.getElementById('site-data').value = new Date().toISOString().split('T')[0];
   await loadAnagraficheCache();
+  switchSiteType();
   if (siteFromBolla) {
     siteApparati = siteFromBolla;
     siteFromBolla = null;
@@ -2888,15 +3016,19 @@ async function siteAggiungiDaRicerca() {
     .or(`etichetta_asset.eq.${q},numero_di_serie.ilike.%${q}%,asset_sn.ilike.%${q}%`)
     .limit(5);
   if (!data || !data.length) { showToast('Nessun apparato trovato', 'error'); return; }
+  const tipo = document.getElementById('site-tipo').value;
   data.forEach(r => {
-    siteApparati.push({
-      tipologia: r.asset_subcategory || '',
-      modello: [r.produttore, r.asset_model].filter(Boolean).join(' '),
-      rack_mount: r.rack ? 'S' : 'N',
+    const app = {
+      tipologia:    r.asset_subcategory || '',
+      modello:      [r.produttore, r.asset_model].filter(Boolean).join(' '),
+      rack_mount:   '',
       serial_number: r.numero_di_serie || r.asset_sn || '',
-      asset: r.etichetta_asset || '',
-      rack: r.rack || ''
-    });
+      asset:        r.etichetta_asset || '',
+      rack:         r.rack || '',
+    };
+    if (tipo === 'Sostituzione') app.azione = 'R';
+    if (tipo === 'Spostamento')  app.da_rack = r.rack || '';
+    siteApparati.push(app);
   });
   document.getElementById('site-cerca-apparato').value = '';
   siteRenderApparati();
@@ -2904,8 +3036,12 @@ async function siteAggiungiDaRicerca() {
 }
 
 function siteAggiungiManuale() {
-  siteApparati.push({ tipologia: '', modello: '', rack_mount: '', serial_number: '', asset: '', rack: '' });
-  siteRenderApparati();
+  const tipo = document.getElementById('site-tipo').value;
+  const app = { tipologia:'', modello:'', rack_mount:'', serial_number:'', asset:'', rack:'' };
+  if (tipo === 'Sostituzione') app.azione = 'I';
+  if (tipo === 'Spostamento')  app.da_rack = '';
+  siteApparati.push(app);
+  openSiteApparatoModal(siteApparati.length - 1);
 }
 
 function siteRimuovi(idx) {
@@ -2915,23 +3051,85 @@ function siteRimuovi(idx) {
 
 function siteRenderApparati() {
   const tbody = document.getElementById('site-apparati-body');
+  const cfg = SITE_TYPE_CONFIG[document.getElementById('site-tipo').value] || SITE_TYPE_CONFIG.Rimozione;
+  const colSpan = 6 + (cfg.colAzione ? 1 : 0) + (cfg.colDaRack ? 1 : 0);
+
   if (!siteApparati.length) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty">Nessun apparato aggiunto</div></td></tr>';
+    tbody.innerHTML = `<tr><td colspan="${colSpan}"><div class="empty">Nessun apparato aggiunto</div></td></tr>`;
     return;
   }
-  const inp = (val, field, idx, ph='', w='100%') =>
-    `<input type="text" value="${escHtml(val)}" onchange="siteApparati[${idx}].${field}=this.value" placeholder="${ph}" style="width:${w};background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:11px;">`;
-  tbody.innerHTML = siteApparati.map((b, i) => `
-    <tr>
-      <td>${inp(b.tipologia,'tipologia',i,'es. Apparati di rete')}</td>
-      <td>${inp(b.modello,'modello',i,'es. AudioCodes MEDIANT 800')}</td>
-      <td style="text-align:center;">${inp(b.rack_mount,'rack_mount',i,'S/N','44px')}</td>
-      <td>${inp(b.serial_number,'serial_number',i,'S/N')}</td>
-      <td><span style="font-family:var(--mono);font-size:11px;">${escHtml(b.asset)||'—'}</span></td>
-      <td><span style="font-family:var(--mono);font-size:11px;">${escHtml(b.rack)||'—'}</span></td>
-      <td><button class="btn btn-danger btn-sm" onclick="siteRimuovi(${i})">✕</button></td>
-    </tr>
-  `).join('');
+
+  tbody.innerHTML = siteApparati.map((b, i) => {
+    const azioneCell = cfg.colAzione
+      ? `<td style="text-align:center;font-weight:700;font-family:var(--mono);font-size:11px;color:${b.azione==='I'?'var(--accent)':'var(--danger)'}">
+           <select onchange="siteApparati[${i}].azione=this.value;siteRenderApparati()" style="background:transparent;border:none;color:inherit;font-weight:700;font-size:11px;cursor:pointer;padding:0;font-family:var(--mono);">
+             <option value="I" ${b.azione==='I'?'selected':''}>INST</option>
+             <option value="R" ${b.azione==='R'?'selected':''}>RIM</option>
+           </select>
+         </td>`
+      : '';
+    const daRackCell = cfg.colDaRack
+      ? `<td style="font-family:var(--mono);font-size:11px;">${escHtml(b.da_rack)||'—'}</td>`
+      : '';
+    return `<tr>
+      ${azioneCell}
+      <td style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;">${escHtml(b.tipologia)||'—'}</td>
+      <td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;">${escHtml(b.modello)||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;">${escHtml(b.serial_number)||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;">${escHtml(b.asset)||'—'}</td>
+      ${daRackCell}
+      <td style="font-family:var(--mono);font-size:11px;">${escHtml(b.rack)||'—'}</td>
+      <td><div class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openSiteApparatoModal(${i})">✎</button>
+        <button class="btn btn-danger btn-sm" onclick="siteRimuovi(${i})">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── MODAL APPARATO ────────────────────────────────────────────────────────────
+const SITE_APP_FIELDS = ['tipologia','modello','rack_mount','serial_number','asset','rack','da_rack',
+  'peso','dimensioni','assorbimento','tensione','doppia_alimentazione',
+  'sezione_alimentazione','livello_rack_unit','componente_di'];
+
+function openSiteApparatoModal(idx) {
+  const b = siteApparati[idx] || {};
+  const tipo = document.getElementById('site-tipo').value;
+  document.getElementById('site-apparato-idx').value = idx;
+  document.getElementById('site-apparato-modal-title').textContent =
+    idx < siteApparati.length && (b.modello || b.asset) ? `Modifica — ${b.modello || b.asset}` : 'Nuovo Apparato';
+
+  // mostra/nascondi campo Azione
+  const azioneRow = document.getElementById('site-app-azione-row');
+  azioneRow.style.display = tipo === 'Sostituzione' ? 'block' : 'none';
+  document.getElementById('site-app-azione').value = b.azione || 'I';
+
+  // mostra/nascondi campo Da Rack
+  document.getElementById('site-app-da_rack-row').style.display = tipo === 'Spostamento' ? 'flex' : 'none';
+
+  SITE_APP_FIELDS.forEach(f => {
+    const el = document.getElementById('site-app-' + f);
+    if (el) el.value = b[f] || '';
+  });
+  document.getElementById('site-apparato-modal').classList.add('open');
+}
+
+function closeSiteApparatoModal() {
+  document.getElementById('site-apparato-modal').classList.remove('open');
+}
+
+function saveSiteApparato() {
+  const idx = parseInt(document.getElementById('site-apparato-idx').value, 10);
+  const tipo = document.getElementById('site-tipo').value;
+  const app = {};
+  SITE_APP_FIELDS.forEach(f => {
+    const el = document.getElementById('site-app-' + f);
+    if (el) app[f] = el.value.trim();
+  });
+  if (tipo === 'Sostituzione') app.azione = document.getElementById('site-app-azione').value;
+  siteApparati[idx] = app;
+  closeSiteApparatoModal();
+  siteRenderApparati();
 }
 
 function siteReset() {
@@ -2939,12 +3137,15 @@ function siteReset() {
   siteUnsavedData = null;
   siteEditingId = null;
   siteRenderApparati();
-  // document.getElementById('site-tipo').value = 'Rimozione';
   document.getElementById('site-data').value = new Date().toISOString().split('T')[0];
   document.getElementById('site-incident').value = '';
   document.getElementById('site-cliente').value = '';
   document.getElementById('site-bolla-numero').value = '';
   document.getElementById('site-bolla-data').value = '';
+  document.getElementById('site-bolla-ingresso-numero').value = '';
+  document.getElementById('site-bolla-ingresso-data').value = '';
+  document.getElementById('site-bolla-uscita-numero').value = '';
+  document.getElementById('site-bolla-uscita-data').value = '';
   document.getElementById('site-unsaved-banner').style.display = 'none';
 }
 
@@ -2956,21 +3157,37 @@ function siteGenera() {
   if (!dataVal || !clienteId) { showToast('Data e cliente sono obbligatori', 'error'); return; }
   if (!siteApparati.length)  { showToast('Aggiungi almeno un apparato', 'error'); return; }
 
+  const cfg          = SITE_TYPE_CONFIG[tipo] || SITE_TYPE_CONFIG.Rimozione;
   const clienteNome  = anagraficheCache.find(a => String(a.id) === String(clienteId))?.nome || '';
   const incident     = document.getElementById('site-incident').value.trim();
-  const bollaNumero  = document.getElementById('site-bolla-numero').value.trim();
-  const bollaData    = document.getElementById('site-bolla-data').value;
   const layout       = document.getElementById('site-layout').value;
+
+  const bollaFields = {};
+  if (cfg.bolla === 'singola') {
+    const num  = document.getElementById('site-bolla-numero').value.trim();
+    const data = document.getElementById('site-bolla-data').value;
+    if (cfg.bollaDir === 'uscita') {
+      bollaFields.numero_bolla_uscita  = num  || null;
+      bollaFields.data_bolla_uscita    = data || null;
+    } else {
+      bollaFields.numero_bolla_ingresso = num  || null;
+      bollaFields.data_bolla_ingresso   = data || null;
+    }
+  } else if (cfg.bolla === 'doppia') {
+    bollaFields.numero_bolla_ingresso = document.getElementById('site-bolla-ingresso-numero').value.trim() || null;
+    bollaFields.data_bolla_ingresso   = document.getElementById('site-bolla-ingresso-data').value || null;
+    bollaFields.numero_bolla_uscita   = document.getElementById('site-bolla-uscita-numero').value.trim() || null;
+    bollaFields.data_bolla_uscita     = document.getElementById('site-bolla-uscita-data').value || null;
+  }
 
   siteUnsavedData = {
     tipo,
-    data_site:    dataVal,
-    mese_anno:    dataVal.slice(0, 7),
-    cliente:      clienteNome,
-    incident:     incident || null,
-    numero_bolla: bollaNumero || null,
-    data_bolla:   bollaData || null,
-    apparati:     siteApparati.map(b => ({ ...b }))
+    data_site:  dataVal,
+    mese_anno:  dataVal.slice(0, 7),
+    cliente:    clienteNome,
+    incident:   incident || null,
+    apparati:   siteApparati.map(b => ({ ...b })),
+    ...bollaFields,
   };
 
   _apriSite(siteUnsavedData, layout);
@@ -3010,8 +3227,10 @@ async function siteSalva() {
 // ── SITE → BOLLA ──────────────────────────────────────────────────────────────
 function siteCompilaDDT() {
   if (!siteApparati.length) { showToast('Aggiungi almeno un apparato', 'error'); return; }
-  const bollaNumero = document.getElementById('site-bolla-numero').value.trim();
-  const bollaData   = document.getElementById('site-bolla-data').value;
+  const tipo = document.getElementById('site-tipo').value;
+  const cfg  = SITE_TYPE_CONFIG[tipo] || SITE_TYPE_CONFIG.Rimozione;
+  const num  = cfg.bolla === 'singola' ? document.getElementById('site-bolla-numero').value.trim() : '';
+  const data = cfg.bolla === 'singola' ? document.getElementById('site-bolla-data').value : '';
 
   bollaApparati = siteApparati.map(b => ({
     qty:   1,
@@ -3023,8 +3242,8 @@ function siteCompilaDDT() {
 
   switchTab('bolle');
   setTimeout(() => {
-    if (bollaNumero) document.getElementById('bolla-numero').value = bollaNumero;
-    if (bollaData)   document.getElementById('bolla-data').value   = bollaData;
+    if (num)  document.getElementById('bolla-numero').value = num;
+    if (data) document.getElementById('bolla-data').value   = data;
     bollaRenderApparati();
   }, 250);
 }
@@ -3067,22 +3286,36 @@ async function loadSiteArchivio() {
   document.getElementById('site-archivio-prev').disabled = siteArchivioPage === 0;
   document.getElementById('site-archivio-next').disabled = to >= total;
 
-  const tipoBadge = { 'Rimozione':'badge-inactive', 'Installazione':'badge-active', 'Spostamento':'badge-default' };
-  document.getElementById('site-archivio-body').innerHTML = (data || []).map(r => `
+  const tipoBadge = {
+    'Rimozione':'badge-inactive', 'Installazione':'badge-active',
+    'Spostamento':'badge-default', 'Sostituzione':'badge-default'
+  };
+  document.getElementById('site-archivio-body').innerHTML = (data || []).map(r => {
+    // mostra bolla: uscita per Rimozione, ingresso per gli altri, entrambe per Sostituzione
+    let bollaLabel = '—';
+    if (r.tipo === 'Sostituzione') {
+      const parts = [r.numero_bolla_ingresso, r.numero_bolla_uscita].filter(Boolean);
+      bollaLabel = parts.length ? parts.join(' / ') : '—';
+    } else if (r.tipo === 'Rimozione') {
+      bollaLabel = escHtml(r.numero_bolla_uscita || '—');
+    } else {
+      bollaLabel = escHtml(r.numero_bolla_ingresso || '—');
+    }
+    return `
     <tr>
       <td><span class="badge ${tipoBadge[r.tipo]||'badge-default'}">${r.tipo}</span></td>
       <td>${new Date(r.data_site+'T00:00:00').toLocaleDateString('it-IT')}</td>
       <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;">${escHtml(r.cliente||'—')}</td>
       <td style="font-family:var(--mono);font-size:11px;">${escHtml(r.incident||'—')}</td>
       <td style="text-align:center;">${(r.apparati||[]).length}</td>
-      <td style="font-family:var(--mono);font-size:11px;">${escHtml(r.numero_bolla||'—')}</td>
+      <td style="font-family:var(--mono);font-size:11px;">${bollaLabel}</td>
       <td><div class="td-actions">
         <button class="btn btn-secondary btn-sm" onclick="siteArchivioRiapri(${r.id})">⬇ PDF</button>
         <button class="btn btn-secondary btn-sm" onclick="siteArchivioModifica(${r.id})">✎</button>
         <button class="btn btn-danger btn-sm" onclick="siteArchivioElimina(${r.id},'${escHtml(r.cliente||'')}')">✕</button>
       </div></td>
-    </tr>
-  `).join('') || '<tr><td colspan="7"><div class="empty">Nessuna site</div></td></tr>';
+    </tr>`;
+  }).join('') || '<tr><td colspan="7"><div class="empty">Nessuna site</div></td></tr>';
 }
 
 async function _loadSiteArchivioMesi() {
@@ -3119,15 +3352,27 @@ async function siteArchivioModifica(id) {
   siteEditingId = id;
   switchSiteTab('nuova');
   await loadAnagraficheCache();
-  document.getElementById('site-tipo').value    = data.tipo || 'Rimozione';
-  document.getElementById('site-data').value    = data.data_site;
+  document.getElementById('site-tipo').value     = data.tipo || 'Rimozione';
+  document.getElementById('site-data').value     = data.data_site;
   document.getElementById('site-incident').value = data.incident || '';
-  document.getElementById('site-bolla-numero').value = data.numero_bolla || '';
-  document.getElementById('site-bolla-data').value   = data.data_bolla || '';
+  switchSiteType();
+
+  const cfg = SITE_TYPE_CONFIG[data.tipo] || SITE_TYPE_CONFIG.Rimozione;
+  if (cfg.bolla === 'singola') {
+    const num  = data.numero_bolla_uscita || data.numero_bolla_ingresso || '';
+    const dat  = data.data_bolla_uscita   || data.data_bolla_ingresso   || '';
+    document.getElementById('site-bolla-numero').value = num;
+    document.getElementById('site-bolla-data').value   = dat;
+  } else if (cfg.bolla === 'doppia') {
+    document.getElementById('site-bolla-ingresso-numero').value = data.numero_bolla_ingresso || '';
+    document.getElementById('site-bolla-ingresso-data').value   = data.data_bolla_ingresso   || '';
+    document.getElementById('site-bolla-uscita-numero').value   = data.numero_bolla_uscita   || '';
+    document.getElementById('site-bolla-uscita-data').value     = data.data_bolla_uscita     || '';
+  }
+
   const found = anagraficheCache.find(a => a.nome === data.cliente);
   document.getElementById('site-cliente').value = found ? found.id : '';
   siteApparati = (data.apparati || []).map(b => ({ ...b }));
-  switchSiteType();
   siteRenderApparati();
   siteUnsavedData = { ...data };
   document.getElementById('site-unsaved-banner').style.display = 'flex';

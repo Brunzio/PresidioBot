@@ -47,6 +47,7 @@ body{background:#e0e0e0;font-family:Calibri,Arial,sans-serif;font-size:10pt;padd
 .watermark{text-align:center;font-size:7pt;color:#666;font-style:italic;margin-top:3mm;}
 
 @media print{
+  * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   body{background:#fff;padding:0;}
   .toolbar{display:none!important;}
   .page{box-shadow:none;padding:6mm 6mm 5mm 6mm;width:297mm;min-height:210mm;margin:0;page-break-after:always;}
@@ -72,20 +73,20 @@ const CAMPI_COLONNE = [
   { lbl: 'Marca \u2013 Modello',  key: 'modello' },
   { lbl: 'Montaggio a Rack \u2013 [S/N]', key: 'rack_mount' },
   { lbl: 'Serial Number',         key: 'serial_number' },
-  { lbl: 'Peso [Kg]',             key: '_' },
-  { lbl: 'Dimensioni - h*l*p - [cm]', key: '_' },
-  { lbl: 'Assorbimento [Watt]',   key: '_' },
-  { lbl: 'Tensione [Volt]',       key: '_' },
-  { lbl: 'Doppia alimentazione [S/N]', key: '_' },
-  { lbl: 'Sezione di alimentazione\n(A \u2013 B \u2013 STS)', key: '_' },
-  { lbl: 'Livello Rack Unit',     key: '_' },
-  { lbl: 'Componente di',         key: '_' },
+  { lbl: 'Peso [Kg]',             key: 'peso' },
+  { lbl: 'Dimensioni - h*l*p - [cm]', key: 'dimensioni' },
+  { lbl: 'Assorbimento [Watt]',   key: 'assorbimento' },
+  { lbl: 'Tensione [Volt]',       key: 'tensione' },
+  { lbl: 'Doppia alimentazione [S/N]', key: 'doppia_alimentazione' },
+  { lbl: 'Sezione di alimentazione\n(A \u2013 B \u2013 STS)', key: 'sezione_alimentazione' },
+  { lbl: 'Livello Rack Unit',     key: 'livello_rack_unit' },
+  { lbl: 'Componente di',         key: 'componente_di' },
   { lbl: 'ASSET',                 key: 'asset' },
   { lbl: 'RACK',                  key: 'rack' },
 ];
 
 const N_COL = 5;   // apparati per pagina (layout colonne)
-const N_RIG = 18;  // apparati per pagina (layout righe)
+const N_RIG = 16;  // apparati per pagina (layout righe)
 
 function headerHTML(d, pag, totPag) {
   return `
@@ -106,10 +107,22 @@ function headerHTML(d, pag, totPag) {
 }
 
 function bollaFooterHTML(d) {
-  const num   = d.numero_bolla || 'Px';
-  const datab = d.data_bolla ? new Date(d.data_bolla).toLocaleDateString('it-IT') : '??/??/????';
-  const inout = (d.tipo==='Rimozione') ? 'uscita' : 'ingresso'
-  const txt   = (d.tipo==='Spostamento') ? '' : num ? `Bolla d\u2019${inout} n\u00b0 ${esc(num)} del ${esc(datab)}` : '';
+  let txt = '';
+  if (d.tipo === 'Sostituzione') {
+    const numI = d.numero_bolla_ingresso || '';
+    const datI = d.data_bolla_ingresso ? new Date(d.data_bolla_ingresso).toLocaleDateString('it-IT') : '';
+    const numU = d.numero_bolla_uscita  || '';
+    const datU = d.data_bolla_uscita  ? new Date(d.data_bolla_uscita).toLocaleDateString('it-IT')  : '';
+    const rigaI = numI ? `Bolla d\u2019ingresso n\u00b0 ${esc(numI)} del ${esc(datI)}` : '';
+    const rigaU = numU ? `Bolla d\u2019uscita n\u00b0 ${esc(numU)} del ${esc(datU)}` : '';
+    txt = [rigaI, rigaU].filter(Boolean).join('<br>');
+  } else if (d.tipo !== 'Spostamento') {
+    const num   = d.numero_bolla_ingresso || d.numero_bolla_uscita || '';
+    const rawDate = d.data_bolla_ingresso || d.data_bolla_uscita || '';
+    const datab = rawDate ? new Date(rawDate).toLocaleDateString('it-IT') : '';
+    const inout = (d.tipo === 'Rimozione') ? 'uscita' : 'ingresso';
+    txt = num ? `Bolla d\u2019${inout} n\u00b0 ${esc(num)} del ${esc(datab)}` : '';
+  }
   return `
   <div class="bolla-footer">
     <div class="bolla-txt">${txt}<br><br>&nbsp;</div>
@@ -148,11 +161,27 @@ function renderColonne(d) {
     }
 
     let rows = '';
+    // Per Sostituzione: riga Azione in cima
+    if (d.tipo === 'Sostituzione') {
+      let tr = `<tr><td class="col-lbl">Azione</td>`;
+      for (let c = 0; c < nCol; c++) {
+        if (c < chunk.length) {
+          const az = chunk[c].azione || '';
+          const color = az === 'I' ? '#1a7a3a' : az === 'R' ? '#cc0000' : '#000';
+          const label = az === 'I' ? 'INSTALLAZIONE' : az === 'R' ? 'RIMOZIONE' : '';
+          tr += `<td class="col-val" style="font-weight:700;color:${color}">${esc(label)}</td>`;
+        } else {
+          tr += `<td class="col-empty"></td>`;
+        }
+      }
+      tr += '</tr>';
+      rows += tr;
+    }
     CAMPI_COLONNE.forEach(f => {
       let tr = `<tr><td class="col-lbl">${esc(f.lbl)}</td>`;
       for (let c = 0; c < nCol; c++) {
         if (c < chunk.length) {
-          const val = (f.key === '_') ? '' : (chunk[c][f.key] || '');
+          const val = chunk[c][f.key] || '';
           tr += `<td class="col-val">${esc(val)}</td>`;
         } else {
           tr += `<td class="col-empty"></td>`;
@@ -161,6 +190,17 @@ function renderColonne(d) {
       tr += '</tr>';
       rows += tr;
     });
+    // Per Spostamento: riga Da Rack in fondo
+    if (d.tipo === 'Spostamento') {
+      let tr = `<tr><td class="col-lbl">Da Rack</td>`;
+      for (let c = 0; c < nCol; c++) {
+        tr += c < chunk.length
+          ? `<td class="col-val">${esc(chunk[c].da_rack || '')}</td>`
+          : `<td class="col-empty"></td>`;
+      }
+      tr += '</tr>';
+      rows += tr;
+    }
 
     page.innerHTML =
       headerHTML(d, pi + 1, totPag) +
@@ -197,29 +237,57 @@ function renderRighe(d) {
     const rows = [...chunk];
     while (rows.length < N_RIG) rows.push(null);
 
+    const tipo = d.tipo || '';
+    const isSostituzione  = tipo === 'Sostituzione';
+    const isInstallazione = tipo === 'Installazione';
+    const isSpostamento   = tipo === 'Spostamento';
+
+    // ── Definizione colonne per tipo ──────────────────────────────────────────
+    // Ogni colonna: { th, key, w (mm), style? }
+    const cols = [];
+    if (isSostituzione) cols.push({ th: 'Az.', key: '_azione'});
+    cols.push({ th: 'Tipologia', key: 'tipologia'});
+    cols.push({ th: 'Marca\u2013Modello', key: 'modello'});
+    if (isInstallazione || isSpostamento) cols.push({ th: 'Mont.\nRack', key: 'rack_mount'});
+    cols.push({ th: 'Serial Number', key: 'serial_number'});
+    if (isInstallazione) {
+      cols.push({ th: 'Peso\nKg', key: 'peso'});
+      cols.push({ th: 'Dimensioni', key: 'dimensioni'});
+      cols.push({ th: 'Watt', key: 'assorbimento'});
+      cols.push({ th: 'Volt', key: 'tensione'});
+      cols.push({ th: 'Doppia\nAlim', key: 'doppia_alimentazione'});
+    }
+    if (isInstallazione || isSpostamento) {
+      cols.push({ th: 'A-B-STS', key: 'sezione_alimentazione'});
+      cols.push({ th: 'Livello RU', key: 'livello_rack_unit'});
+    }
+    if (isSpostamento) cols.push({ th: 'Da Rack', key: 'da_rack'});
+    cols.push({ th: 'ASSET', key: 'asset'});
+    cols.push({ th: 'Rack', key: 'rack'});
+
+    const emptyTds = cols.map(() => '<td></td>').join('');
     const tbody = rows.map(r => {
-      if (!r) return `<tr><td></td><td></td><td></td><td></td><td></td></tr>`;
-      return `<tr>
-        <td>${esc(r.tipologia)}</td>
-        <td>${esc(r.modello)}</td>
-        <td>${esc(r.serial_number)}</td>
-        <td>${esc(r.asset)}</td>
-        <td>${esc(r.rack)}</td>
-      </tr>`;
+      if (!r) return `<tr>${emptyTds}</tr>`;
+      return '<tr>' + cols.map(c => {
+        if (c.key === '_azione') {
+          const color = r.azione === 'I' ? '#1a7a3a' : '#cc0000';
+          const label = r.azione === 'I' ? 'INST' : 'RIM';
+          return `<td style="font-weight:700;color:${color}">${label}</td>`;
+        }
+        return `<td ${(c.key === 'modello')?'width=100%;':'style="white-space:pre;"'}>${esc(r[c.key])}</td>`;
+      }).join('') + '</tr>';
     }).join('');
+
+    // colgroup per larghezze fisse
+    // const colgroup = '<colgroup>' + cols.map(c => `<col style="width:${c.w}mm">`).join('') + '</colgroup>';
+
+    const thead = '<thead><tr>' + cols.map(c =>
+      `<th ${(c.key === 'modello')?'width=100%;':'style="white-space:pre;'} vertical-align:middle;">${esc(c.th)}</th>`
+    ).join('') + '</tr></thead>';
 
     page.innerHTML =
       headerHTML(d, pi + 1, totPag) +
-      `<table class="row-table">
-        <thead><tr>
-          <th>Tipologia</th>
-          <th>Marca \u2013 Modello</th>
-          <th>Serial Number</th>
-          <th>ASSET</th>
-          <th>Rack</th>
-        </tr></thead>
-        <tbody>${tbody}</tbody>
-      </table>` +
+      `<table class="row-table">${thead}<tbody>${tbody}</tbody></table>` +
       bollaFooterHTML(d);
 
     container.appendChild(page);
@@ -236,7 +304,7 @@ if (raw) {
   } catch(e) { console.error('site_data parse error', e); }
 } else {
   // Fallback: pagina vuota di esempio
-  renderColonne({ numero_bolla: 'P15', data_bolla: '20260325', tipo: 'Rimozione', cliente: 'Cliente', incident: 'INC00000xxxxxxx', data_site: new Date().toISOString(), apparati: [
+  renderColonne({ numero_bolla_uscita: 'P15', data_bolla_uscita: '2026-03-25', tipo: 'Rimozione', cliente: 'Cliente', incident: 'INC00000xxxxxxx', data_site: new Date().toISOString(), apparati: [
     {
       "rack": "",
       "asset": "2012162685",
