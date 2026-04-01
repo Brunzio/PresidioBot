@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Certificazione Elettrica</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:#e0e0e0;font-family:Calibri,Arial,sans-serif;font-size:10pt;padding:20px;}
+.toolbar{max-width:210mm;margin:0 auto 14px;display:flex;gap:10px;}
+.toolbar button{padding:7px 18px;background:#1a56db;color:#fff;border:none;border-radius:5px;font-size:13px;cursor:pointer;font-family:inherit;}
+.toolbar button:hover{background:#1e40af;}
+
+/* Pagina A4 verticale */
+.page{width:210mm;min-height:297mm;background:#fff;margin:0 auto;padding:12mm 10mm 10mm 10mm;box-shadow:0 2px 16px rgba(0,0,0,.18);display:flex;flex-direction:column;}
+.page+.page{margin-top:20px;}
+
+/* Header */
+.logo-img{height:10mm;display:block;}
+.cert-title{text-align:center;font-size:18pt;font-weight:700;margin-bottom:6mm;}
+
+/* Progetto */
+.progetto-row{display:flex;align-items:stretch;border:1px solid #000;margin-bottom:5mm;}
+.progetto-lbl{padding:4px 8px;font-size:9pt;white-space:nowrap;border-right:1px solid #000;display:flex;align-items:center;}
+.progetto-val{padding:4px 10px;font-size:9pt;font-weight:700;display:flex;align-items:center;}
+
+/* Sottotitolo tabella */
+.cert-sub{font-size:10pt;margin-bottom:3mm;}
+
+/* Tabella apparati */
+.cert-table{width:100%;border-collapse:collapse;table-layout:auto;margin-bottom:5mm;}
+.cert-table th{background:#ffff00;font-weight:700;font-size:9pt;padding:4px 5px;border:1px solid #000;text-align:center;}
+.cert-table td{border:1px solid #000;padding:3px 5px;font-size:9pt;vertical-align:middle;text-align:center;height:7mm;}
+
+/* Nota disclaimer */
+.nota{font-size:8pt;color:#ff0000;line-height:1.5;margin-bottom:6mm;}
+
+/* Area firme */
+.firme-section{margin-top:auto;}
+.data-verifica{font-size:11pt;margin-bottom:6mm;}
+.firma-row{display:flex;align-items:flex-end;gap:6mm;margin-bottom:5mm;}
+.firma-label{font-size:10pt;white-space:nowrap;min-width:68mm;}
+.firma-line-box{flex:1;display:flex;flex-direction:column;gap:2mm;}
+.firma-line{border-bottom:1px solid #000;height:6mm;}
+.firma-sub{font-size:9pt;text-align:center;}
+
+/* Footer tabella */
+.footer-table{width:100%;border-collapse:collapse;margin-top:8mm;}
+.footer-table td{border:1px solid #000;padding:4px 8px;font-size:9pt;}
+.footer-left{width:25mm;text-align:center;font-weight:700;}
+.footer-right{text-align:center;font-style:italic;}
+
+/* Watermark */
+.watermark{text-align:center;font-size:7pt;color:#666;font-style:italic;margin-top:3mm;}
+
+/* Righe vuote nella tabella: numero fisso di righe */
+.cert-table tbody tr.empty-row td{height:7mm;}
+
+@media print{
+  body{background:#fff;padding:0;}
+  .toolbar{display:none!important;}
+  .page{box-shadow:none;padding:10mm 8mm 8mm 8mm;width:210mm;min-height:297mm;margin:0;page-break-after:always;}
+  .page:last-of-type{page-break-after:auto;}
+  @page{size:A4 portrait;margin:0;}
+}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button onclick="window.print()">&#x1F5A8; Stampa / Salva PDF</button>
+</div>
+<div id="pages-container"></div>
+<script>
+const LOGO_SRC = 'data:image/png;base64,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'
+
+// N. righe minime per riempire la tabella (escluse quelle con dati)
+const MIN_ROWS = 10;
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Testi disclaimer ──────────────────────────────────────────────────────────
+const NOTA_STANDARD = '(*) ATTENZIONE: con riferimento al documento tecnico TIIT_INF_NO1400011, l\'installazione di apparati informatici non dotati di doppia alimentazione, comporta che il Cliente accetta esplicitamente che gli stessi sono connessi ad una sola delle due linee di alimentazione disponibili, con conseguente decadimento dello SLA impiantistico e la possibilità che tali apparati possano subire la disalimentazione durante le eventuali attività di manutenzione programmate e/o straordinarie';
+
+const NOTA_CSE = '(*) ATTENZIONE: con riferimento al documento tecnico TIIT_INF_NO1400011, l\'installazione di apparati informatici non dotati di doppia alimentazione, comporta che gli stessi sono connessi ad una sola delle due linee di alimentazione disponibili, con conseguente applicazione dello SLA impiantistico come da OFF-5629-TIM-DORA-Moving di sala 1 presso Data Center TIM Bologna \u2013 Riferimento offerta fornitore: PROT.OP380984.';
+
+// ── Render principale ─────────────────────────────────────────────────────────
+function renderCert(d) {
+  const container = document.getElementById('pages-container');
+  container.innerHTML = '';
+  document.title = `Cert_${d.cliente || ''}_${d.data_cert || ''}`;
+
+  const isCse     = d.tipo_cert === 'cse';
+  const apparati  = d.apparati || [];
+  const nota      = isCse ? NOTA_CSE : NOTA_STANDARD;
+
+  // Paginazione: massimo MIN_ROWS righe dati per pagina, ma almeno 1 pagina
+  const pageSize  = MIN_ROWS;
+  const chunks    = [];
+  if (apparati.length === 0) {
+    chunks.push([]);
+  } else {
+    for (let i = 0; i < apparati.length; i += pageSize) {
+      chunks.push(apparati.slice(i, i + pageSize));
+    }
+  }
+
+  chunks.forEach((chunk, pi) => {
+    const page = document.createElement('div');
+    page.className = 'page';
+
+    // ── Righe tabella ──
+    const dataRows = chunk.map(a => `
+      <tr>
+        <td>${esc(a.costruttore)}</td>
+        <td>${esc(a.modello)}</td>
+        <td style="font-family:monospace;font-size:8pt;">${esc(a.asset)}</td>
+        <td style="font-family:monospace;font-size:8pt;">${esc(a.serial_number)}</td>
+        <td>${esc(a.mono_alimentato)}</td>
+        <td style="font-family:monospace;font-size:8pt;">${esc(a.rack)}</td>
+        <td>${esc(a.fornitore)}</td>
+        <td>${esc(a.sala)}</td>
+        <td>${esc(a.inter)}</td>
+        <td>${esc(a.quadro)}</td>
+      </tr>`).join('');
+
+    // Righe vuote per completare fino a MIN_ROWS
+    const emptyCount = Math.max(0, MIN_ROWS - chunk.length);
+    const emptyRows  = Array(emptyCount).fill(
+      '<tr class="empty-row"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>'
+    ).join('');
+
+    const dataStr = d.data_cert
+      ? new Date(d.data_cert + 'T00:00:00').toLocaleDateString('it-IT')
+      : '';
+
+    page.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4mm;">
+        <img class="logo-img" src="${LOGO_SRC}" alt="Noovle">
+      </div>
+      <div class="cert-title">Scheda di certificazione elettrica</div>
+
+      <div class="progetto-row">
+        <div class="progetto-lbl">Progetto di Riferimento / Codice Piattaforma</div>
+        <div class="progetto-val">${esc(d.progetto_riferimento || '')}</div>
+      </div>
+
+      <div class="cert-sub">Si certifica la corretta predisposizione elettrica dei seguenti apparati:</div>
+
+      <table class="cert-table">
+        <thead>
+          <tr>
+            <th>Costruttore</th>
+            <th>Modello</th>
+            <th>Asset Number</th>
+            <th>Serial Number</th>
+            <th>MONO-Alimentato<br>SI / NO (*)</th>
+            <th>Rack</th>
+            <th>Fornitore<br>Manutentore<br>dell'hardware</th>
+            <th>Sala /<br>areola</th>
+            <th>Inter.</th>
+            <th>Quadro</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${dataRows}
+          ${emptyRows}
+        </tbody>
+      </table>
+
+      <div class="nota">${esc(nota)}</div>
+
+      <div class="firme-section">
+        <div class="data-verifica">La verifica è stata effettuata in data : <span style="text-decoration:underline;">&nbsp;&nbsp;&nbsp;&nbsp;${esc(dataStr)}&nbsp;&nbsp;&nbsp;&nbsp;</span></div>
+
+        <div class="firma-row">
+          <div class="firma-label">Firma Impianti &amp; Logistica:</div>
+          <div class="firma-line-box">
+            <div class="firma-line"></div>
+            <div class="firma-sub">(Nome e cognome per esteso)</div>
+          </div>
+          <div class="firma-line-box">
+            <div class="firma-line"></div>
+            <div class="firma-sub">&nbsp;</div>
+          </div>
+        </div>
+
+        <div class="firma-row">
+          <div class="firma-label">Firma Presidio Tecnologico</div>
+          <div class="firma-line-box">
+            <div class="firma-line"></div>
+            <div class="firma-sub">(Nome e cognome per esteso)</div>
+          </div>
+          <div class="firma-line-box">
+            <div class="firma-line"></div>
+            <div class="firma-sub">&nbsp;</div>
+          </div>
+        </div>
+
+        <div class="firma-row">
+          <div class="firma-label">Firma Fornitore/manutentore dell'hardware</div>
+          <div class="firma-line-box">
+            <div class="firma-line"></div>
+            <div class="firma-sub">(Nome e cognome per esteso)</div>
+          </div>
+          <div class="firma-line-box">
+            <div class="firma-line"></div>
+            <div class="firma-sub">&nbsp;</div>
+          </div>
+        </div>
+
+        <table class="footer-table">
+          <tr>
+            <td class="footer-left">I.DC/NE</td>
+            <td class="footer-right"><strong>NOOVLE</strong><br><em>Tutti i diritti riservati</em></td>
+          </tr>
+        </table>
+        <div class="watermark">Gruppo TIM &ndash; Uso Interno &ndash; Tutti i diritti riservati.</div>
+      </div>
+    `;
+
+    container.appendChild(page);
+  });
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+const raw = sessionStorage.getItem('cert_data');
+if (raw) {
+  try {
+    renderCert(JSON.parse(raw));
+  } catch(e) { console.error('cert_data parse error', e); }
+} else {
+  // Fallback: pagina vuota di esempio
+  renderCert({
+    tipo_cert: 'standard',
+    progetto_riferimento: 'IFICONSULTING - 2012163007',
+    cliente: 'IFICONSULTING',
+    data_cert: new Date().toISOString().split('T')[0],
+    apparati: [
+      { costruttore:'HPE', modello:'Proliant DL360 gen12', asset:'2023016760', serial_number:'CZUD3V00YF', mono_alimentato:'NO', rack:'201263007', fornitore:'IFICONSULTING', sala:'SalaC0/H4', inter:'INT0031', quadro:'A + B' },
+      { costruttore:'HPE', modello:'Proliant DL360 gen12', asset:'2020064941', serial_number:'CZUD3V00YD', mono_alimentato:'NO', rack:'201263007', fornitore:'IFICONSULTING', sala:'SalaC0/H4', inter:'INT0031', quadro:'A + B' }
+    ]
+  });
+}
+</script>
+</body>
+</html>

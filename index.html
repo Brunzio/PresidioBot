@@ -663,6 +663,7 @@
       <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px;">
         <div class="tab active" id="stab-nuova" onclick="switchSiteTab('nuova')" style="padding:8px 16px;">Nuova Site</div>
         <div class="tab" id="stab-archivio" onclick="switchSiteTab('archivio')" style="padding:8px 16px;">Archivio</div>
+        <div class="tab" id="stab-certificazioni" onclick="switchSiteTab('certificazioni')" style="padding:8px 16px;">Certificazioni</div>
       </div>
 
       <!-- ── NUOVA SITE ── -->
@@ -758,7 +759,8 @@
 
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:12px;align-items:center;">
           <button class="btn btn-secondary" onclick="siteReset()">↺ Svuota</button>
-          <button class="btn btn-secondary" onclick="siteCompilaDDT()">📋 Compila DDT</button>
+          <button class="btn btn-secondary" id="btn-compila-ddt" onclick="siteCompilaDDT()">📋 Compila DDT</button>
+          <button class="btn btn-secondary" id="btn-vai-cert" style="display:none;" onclick="siteSalvaEVaiCert()">📄 Vai alla Cert</button>
           <select id="site-layout" style="font-size:11px;padding:6px 10px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px;">
             <option value="colonne">Layout colonne (5xPagina)</option>
             <option value="righe">Layout righe (16xPagina)</option>
@@ -812,6 +814,42 @@
           <div style="display:flex;gap:6px;">
             <button class="btn btn-secondary btn-sm" id="site-archivio-prev" onclick="siteArchivioPage--;loadSiteArchivio()" disabled>← Prec</button>
             <button class="btn btn-secondary btn-sm" id="site-archivio-next" onclick="siteArchivioPage++;loadSiteArchivio()" disabled>Succ →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CERTIFICAZIONI ── -->
+      <div id="spanel-certificazioni" style="display:none;">
+        <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div class="search-box" style="max-width:300px;">
+            <input type="text" id="cert-archivio-search" placeholder="Cerca cliente o asset..." oninput="onCertArchivioSearch()">
+          </div>
+          <select id="cert-archivio-mese" onchange="certArchivioPage=0;loadCertArchivio()" style="min-width:140px;">
+            <option value="">Tutti i mesi</option>
+          </select>
+          <button class="btn btn-secondary" onclick="certArchivioPage=0;loadCertArchivio()">↺ Aggiorna</button>
+          <button class="btn btn-primary" onclick="openCertModal(null)" style="margin-left:auto;">+ Nuova Certificazione</button>
+        </div>
+        <div class="table-wrapper scrollable">
+          <table>
+            <thead><tr>
+              <th>Tipo</th>
+              <th>Data</th>
+              <th>Cliente</th>
+              <th>Progetto / Piattaforma</th>
+              <th>N° App.</th>
+              <th style="width:160px;"></th>
+            </tr></thead>
+            <tbody id="cert-archivio-body">
+              <tr><td colspan="6"><div class="empty">Clicca Aggiorna per caricare</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+          <span class="pagination-info" id="cert-archivio-info"></span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-secondary btn-sm" id="cert-archivio-prev" onclick="certArchivioPage--;loadCertArchivio()" disabled>← Prec</button>
+            <button class="btn btn-secondary btn-sm" id="cert-archivio-next" onclick="certArchivioPage++;loadCertArchivio()" disabled>Succ →</button>
           </div>
         </div>
       </div>
@@ -907,8 +945,134 @@
   </div>
 </div>
 
+<!-- MODAL CERTIFICAZIONE -->
+<div class="modal-overlay" id="cert-modal">
+  <div class="modal" style="width:900px;max-width:98vw;">
+    <div class="modal-header">
+      <h2 id="cert-modal-title">Nuova Certificazione Elettrica</h2>
+      <button class="modal-close" onclick="closeCertModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cert-editing-id">
+      <input type="hidden" id="cert-site-report-id">
 
-<!-- MODAL DETTAGLIO RECORD (sola lettura) -->
+      <!-- Testata -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px;">
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Tipo Cert <span style="color:var(--accent)">*</span></label>
+          <select id="cert-tipo" onchange="onCertTipoChange()">
+            <option value="standard">Standard</option>
+            <option value="cse">CSE</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Data <span style="color:var(--accent)">*</span></label>
+          <input type="date" id="cert-data">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Cliente</label>
+          <input type="text" id="cert-cliente" placeholder="Nome cliente" oninput="onCertClienteInput()">
+        </div>
+        <div class="form-group full" style="grid-column:1/-1;">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Progetto di Riferimento / Codice Piattaforma</label>
+          <input type="text" id="cert-progetto" placeholder="es. IFICONSULTING – Rack: 2023012603">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Incident (per ricerca, non stampato)</label>
+          <input type="text" id="cert-incident" placeholder="es. INC000007256308">
+        </div>
+      </div>
+
+      <!-- Tabella apparati cert -->
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);">Apparati</div>
+      <div class="table-wrapper scrollable-sm" style="margin-bottom:10px;">
+        <table id="cert-apparati-table">
+          <thead>
+            <tr>
+              <th>Costruttore</th>
+              <th>Modello</th>
+              <th>Asset</th>
+              <th>Serial Number</th>
+              <th>Rack</th>
+              <th style="width:40px;"></th>
+            </tr>
+          </thead>
+          <tbody id="cert-apparati-body">
+            <tr id="cert-empty-row"><td colspan="6"><div class="empty">Nessun apparato</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:4px;">
+        <button class="btn btn-secondary btn-sm" onclick="certAggiungiRiga()">+ Riga manuale</button>
+        <button class="btn btn-secondary btn-sm" onclick="compilaSiteDaCart()">📋 Compila Site</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeCertModal()">Annulla</button>
+      <button class="btn btn-secondary" onclick="certGenera()">⬇ Genera PDF</button>
+      <button class="btn btn-primary" onclick="certSalva()">✓ Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RIGA APPARATO CERT -->
+<div class="modal-overlay" id="cert-app-modal">
+  <div class="modal" style="width:700px;">
+    <div class="modal-header">
+      <h2>Apparato Certificazione</h2>
+      <button class="modal-close" onclick="closeCertAppModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cert-app-idx">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Costruttore</label>
+          <input type="text" id="cert-app-costruttore" placeholder="es. HPE">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Modello</label>
+          <input type="text" id="cert-app-modello" placeholder="es. Proliant DL360 gen12">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Asset Number</label>
+          <input type="text" id="cert-app-asset" placeholder="">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Serial Number</label>
+          <input type="text" id="cert-app-serial_number" placeholder="">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Mono Alimentato (SI/NO)</label>
+          <input type="text" id="cert-app-mono_alimentato" placeholder="SI / NO">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Rack</label>
+          <input type="text" id="cert-app-rack" placeholder="">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Fornitore / Manutentore</label>
+          <input type="text" id="cert-app-fornitore" placeholder="">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Sala / Areola</label>
+          <input type="text" id="cert-app-sala" placeholder="es. SalaC0/H4">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Inter.</label>
+          <input type="text" id="cert-app-inter" placeholder="es. INT0031">
+        </div>
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Quadro</label>
+          <input type="text" id="cert-app-quadro" placeholder="A / B / A + B">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeCertAppModal()">Annulla</button>
+      <button class="btn btn-primary" onclick="saveCertApp()">Salva</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="detail-modal">
   <div class="modal" style="width:750px">
     <div class="modal-header">
@@ -2965,13 +3129,22 @@ const SITE_TYPE_CONFIG = {
 };
 
 function switchSiteType() {
-  const cfg = SITE_TYPE_CONFIG[document.getElementById('site-tipo').value] || SITE_TYPE_CONFIG.Rimozione;
+  const tipo = document.getElementById('site-tipo').value;
+  const cfg = SITE_TYPE_CONFIG[tipo] || SITE_TYPE_CONFIG.Rimozione;
 
   // sezione bolla
   document.getElementById('bolla-site').style.display          = cfg.bolla !== 'nessuna' ? 'block' : 'none';
   document.getElementById('bolla-site-singola').style.display  = cfg.bolla === 'singola' ? 'grid'  : 'none';
   document.getElementById('bolla-site-doppia').style.display   = cfg.bolla === 'doppia'  ? 'grid'  : 'none';
   if (cfg.bollaDir) document.getElementById('bolla-site-dir').textContent = cfg.bollaDir;
+
+  // Compila DDT: solo per Rimozione e Sostituzione
+  const btnDdt = document.getElementById('btn-compila-ddt');
+  if (btnDdt) btnDdt.style.display = (tipo === 'Rimozione' || tipo === 'Sostituzione') ? '' : 'none';
+
+  // Vai alla Cert: solo per Installazione
+  const btnCert = document.getElementById('btn-vai-cert');
+  if (btnCert) btnCert.style.display = tipo === 'Installazione' ? '' : 'none';
 
   // intestazione tabella
   const head = document.getElementById('site-apparati-head');
@@ -2989,11 +3162,12 @@ function switchSiteType() {
 }
 
 function switchSiteTab(name) {
-  ['nuova','archivio'].forEach(t => {
+  ['nuova','archivio','certificazioni'].forEach(t => {
     document.getElementById('stab-' + t).classList.toggle('active', t === name);
     document.getElementById('spanel-' + t).style.display = t === name ? 'block' : 'none';
   });
   if (name === 'archivio') loadSiteArchivio();
+  if (name === 'certificazioni') loadCertArchivio();
 }
 
 async function initNuovaSite() {
@@ -3150,17 +3324,17 @@ function siteReset() {
 }
 
 // ── GENERA SITE ───────────────────────────────────────────────────────────────
-function siteGenera() {
+
+function _siteRaccogliDati() {
   const tipo      = document.getElementById('site-tipo').value;
   const dataVal   = document.getElementById('site-data').value;
   const clienteId = document.getElementById('site-cliente').value;
-  if (!dataVal || !clienteId) { showToast('Data e cliente sono obbligatori', 'error'); return; }
-  if (!siteApparati.length)  { showToast('Aggiungi almeno un apparato', 'error'); return; }
+  if (!dataVal || !clienteId) { showToast('Data e cliente sono obbligatori', 'error'); return null; }
+  if (!siteApparati.length)  { showToast('Aggiungi almeno un apparato', 'error'); return null; }
 
-  const cfg          = SITE_TYPE_CONFIG[tipo] || SITE_TYPE_CONFIG.Rimozione;
-  const clienteNome  = anagraficheCache.find(a => String(a.id) === String(clienteId))?.nome || '';
-  const incident     = document.getElementById('site-incident').value.trim();
-  const layout       = document.getElementById('site-layout').value;
+  const cfg         = SITE_TYPE_CONFIG[tipo] || SITE_TYPE_CONFIG.Rimozione;
+  const clienteNome = anagraficheCache.find(a => String(a.id) === String(clienteId))?.nome || '';
+  const incident    = document.getElementById('site-incident').value.trim();
 
   const bollaFields = {};
   if (cfg.bolla === 'singola') {
@@ -3180,17 +3354,23 @@ function siteGenera() {
     bollaFields.data_bolla_uscita     = document.getElementById('site-bolla-uscita-data').value || null;
   }
 
-  siteUnsavedData = {
+  return {
     tipo,
-    data_site:  dataVal,
-    mese_anno:  dataVal.slice(0, 7),
-    cliente:    clienteNome,
-    incident:   incident || null,
-    apparati:   siteApparati.map(b => ({ ...b })),
+    data_site: dataVal,
+    mese_anno: dataVal.slice(0, 7),
+    cliente:   clienteNome,
+    incident:  incident || null,
+    apparati:  siteApparati.map(b => ({ ...b })),
     ...bollaFields,
   };
+}
 
-  _apriSite(siteUnsavedData, layout);
+function siteGenera() {
+  const d      = _siteRaccogliDati();
+  if (!d) return;
+  const layout = document.getElementById('site-layout').value;
+  siteUnsavedData = d;
+  _apriSite(d, layout);
   document.getElementById('site-unsaved-banner').style.display = 'flex';
   document.getElementById('site-banner-msg').textContent = '⚠ Site generata ma non ancora salvata.';
 }
@@ -3202,15 +3382,16 @@ function _apriSite(d, layout) {
 
 // ── SALVA SITE ────────────────────────────────────────────────────────────────
 async function siteSalva() {
-  if (!siteUnsavedData) return;
+  const d = _siteRaccogliDati();
+  if (!d) return;
   const btn = document.querySelector('[onclick="siteSalva()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Salvo...'; }
 
   let error;
   if (siteEditingId) {
-    ({ error } = await db.from('site_report').update(siteUnsavedData).eq('id', siteEditingId));
+    ({ error } = await db.from('site_report').update(d).eq('id', siteEditingId));
   } else {
-    ({ error } = await db.from('site_report').insert(siteUnsavedData));
+    ({ error } = await db.from('site_report').insert(d));
   }
 
   if (btn) { btn.disabled = false; btn.textContent = "✓ Salva e vai all'archivio"; }
@@ -3229,10 +3410,19 @@ function siteCompilaDDT() {
   if (!siteApparati.length) { showToast('Aggiungi almeno un apparato', 'error'); return; }
   const tipo = document.getElementById('site-tipo').value;
   const cfg  = SITE_TYPE_CONFIG[tipo] || SITE_TYPE_CONFIG.Rimozione;
-  const num  = cfg.bolla === 'singola' ? document.getElementById('site-bolla-numero').value.trim() : '';
-  const data = cfg.bolla === 'singola' ? document.getElementById('site-bolla-data').value : '';
 
-  bollaApparati = siteApparati.map(b => ({
+  // Per Sostituzione: solo gli apparati con azione 'R' (rimossi)
+  const sorgente = tipo === 'Sostituzione'
+    ? siteApparati.filter(b => b.azione === 'R')
+    : siteApparati;
+  if (!sorgente.length) { showToast('Nessun apparato rimosso da trasferire al DDT', 'error'); return; }
+
+  const num  = cfg.bolla === 'doppia' ? document.getElementById('site-bolla-uscita-numero').value.trim()
+             : cfg.bolla === 'singola' ? document.getElementById('site-bolla-numero').value.trim() : '';
+  const data = cfg.bolla === 'doppia' ? document.getElementById('site-bolla-uscita-data').value
+             : cfg.bolla === 'singola' ? document.getElementById('site-bolla-data').value : '';
+
+  bollaApparati = sorgente.map(b => ({
     qty:   1,
     desc:  b.modello || '',
     asset: b.asset   || '',
@@ -3374,9 +3564,8 @@ async function siteArchivioModifica(id) {
   document.getElementById('site-cliente').value = found ? found.id : '';
   siteApparati = (data.apparati || []).map(b => ({ ...b }));
   siteRenderApparati();
-  siteUnsavedData = { ...data };
   document.getElementById('site-unsaved-banner').style.display = 'flex';
-  document.getElementById('site-banner-msg').textContent = '✎ Stai modificando una site esistente — genera il PDF e poi salva.';
+  document.getElementById('site-banner-msg').textContent = '✎ Stai modificando una site esistente — salva quando hai finito.';
 }
 
 async function siteArchivioElimina(id, cliente) {
@@ -3402,6 +3591,446 @@ confirmDelete = async function() {
     _origConfirmDeleteSite();
   }
 };
+
+// ─── TAB CERTIFICAZIONI ────────────────────────────────────────────────────────
+
+const CERT_PAGE_SIZE = 50;
+const CERT_PROGETTO_CSE = 'CLIENTE CSE – PROGETTO TIM TLC23MSLTPATO- SALA L0';
+
+let certArchivioPage = 0;
+let certArchivioSearch = '';
+let certArchivioSearchTimeout = null;
+let certApparati = [];   // apparati nel modal cert corrente
+let certEditingId = null;
+
+// ── Helpers pre-compilazione ──────────────────────────────────────────────────
+
+function _certCostruttore(modello) {
+  if (!modello) return '';
+  return modello.trim().split(/\s+/)[0] || '';
+}
+
+function _certModello(modello) {
+  if (!modello) return '';
+  const parts = modello.trim().split(/\s+/);
+  return parts.slice(1).join(' ');
+}
+
+function _certMonoAlimentato(doppiaAlim) {
+  if (doppiaAlim === 'S') return 'NO';
+  if (doppiaAlim === 'N') return 'SI';
+  return '';
+}
+
+function _certQuadro(monoAlim, sezAlim) {
+  // Se mono_alimentato è NO (doppia alim) → A + B; altrimenti usa sezione_alimentazione se disponibile
+  if (monoAlim === 'NO') return 'A + B';
+  return sezAlim || '';
+}
+
+function _certProgettoDefault(clienteNome, apparati) {
+  const racks = [...new Set((apparati || []).map(a => a.rack).filter(Boolean))];
+  const rackStr = racks.length ? ' – Rack: ' + racks.join(', ') : '';
+  return (clienteNome || '') + rackStr;
+}
+
+// Converte apparati site → apparati cert
+function _siteApparatiToCert(apparatiSite, clienteNome, isCse) {
+  return (apparatiSite || []).map(a => {
+    const mono = _certMonoAlimentato(a.doppia_alimentazione);
+    return {
+      costruttore:    _certCostruttore(a.modello),
+      modello:        _certModello(a.modello),
+      asset:          a.asset || '',
+      serial_number:  a.serial_number || '',
+      mono_alimentato: mono,
+      rack:           a.rack || '',
+      fornitore:      isCse ? 'CSE' : (clienteNome || ''),
+      sala:           isCse ? 'L0' : '',
+      inter:          '',
+      quadro:         _certQuadro(mono, a.sezione_alimentazione),
+    };
+  });
+}
+
+// ── Archivio certificazioni ───────────────────────────────────────────────────
+
+function onCertArchivioSearch() {
+  clearTimeout(certArchivioSearchTimeout);
+  certArchivioSearchTimeout = setTimeout(() => {
+    certArchivioSearch = document.getElementById('cert-archivio-search').value.trim();
+    certArchivioPage = 0;
+    loadCertArchivio();
+  }, 300);
+}
+
+async function loadCertArchivio() {
+  const tbody = document.getElementById('cert-archivio-body');
+  tbody.innerHTML = '<tr><td colspan="6"><div class="loading"><div class="spinner"></div></div></td></tr>';
+  await _loadCertArchivioMesi();
+
+  const meseFilter = document.getElementById('cert-archivio-mese').value;
+
+  let q = db.from('cert_elettrica').select('*', { count: 'exact' }).order('data_cert', { ascending: false });
+  if (certArchivioSearch) q = q.or(`cliente.ilike.%${certArchivioSearch}%,incident.ilike.%${certArchivioSearch}%,apparati.cs.[{"asset":"${certArchivioSearch}"}]`);
+  if (meseFilter) q = q.eq('mese_anno', meseFilter);
+  q = q.range(certArchivioPage * CERT_PAGE_SIZE, (certArchivioPage + 1) * CERT_PAGE_SIZE - 1);
+
+  const { data, count, error } = await q;
+  if (error) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty" style="color:var(--danger)">Errore: ${error.message}</div></td></tr>`;
+    return;
+  }
+
+  const total = count || 0;
+  const from  = certArchivioPage * CERT_PAGE_SIZE + 1;
+  const to    = Math.min((certArchivioPage + 1) * CERT_PAGE_SIZE, total);
+  document.getElementById('cert-archivio-info').textContent = total ? `${from}–${to} di ${total}` : '0 certificazioni';
+  document.getElementById('cert-archivio-prev').disabled = certArchivioPage === 0;
+  document.getElementById('cert-archivio-next').disabled = to >= total;
+
+  tbody.innerHTML = (data || []).map(r => {
+    const tipoBadge = r.tipo_cert === 'cse' ? 'badge-inactive' : 'badge-default';
+    const tipoLabel = r.tipo_cert === 'cse' ? 'CSE' : 'Standard';
+    const dataStr = r.data_cert ? new Date(r.data_cert + 'T00:00:00').toLocaleDateString('it-IT') : '—';
+    return `
+    <tr>
+      <td><span class="badge ${tipoBadge}">${tipoLabel}</span></td>
+      <td>${dataStr}</td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">${escHtml(r.cliente||'—')}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;font-size:11px;">${escHtml(r.progetto_riferimento||'—')}</td>
+      <td style="text-align:center;">${(r.apparati||[]).length}</td>
+      <td><div class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="certArchivioRiapri(${r.id})">⬇ PDF</button>
+        <button class="btn btn-secondary btn-sm" onclick="certArchivioModifica(${r.id})">✎</button>
+        <button class="btn btn-danger btn-sm" onclick="certArchivioElimina(${r.id},'${escHtml(r.cliente||'')}')">✕</button>
+      </div></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6"><div class="empty">Nessuna certificazione</div></td></tr>';
+}
+
+async function _loadCertArchivioMesi() {
+  const sel = document.getElementById('cert-archivio-mese');
+  if (!sel || sel.dataset.loaded) return;
+  const { data } = await db.from('cert_elettrica').select('mese_anno').order('mese_anno', { ascending: false });
+  if (!data) return;
+  const unici = [...new Set(data.map(r => r.mese_anno))];
+  sel.innerHTML = '<option value="">Tutti i mesi</option>' + unici.map(m => {
+    const [y, mo] = m.split('-');
+    const label = new Date(+y, +mo - 1, 1).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+    return `<option value="${m}">${label}</option>`;
+  }).join('');
+  sel.dataset.loaded = '1';
+}
+
+function _resetCertArchivioMesiCache() {
+  const sel = document.getElementById('cert-archivio-mese');
+  if (sel) delete sel.dataset.loaded;
+}
+
+async function certArchivioRiapri(id) {
+  const { data } = await db.from('cert_elettrica').select('*').eq('id', id).single();
+  if (!data) { showToast('Certificazione non trovata', 'error'); return; }
+  _apriCert(data);
+}
+
+async function certArchivioModifica(id) {
+  const { data } = await db.from('cert_elettrica').select('*').eq('id', id).single();
+  if (!data) return;
+  openCertModal(null, data);
+}
+
+function certArchivioElimina(id, cliente) {
+  document.getElementById('delete-label').textContent = `Cert — ${cliente}`;
+  document.getElementById('delete-detail').textContent = 'La certificazione verrà eliminata definitivamente.';
+  document.getElementById('delete-modal').dataset.mode = 'cert';
+  document.getElementById('delete-modal').dataset.certId = id;
+  document.getElementById('delete-modal').classList.add('open');
+}
+
+// Estendi confirmDelete per cert
+const _origConfirmDeleteCert = confirmDelete;
+confirmDelete = async function() {
+  const mode = document.getElementById('delete-modal').dataset.mode;
+  if (mode === 'cert') {
+    const id = document.getElementById('delete-modal').dataset.certId;
+    const { error } = await db.from('cert_elettrica').delete().eq('id', id);
+    if (error) { showToast('Errore: ' + error.message, 'error'); return; }
+    showToast('Certificazione eliminata', 'success');
+    closeDeleteModal();
+    loadCertArchivio();
+  } else {
+    _origConfirmDeleteCert();
+  }
+};
+
+// ── Modal certificazione ──────────────────────────────────────────────────────
+
+// Apre il modal cert.
+// siteData: dati della site di installazione (per pre-compilare), oppure null
+// existingCert: record cert_elettrica esistente (per modifica), oppure null
+function openCertModal(siteData, existingCert) {
+  certEditingId = existingCert?.id || null;
+  certApparati = [];
+
+  document.getElementById('cert-modal-title').textContent =
+    certEditingId ? 'Modifica Certificazione' : 'Nuova Certificazione Elettrica';
+  document.getElementById('cert-editing-id').value = certEditingId || '';
+  document.getElementById('cert-site-report-id').value = existingCert?.site_report_id || siteData?.id || '';
+
+  if (existingCert) {
+    // Modalità modifica: carica dati esistenti
+    document.getElementById('cert-tipo').value      = existingCert.tipo_cert || 'standard';
+    document.getElementById('cert-data').value      = existingCert.data_cert || '';
+    document.getElementById('cert-cliente').value   = existingCert.cliente || '';
+    document.getElementById('cert-progetto').value  = existingCert.progetto_riferimento || '';
+    document.getElementById('cert-incident').value  = existingCert.incident || '';
+    certApparati = (existingCert.apparati || []).map(a => ({ ...a }));
+  } else if (siteData) {
+    // Pre-compilazione da site di installazione
+    const isCse = /\bCSE\b/i.test(siteData.cliente || '');
+    const tipo  = isCse ? 'cse' : 'standard';
+    document.getElementById('cert-tipo').value      = tipo;
+    document.getElementById('cert-data').value      = siteData.data_site || '';
+    document.getElementById('cert-cliente').value   = siteData.cliente || '';
+    document.getElementById('cert-incident').value  = siteData.incident || '';
+    document.getElementById('cert-progetto').value  = isCse
+      ? CERT_PROGETTO_CSE
+      : _certProgettoDefault(siteData.cliente, siteData.apparati);
+    certApparati = _siteApparatiToCert(siteData.apparati, siteData.cliente, isCse);
+  } else {
+    // Nuova cert standalone: campi vuoti
+    document.getElementById('cert-tipo').value      = 'standard';
+    document.getElementById('cert-data').value      = new Date().toISOString().split('T')[0];
+    document.getElementById('cert-cliente').value   = '';
+    document.getElementById('cert-progetto').value  = '';
+    document.getElementById('cert-incident').value  = '';
+  }
+
+  certRenderApparati();
+  document.getElementById('cert-modal').classList.add('open');
+}
+
+function closeCertModal() {
+  document.getElementById('cert-modal').classList.remove('open');
+  certEditingId = null;
+  certApparati = [];
+}
+
+// Aggiorna il campo progetto quando l'utente cambia il tipo cert
+function onCertTipoChange() {
+  const tipo    = document.getElementById('cert-tipo').value;
+  const cliente = document.getElementById('cert-cliente').value.trim();
+  if (tipo === 'cse') {
+    document.getElementById('cert-progetto').value = CERT_PROGETTO_CSE;
+    certApparati.forEach(a => { a.fornitore = 'CSE'; a.sala = 'L0'; });
+  } else {
+    document.getElementById('cert-progetto').value = _certProgettoDefault(cliente, certApparati);
+    certApparati.forEach(a => { a.fornitore = cliente; a.sala = ''; });
+  }
+  certRenderApparati();
+}
+
+// Aggiorna il campo progetto quando cambia il nome cliente (solo standard)
+function onCertClienteInput() {
+  const tipo = document.getElementById('cert-tipo').value;
+  if (tipo === 'cse') return;
+  const cliente = document.getElementById('cert-cliente').value.trim();
+  document.getElementById('cert-progetto').value = _certProgettoDefault(cliente, certApparati);
+}
+
+// ── Render tabella apparati cert ──────────────────────────────────────────────
+
+function certRenderApparati() {
+  const tbody = document.getElementById('cert-apparati-body');
+  if (!certApparati.length) {
+    tbody.innerHTML = '<tr id="cert-empty-row"><td colspan="6"><div class="empty">Nessun apparato</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = certApparati.map((a, i) => `
+    <tr>
+      <td style="font-size:11px;">${escHtml(a.costruttore)}</td>
+      <td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;">${escHtml(a.modello)}</td>
+      <td style="font-family:var(--mono);font-size:11px;">${escHtml(a.asset)}</td>
+      <td style="font-family:var(--mono);font-size:11px;">${escHtml(a.serial_number)}</td>
+      <td style="font-family:var(--mono);font-size:11px;">${escHtml(a.rack)}</td>
+      <td><div class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openCertAppModal(${i})">✎</button>
+        <button class="btn btn-danger btn-sm" onclick="certRimuoviApp(${i})">✕</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function certRimuoviApp(i) {
+  certApparati.splice(i, 1);
+  certRenderApparati();
+}
+
+function certAggiungiRiga() {
+  const tipo    = document.getElementById('cert-tipo').value;
+  const cliente = document.getElementById('cert-cliente').value.trim();
+  certApparati.push({
+    costruttore: '', modello: '', asset: '', serial_number: '',
+    mono_alimentato: '', rack: '',
+    fornitore: tipo === 'cse' ? 'CSE' : cliente,
+    sala: tipo === 'cse' ? 'L0' : '',
+    inter: '', quadro: ''
+  });
+  certRenderApparati();
+  openCertAppModal(certApparati.length - 1);
+}
+
+// ── Modal singolo apparato cert ───────────────────────────────────────────────
+
+const CERT_APP_FIELDS = ['costruttore','modello','asset','serial_number','mono_alimentato','rack','fornitore','sala','inter','quadro'];
+
+function openCertAppModal(idx) {
+  const a = certApparati[idx] || {};
+  document.getElementById('cert-app-idx').value = idx;
+  CERT_APP_FIELDS.forEach(f => {
+    const el = document.getElementById('cert-app-' + f);
+    if (el) el.value = a[f] || '';
+  });
+  document.getElementById('cert-app-modal').classList.add('open');
+}
+
+function closeCertAppModal() {
+  document.getElementById('cert-app-modal').classList.remove('open');
+}
+
+function saveCertApp() {
+  const idx = parseInt(document.getElementById('cert-app-idx').value, 10);
+  if (isNaN(idx) || idx < 0) return;
+  if (!certApparati[idx]) certApparati[idx] = {};
+  CERT_APP_FIELDS.forEach(f => {
+    const el = document.getElementById('cert-app-' + f);
+    if (el) certApparati[idx][f] = el.value.trim();
+  });
+  closeCertAppModal();
+  certRenderApparati();
+}
+
+// ── Genera PDF cert ───────────────────────────────────────────────────────────
+
+function _apriCert(d) {
+  sessionStorage.setItem('cert_data', JSON.stringify(d));
+  window.open('cert_template.html', '_blank');
+}
+
+function certGenera() {
+  const data = _certDatiDaModal();
+  if (!data) return;
+  _apriCert(data);
+}
+
+function _certDatiDaModal() {
+  const dataVal = document.getElementById('cert-data').value;
+  if (!dataVal) { showToast('La data è obbligatoria', 'error'); return null; }
+  if (!certApparati.length) { showToast('Aggiungi almeno un apparato', 'error'); return null; }
+  return {
+    tipo_cert:            document.getElementById('cert-tipo').value,
+    progetto_riferimento: document.getElementById('cert-progetto').value.trim(),
+    cliente:              document.getElementById('cert-cliente').value.trim(),
+    incident:             document.getElementById('cert-incident').value.trim() || null,
+    data_cert:            dataVal,
+    mese_anno:            dataVal.slice(0, 7),
+    site_report_id:       document.getElementById('cert-site-report-id').value || null,
+    apparati:             certApparati.map(a => ({ ...a })),
+  };
+}
+
+// ── Salva cert ────────────────────────────────────────────────────────────────
+
+async function certSalva() {
+  const payload = _certDatiDaModal();
+  if (!payload) return;
+
+  const btn = document.querySelector('#cert-modal .modal-footer .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvo...'; }
+
+  let error;
+  const id = certEditingId || parseInt(document.getElementById('cert-editing-id').value, 10) || null;
+  if (id) {
+    ({ error } = await db.from('cert_elettrica').update(payload).eq('id', id));
+  } else {
+    ({ error } = await db.from('cert_elettrica').insert(payload));
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '✓ Salva'; }
+  if (error) { showToast('Errore salvataggio: ' + error.message, 'error'); return; }
+
+  showToast(id ? 'Certificazione aggiornata' : 'Certificazione salvata', 'success');
+  closeCertModal();
+  _resetCertArchivioMesiCache();
+  switchSiteTab('certificazioni');
+}
+
+// ── SITE → CERT ───────────────────────────────────────────────────────────────
+async function siteSalvaEVaiCert() {
+  const d = _siteRaccogliDati();
+  if (!d) return;
+  const btn = document.getElementById('btn-vai-cert');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvo...'; }
+
+  let savedId = siteEditingId;
+  let error;
+
+  if (siteEditingId) {
+    ({ error } = await db.from('site_report').update(d).eq('id', siteEditingId));
+  } else {
+    const { data: ins, error: e } = await db.from('site_report').insert(d).select('id').single();
+    error = e;
+    if (ins) savedId = ins.id;
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = '📄 Vai alla Cert'; }
+  if (error) { showToast('Errore salvataggio site: ' + error.message, 'error'); return; }
+
+  showToast(siteEditingId ? 'Site aggiornata' : 'Site salvata', 'success');
+  document.getElementById('site-unsaved-banner').style.display = 'none';
+  _resetSiteArchivioMesiCache();
+  siteUnsavedData = null;
+  siteEditingId = null;
+
+  openCertModal({ ...d, id: savedId });
+}
+
+// ── Compila Site da modal cert ────────────────────────────────────────────────
+
+function compilaSiteDaCart() {
+  const cliente  = document.getElementById('cert-cliente').value.trim();
+  const dataVal  = document.getElementById('cert-data').value;
+
+  // Converti apparati cert → apparati site (inverso parziale)
+  const apparatiSite = certApparati.map(a => ({
+    tipologia:           '',
+    modello:             [a.costruttore, a.modello].filter(Boolean).join(' '),
+    rack_mount:          a.mono_alimentato === 'SI' ? 'N' : a.mono_alimentato === 'NO' ? 'S' : '',
+    serial_number:       a.serial_number || '',
+    asset:               a.asset || '',
+    rack:                a.rack || '',
+    doppia_alimentazione: a.mono_alimentato === 'NO' ? 'S' : a.mono_alimentato === 'SI' ? 'N' : '',
+    sezione_alimentazione: a.quadro === 'A + B' ? '' : a.quadro || '',
+  }));
+
+  closeCertModal();
+  switchTab('site');
+
+  setTimeout(async () => {
+    switchSiteTab('nuova');
+    await loadAnagraficheCache();
+    document.getElementById('site-tipo').value = 'Installazione';
+    document.getElementById('site-data').value = dataVal || new Date().toISOString().split('T')[0];
+
+    // Cerca anagrafica per nome cliente
+    const found = anagraficheCache.find(a => a.nome === cliente);
+    if (found) document.getElementById('site-cliente').value = found.id;
+
+    switchSiteType();
+    siteApparati = apparatiSite;
+    siteRenderApparati();
+  }, 250);
+}
 
 
 </script>
