@@ -177,6 +177,13 @@
   #login-screen .subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 32px; }
   #login-error { display: none; color: var(--danger); font-size: 12px; margin-bottom: 14px; font-family: var(--mono); }
   #btn-login { width: 100%; margin-top: 14px; }
+
+  @media print{
+    body{background:#fff;padding:0;}
+    header, .tabs, .toolbar{display:none!important;}
+    @page{size:A4 landscape;margin:0;}
+  }
+
 </style>
 </head>
 <body>
@@ -1004,7 +1011,7 @@
       </div>
       <div style="display:flex;gap:10px;margin-bottom:4px;">
         <button class="btn btn-secondary btn-sm" onclick="certAggiungiRiga()">+ Riga manuale</button>
-        <button class="btn btn-secondary btn-sm" onclick="compilaSiteDaCart()">📋 Compila Site</button>
+        <button class="btn btn-secondary btn-sm" onclick="compilaSiteDaCert()">📋 Compila Site</button>
       </div>
     </div>
     <div class="modal-footer">
@@ -3617,8 +3624,9 @@ function _certModello(modello) {
 }
 
 function _certMonoAlimentato(doppiaAlim) {
-  if (doppiaAlim === 'S') return 'NO';
-  if (doppiaAlim === 'N') return 'SI';
+  const v = String(doppiaAlim || '').trim().toUpperCase();
+  if (v === 'S' || v === 'SI' || v === 'SÌ') return 'NO';
+  if (v === 'N' || v === 'NO')               return 'SI';
   return '';
 }
 
@@ -3997,21 +4005,24 @@ async function siteSalvaEVaiCert() {
 
 // ── Compila Site da modal cert ────────────────────────────────────────────────
 
-function compilaSiteDaCart() {
+function compilaSiteDaCert() {
   const cliente  = document.getElementById('cert-cliente').value.trim();
   const dataVal  = document.getElementById('cert-data').value;
 
   // Converti apparati cert → apparati site (inverso parziale)
-  const apparatiSite = certApparati.map(a => ({
-    tipologia:           '',
-    modello:             [a.costruttore, a.modello].filter(Boolean).join(' '),
-    rack_mount:          a.mono_alimentato === 'SI' ? 'N' : a.mono_alimentato === 'NO' ? 'S' : '',
-    serial_number:       a.serial_number || '',
-    asset:               a.asset || '',
-    rack:                a.rack || '',
-    doppia_alimentazione: a.mono_alimentato === 'NO' ? 'S' : a.mono_alimentato === 'SI' ? 'N' : '',
-    sezione_alimentazione: a.quadro === 'A + B' ? '' : a.quadro || '',
-  }));
+  const apparatiSite = certApparati.map(a => {
+    const mono = String(a.mono_alimentato || '').trim().toUpperCase();
+    const doppiaAlim = (mono === 'NO' || mono === 'N') ? 'S' : (mono === 'SI' || mono === 'SÌ' || mono === 'S') ? 'N' : '';
+    return {
+      tipologia:            '',
+      modello:              [a.costruttore, a.modello].filter(Boolean).join(' '),
+      serial_number:        a.serial_number || '',
+      asset:                a.asset || '',
+      rack:                 a.rack || '',
+      doppia_alimentazione: doppiaAlim,
+      sezione_alimentazione: a.quadro || '',
+    };
+  });
 
   closeCertModal();
   switchTab('site');
@@ -4023,7 +4034,7 @@ function compilaSiteDaCart() {
     document.getElementById('site-data').value = dataVal || new Date().toISOString().split('T')[0];
 
     // Cerca anagrafica per nome cliente
-    const found = anagraficheCache.find(a => a.nome === cliente);
+    const found = anagraficheCache.find(an => an.nome === cliente);
     if (found) document.getElementById('site-cliente').value = found.id;
 
     switchSiteType();
