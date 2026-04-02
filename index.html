@@ -3199,19 +3199,38 @@ async function initNuovaSite() {
 
 // ── APPARATI SITE ─────────────────────────────────────────────────────────────
 async function siteAggiungiDaRicerca() {
+
+  // cerca apparati in base al input
   const q = document.getElementById('site-cerca-apparato').value.trim();
   if (!q) return;
-  const { data } = await db.from('sn_main')
-    .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn,rack,asset_subcategory')
-    .or(`etichetta_asset.eq.${q},numero_di_serie.ilike.%${q}%,asset_sn.ilike.%${q}%`)
-    .limit(5);
+  const tokens = q.split(/[\s,;\n]+/).map(t => t.trim()).filter(Boolean);
+
+  let data;
+  if (tokens.length > 1) {
+    const { data: dMulti } = await db.from('sn_main')
+      .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn,rack,asset_subcategory')
+      .in('etichetta_asset',tokens);
+      data = dMulti;
+  } else {
+    const { data: dSingle } = await db.from('sn_main')
+      .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn,rack,asset_subcategory')
+      .or(`etichetta_asset.eq.${q},numero_di_serie.ilike.%${q}%,asset_sn.ilike.%${q}%`);
+    if (!dSingle || !dSingle.length) {
+      const { data: dCli } = await db.from('sn_main')
+        .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn,rack,asset_subcategory')
+        .ilike('piattaforma_supportata',`%${q}%`);
+        data = dCli;
+    } else { data = dSingle; }
+  }
+
   if (!data || !data.length) { showToast('Nessun apparato trovato', 'error'); return; }
+
+  // trasferisce dati trovati nella site
   const tipo = document.getElementById('site-tipo').value;
   data.forEach(r => {
     const app = {
       tipologia:    r.asset_subcategory || '',
       modello:      [r.produttore, r.asset_model].filter(Boolean).join(' '),
-      rack_mount:   '',
       serial_number: r.numero_di_serie || r.asset_sn || '',
       asset:        r.etichetta_asset || '',
       rack:         r.rack || '',
