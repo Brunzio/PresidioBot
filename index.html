@@ -222,8 +222,8 @@
   <div class="tab" onclick="switchTab('chiave')">Cerca Chiave</div>
   <div class="tab" onclick="switchTab('ricercasn')">Ricerca SN</div>
   <div class="tab" onclick="switchTab('clienti')">Clienti</div>
-  <div class="tab" onclick="switchTab('bolle')">Bolle</div>
   <div class="tab" onclick="switchTab('site')">Site</div>
+  <div class="tab" onclick="switchTab('bolle')">Bolle</div>
   <div class="tab" onclick="switchTab('admin')">Admin</div>
 </div>
 
@@ -566,7 +566,7 @@
         <div style="font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">Apparati</div>
         <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
           <div class="search-box" style="max-width:360px;">
-            <input type="text" id="bolla-cerca-apparato" placeholder="Etichetta o seriale..." onkeydown="if(event.key==='Enter')bollaAggiungiDaRicerca()">
+            <input type="text" id="bolla-cerca-apparato" placeholder="Etichetta, seriale o lista seriali..." onkeydown="if(event.key==='Enter')bollaAggiungiDaRicerca()">
           </div>
           <button class="btn btn-secondary" onclick="bollaAggiungiDaRicerca()">Cerca e aggiungi</button>
           <button class="btn btn-secondary" onclick="bollaAggiungiManuale()">+ Riga manuale</button>
@@ -705,7 +705,7 @@
         <div style="font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">Apparati</div>
         <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
           <div class="search-box" style="max-width:360px;">
-            <input type="text" id="site-cerca-apparato" placeholder="Etichetta o seriale..." onkeydown="if(event.key==='Enter')siteAggiungiDaRicerca()">
+            <input type="text" id="site-cerca-apparato" placeholder="Etichetta, seriale, cliente o lista etichette..." onkeydown="if(event.key==='Enter')siteAggiungiDaRicerca()">
           </div>
           <button class="btn btn-secondary" onclick="siteAggiungiDaRicerca()">Cerca e aggiungi</button>
           <button class="btn btn-secondary" onclick="siteAggiungiManuale()">+ Riga manuale</button>
@@ -1280,7 +1280,7 @@ let parsedRows = [];
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function switchTab(name) {
-  const tabs = ['browse','chiave','ricercasn','clienti','bolle','site','admin'];
+  const tabs = ['browse','chiave','ricercasn','clienti','site','bolle','admin'];
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
@@ -2778,11 +2778,40 @@ async function loadAnagraficheCache() {
 async function bollaAggiungiDaRicerca() {
   const q = document.getElementById('bolla-cerca-apparato').value.trim();
   if (!q) return;
-  const { data } = await db.from('sn_main')
+
+  const tokens = q.split(/[\s,;\n]+/).map(t => t.trim()).filter(Boolean);
+  let data;
+
+  // cerca per singolo o lista
+  if (tokens.length > 1) {
+    const { data: dSN } = await db.from('sn_main')
     .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn')
-    .or(`etichetta_asset.eq.${q},numero_di_serie.ilike.%${q}%,asset_sn.ilike.%${q}%`)
-    .limit(5);
+    .in('asset_sn',tokens);
+
+    const trovati = new Set((dSN || []).map(t => t.asset_sn));
+    const nontrovati = tokens.filter(t => !trovati.has(t));
+
+    const { data: dNumeroS } = await db.from('sn_main')
+    .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn')
+    .in('numero_di_serie',nontrovati);
+
+    data = (dSN || []).concat(dNumeroS);
+
+    // aggiungi i seriali non assettati
+    dNumeroS.forEach(item => trovati.add(item.numero_di_serie));
+    const nonAssettati = tokens.filter(t => !trovati.has(t));
+    nonAssettati.forEach(notA => data.push({asset_sn: notA, asset_model: "Non in Asset"}));
+
+  } else {
+    const { data: dSingle } = await db.from('sn_main')
+    .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn')
+    .or(`etichetta_asset.eq.${q},numero_di_serie.ilike.%${q}%,asset_sn.ilike.%${q}%`);
+    data = dSingle;
+  }
+  
   if (!data || !data.length) { showToast('Nessun apparato trovato', 'error'); return; }
+
+  // popola bolla apparati coi dati trovati
   data.forEach(r => {
     const sn = r.numero_di_serie || r.asset_sn || '';
     const desc = [r.produttore, r.asset_model].filter(Boolean).join(' ');
