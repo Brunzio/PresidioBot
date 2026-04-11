@@ -224,6 +224,7 @@
   <div class="tab" onclick="switchTab('clienti')">Clienti</div>
   <div class="tab" onclick="switchTab('site')">Site</div>
   <div class="tab" onclick="switchTab('bolle')">Bolle</div>
+  <div class="tab" onclick="switchTab('ispezione')">Ispezione</div>
   <div class="tab" onclick="switchTab('admin')">Admin</div>
 </div>
 
@@ -864,6 +865,39 @@
     </div>
   </div>
 
+  <!-- ISPEZIONE PANEL -->
+  <div class="panel" id="panel-ispezione">
+    <div style="max-width:1100px;">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+        <!-- <button class="btn btn-primary" onclick="ispNuovaIspezione()">↺ Nuova Ispezione</button> -->
+        <select id="ispEttore"><option value="">— ispettore —</option></select>
+        <button class="btn btn-primary" onclick="ispAggiungi()">+ Aggiungi</button>
+        <button class="btn btn-secondary" onclick="ispControllaINC()">🔍 Controlla INC</button>
+        <button class="btn btn-secondary" onclick="ispAnteprima()">⬇ Anteprima</button>
+        <button class="btn btn-secondary" onclick="ispCopiaMail()">📋 Copia testo mail</button>
+        <span id="isp-batch-info" style="font-family:var(--mono);font-size:11px;color:var(--text-muted);margin-left:8px;"></span>
+      </div>
+      <div class="table-wrapper scrollable">
+        <table id="isp-table">
+          <thead>
+            <tr>
+              <th style="width:110px;">Creatore</th>
+              <th style="width:70px;">Sala</th>
+              <th>Anomalia Riscontrata</th>
+              <th style="width:180px;">Settore Owner</th>
+              <th style="width:90px;">Data</th>
+              <th style="width:160px;">Dettagli Segnalazione</th>
+              <th style="width:40px;"></th>
+            </tr>
+          </thead>
+          <tbody id="isp-body">
+            <tr><td colspan="7"><div class="empty">Nessuna segnalazione — clicca "Aggiungi" per iniziare</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </main>
 
 <!-- MODAL APPARATO SITE -->
@@ -1218,6 +1252,69 @@
   </div>
 </div>
 
+<!-- MODAL ISPEZIONE -->
+<div class="modal-overlay" id="isp-modal">
+  <div class="modal" style="width:300px;">
+    <div class="modal-header">
+      <h2 id="isp-modal-title">Nuova Segnalazione</h2>
+      <button class="modal-close" onclick="closeIspModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="isp-editing-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="form-group full" style="grid-column:1/-1;">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Etichetta Asset <span style="color:var(--text-muted);font-size:9px;">(pre-compila campi)</span></label>
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="isp-etichetta" placeholder="es. 2020008269" style="flex:1;" onkeydown="if(event.key==='Enter')ispCercaAsset()">
+            <button class="btn btn-secondary btn-sm" onclick="ispCercaAsset()">Cerca</button>
+          </div>
+          <div id="isp-asset-warn" style="display:none;margin-top:6px;font-size:11px;color:var(--warning);">⚠ Questa macchina è già presente nell'ispezione.</div>
+        </div>
+        <!--
+        <div class="form-group">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Firma <span style="color:var(--accent)">*</span></label>
+          <select id="isp-firma">
+            <option value="">— seleziona —</option>
+            <option>Andreucci</option>
+            <option>Cappabianca</option>
+            <option>Di Cioccio</option>
+            <option>Ferrer</option>
+            <option>Passeggiato</option>
+            <option>Pellegatti</option>
+            <option>Sorrentino</option>
+          </select>
+        </div>
+        -->
+        <div class="form-group full">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Sala <span style="color:var(--accent)">*</span></label>
+          <select id="isp-sala"><option value="">— seleziona —</option></select>
+        </div>
+        <div class="form-group full" style="grid-column:1/-1;">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Anomalia Riscontrata <span style="color:var(--accent)">*</span></label>
+          <input type="text" id="isp-anomalia" placeholder="es. 2020008269 (D5)">
+        </div>
+        <div class="form-group full" style="grid-column:1/-1;">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Settore Owner</label>
+          <input type="text" id="isp-owner" placeholder="es. CR_PresidioH24_BSS" list="isp-owner-list" autocomplete="off">
+          <datalist id="isp-owner-list"></datalist>
+        </div>
+        <div class="form-group full">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Data <span style="color:var(--accent)">*</span></label>
+          <input type="date" id="isp-data">
+        </div>
+        <div class="form-group full">
+          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Dettagli Segnalazione</label>
+          <input type="text" id="isp-dettagli" placeholder="es. INC000006942157">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeIspModal()">Annulla</button>
+      <button class="btn btn-primary" onclick="saveIspSegnalazione()">Salva</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -1280,7 +1377,7 @@ let parsedRows = [];
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function switchTab(name) {
-  const tabs = ['browse','chiave','ricercasn','clienti','site','bolle','admin'];
+  const tabs = ['browse','chiave','ricercasn','clienti','site','bolle','ispezione','admin'];
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
@@ -1288,6 +1385,7 @@ function switchTab(name) {
   if (name === 'clienti') loadClienti();
   if (name === 'bolle') { switchBolleTab('nuova'); initNuovaBolla(); }
   if (name === 'site') { switchSiteTab('nuova'); initNuovaSite(); }
+  if (name === 'ispezione') initIspezione();
 }
 
 // ─── CERCA CHIAVE ─────────────────────────────────────────────────────────────
@@ -1609,6 +1707,10 @@ async function loadData() {
   const tipoPiattaforma = document.getElementById('filter-tipo-piattaforma').value;
   const macrocategory  = document.getElementById('filter-macrocategory').value;
   const localizzazione = document.getElementById('filter-localizzazione').value;
+  if (!rawSearch && !tipoPiattaforma && !macrocategory && !localizzazione) {
+    document.getElementById('table-body').innerHTML = `<tr><td colspan="${TABLE_COLS.length + 1}"><div class="empty">Nessun apparato</div></td></tr>`;
+    return;
+  }
 
   // Tokenizza: separa per spazio e/o virgola, rimuove token vuoti
   const tokens = rawSearch ? rawSearch.split(/[\s,]+/).filter(t => t.length > 0) : [];
@@ -4111,6 +4213,410 @@ async function compilaSiteDaCert() {
     siteRenderApparati();
   }, 250);
 }
+
+// ─── TAB ISPEZIONE ────────────────────────────────────────────────────────────
+
+const ISP_SALE = ['TDB0','D0','P0','I0','H0','F0','C0','A0','M0','E0','G0','TLC0','B0','L0','N0','TLC-1','G-1','A-1','B-1','C-1','D-1','E-1','F-1'];
+const ISP_FIRME = ['Andreucci','Cappabianca','Di Cioccio','Ferrer','Passeggiato','Pellegatti','Sorrentino'];
+
+const ispOpts = ISP_FIRME.map(a => `<option>${a}</option>`).join('');
+const ispSel = document.getElementById('ispEttore');
+if (ispSel) ispSel.innerHTML += ispOpts;
+document.getElementById('isp-sala').innerHTML += ISP_SALE.map(a => `<option>${a}</option>`).join('');
+
+// let ispBatchId = null;         // batch corrente (sessionStorage)
+// let ispPrevBatchId = null;     // batch precedente (per avvisi duplicati)
+let ispSegnalazioni = [];      // tutte le segnalazioni caricate (correnti + precedenti)
+let ispOwnerList = [];         // lista owner per datalist
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function initIspezione() {
+  // Ripristina batch da sessionStorage
+  // ispBatchId = sessionStorage.getItem('isp_batch_id') || null;
+  await ispLoadOwners();
+  await ispLoadSegnalazioni();
+}
+
+// ── Nuova Ispezione ───────────────────────────────────────────────────────────
+// async function ispNuovaIspezione() {
+//   if (!confirm('Avviare una nuova ispezione? Le segnalazioni correnti rimarranno visibili come "Precedente".')) return;
+//   ispPrevBatchId = ispBatchId;
+//   ispBatchId = crypto.randomUUID();
+//   sessionStorage.setItem('isp_batch_id', ispBatchId);
+
+//   // Elimina batch più vecchi: mantieni solo current + previous
+//   // Carica tutti i batch distinti
+//   const { data: allBatches } = await db.from('ispezione_segnalazioni')
+//     .select('batch_id')
+//     .not('batch_id', 'in', `(${[ispBatchId, ispPrevBatchId].filter(Boolean).map(b=>`'${b}'`).join(',')})`)
+//     .limit(1);
+//   // Se ci sono batch ancora più vecchi, rimuovili
+//   if (allBatches && allBatches.length > 0) {
+//     const oldBatches = [...new Set(allBatches.map(r => r.batch_id))];
+//     if (oldBatches.length) {
+//       await db.from('ispezione_segnalazioni').delete().in('batch_id', oldBatches);
+//     }
+//   }
+
+//   showToast('Nuova ispezione avviata', 'success');
+//   await ispLoadSegnalazioni();
+// }
+
+// ── Carica segnalazioni ───────────────────────────────────────────────────────
+async function ispLoadSegnalazioni() {
+  const { data, error } = await db.from('ispezione_segnalazioni')
+    .select('*')
+    .order('created_at', { ascending: true });
+  if (error) { showToast('Errore caricamento ispezione: ' + error.message, 'error'); return; }
+  ispSegnalazioni = data || [];
+
+  // Determina prev batch se non in sessione
+  // if (!ispPrevBatchId && ispBatchId) {
+  //  const altri = [...new Set(ispSegnalazioni.map(r => r.batch_id).filter(b => b !== ispBatchId))];
+  //  ispPrevBatchId = altri[0] || null;
+  // }
+
+  // Aggiorna info batch
+  // const correnti = ispSegnalazioni.filter(r => r.batch_id === ispBatchId).length;
+  // const prev     = ispSegnalazioni.filter(r => r.batch_id === ispPrevBatchId).length;
+  // const infoEl   = document.getElementById('isp-batch-info');
+  // if (ispBatchId) {
+  //  infoEl.textContent = `Ispezione corrente: ${correnti} segnalazioni` + (prev ? ` — Precedente: ${prev}` : '');
+  // } else {
+  //   infoEl.textContent = 'Nessuna ispezione attiva — clicca "Nuova Ispezione"';
+  // }
+
+  ispRenderTabella();
+}
+
+function ispDataChk(row) {
+  const adesso = new Date();
+  // const creato = row.created_at
+  //   .replace(" ", "T")               // spazio -> T
+  //   .replace(/\.(\d{3})\d+/, '.$1')  // taglia microsecondi a millisecondi
+  //   .replace("+00", "Z");            // timezone
+  const creato = new Date(row.created_at);
+  const dataObj = row.data ? new Date(row.data + 'T00:00:00') : null;
+  const sameDay = dataObj ? dataObj.toDateString() === adesso.toDateString() : false;
+  const diff = (adesso - creato) / (1000 * 60 * 60);
+  const isNew = sameDay && diff < 6;
+  const dataStr = dataObj ? dataObj.toLocaleDateString('it-IT') : '—';
+  return [dataStr, isNew];
+}
+
+// ── Render tabella ────────────────────────────────────────────────────────────
+function ispRenderTabella() {
+  const tbody = document.getElementById('isp-body');
+
+  if (!ispSegnalazioni.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty">Nessuna segnalazione — clicca "Aggiungi" per iniziare</div></td></tr>';
+    return;
+  }
+
+  // Ordina: prima correnti poi precedenti, dentro ognuno per ordine sala
+  const ordina = (a, b) => {
+    const ai = ISP_SALE.indexOf(a.sala);
+    const bi = ISP_SALE.indexOf(b.sala);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  };
+
+  // const correnti = ispSegnalazioni.filter(r => r.batch_id === ispBatchId).sort(ordina);
+  // const precedenti = ispSegnalazioni.filter(r => r.batch_id !== ispBatchId).sort(ordina);
+  // const tutte = [...correnti, ...precedenti];
+  const tutte = ispSegnalazioni.sort(ordina);
+
+  tbody.innerHTML = tutte.map((r, index) => {
+    // const isPrev = r.batch_id !== ispBatchId;
+    // const adesso = new Date();
+    // const dataObj = r.data ? new Date(r.data + 'T00:00:00') : null;
+    // const dataStr = dataObj ? dataObj.toLocaleDateString('it-IT') : '—';
+    // const sameDay = dataObj ? dataObj.toDateString() === adesso.toDateString() : false;
+    // const isNew = sameDay && adesso.getHours() < 16;
+    const [dataStr, isNew] = ispDataChk(r);
+    // const rowStyle = isPrev ? 'opacity:0.45;' : '';
+    // const prevBadge = isPrev ? '<span class="badge badge-default" style="margin-left:6px;font-size:9px;">prec.</span>' : '';
+    const rowStyle = isNew ? 'background:#660;' : ''
+    const newBadge = isNew ? '<span class="badge badge-default" style="margin-left:6px;font-size:9px;">new</span>' : '';
+    return `<tr style="${rowStyle}">
+      <td style="font-size:12px;">${escHtml(r.firma||'—')}</td>
+      <td><span class="badge badge-default">${escHtml(r.sala||'—')}</span>${newBadge}</td>
+      <td style="max-width:260px;" title="${escHtml(r.anomalia||'')}">${escHtml(r.anomalia||'—')}</td>
+      <td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.settore_owner||'')}">${escHtml(r.settore_owner||'—')}</td>
+      <td style="font-size:11px;">${dataStr}</td>
+      <td style="font-family:var(--mono);font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.dettagli||'')}">${escHtml(r.dettagli||'—')}</td>
+      <td><button class="btn btn-secondary btn-sm" style="margin: 0 6px" onclick="ispModifica(${index})">✎</button><button class="btn btn-danger btn-sm" onclick="ispElimina(${r.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Owners ────────────────────────────────────────────────────────────────────
+async function ispLoadOwners() {
+  const { data } = await db.from('ispezione_owner').select('nome').order('nome');
+  ispOwnerList = (data || []).map(r => r.nome);
+  const dl = document.getElementById('isp-owner-list');
+  if (dl) dl.innerHTML = ispOwnerList.map(n => `<option value="${escHtml(n)}">`).join('');
+}
+
+async function ispEnsureOwner(nome) {
+  if (!nome || ispOwnerList.includes(nome)) return;
+  await db.from('ispezione_owner').upsert({ nome }, { onConflict: 'nome' });
+  ispOwnerList.push(nome);
+  const dl = document.getElementById('isp-owner-list');
+  if (dl) dl.innerHTML += `<option value="${escHtml(nome)}">`;
+}
+
+// ── Aggiungi / Modal ──────────────────────────────────────────────────────────
+function ispAggiungi() {
+  if (document.getElementById('ispEttore').value === '') { showToast('Prima scegli un ispettore', 'error'); return; }
+  document.getElementById('isp-editing-id').value = '';
+  document.getElementById('isp-modal-title').textContent = 'Nuova Segnalazione';
+  document.getElementById('isp-etichetta').value = '';
+  // document.getElementById('isp-firma').value = document.getElementById('ispEttore').value;
+  document.getElementById('isp-sala').value = '';
+  document.getElementById('isp-anomalia').value = '';
+  document.getElementById('isp-owner').value = '';
+  document.getElementById('isp-data').value = new Date().toISOString().split('T')[0];
+  document.getElementById('isp-dettagli').value = '';
+  document.getElementById('isp-asset-warn').style.display = 'none';
+  document.getElementById('isp-modal').classList.add('open');
+}
+
+function ispModifica(idx) {
+  const editSel = ispSegnalazioni[idx] || {};
+  document.getElementById('ispEttore').value = editSel.firma;
+  document.getElementById('isp-editing-id').value = editSel.id;
+  document.getElementById('isp-modal-title').textContent = 'Modifica Segnalazione';
+  document.getElementById('isp-etichetta').value = '';
+  document.getElementById('isp-sala').value = editSel.sala;
+  document.getElementById('isp-anomalia').value = editSel.anomalia;
+  document.getElementById('isp-owner').value = editSel.settore_owner;
+  document.getElementById('isp-data').value = editSel.data;
+  document.getElementById('isp-dettagli').value = editSel.dettagli;
+  document.getElementById('isp-asset-warn').style.display = 'none';
+  document.getElementById('isp-modal').classList.add('open');
+}
+
+function closeIspModal() {
+  document.getElementById('isp-modal').classList.remove('open');
+}
+
+// ── Cerca asset e pre-compila ─────────────────────────────────────────────────
+async function ispCercaAsset() {
+  const et = document.getElementById('isp-etichetta').value.trim();
+  if (!et) return;
+  const { data, error } = await db.from('sn_main')
+    .select('etichetta_asset,nome_completo')
+    .eq('etichetta_asset', et)
+    .single();
+  if (error || !data) { showToast('Etichetta non trovata', 'error'); return; }
+
+  // Estrai sala e areola da nome_completo: /BO1/SalaH-0/D5/ → sala=H-0, areola=D5
+  let sala = '';
+  let areola = '';
+  const nc = data.nome_completo || '';
+  const salaMatch = nc.match(/[Ss]ala([^/]+)/);
+  if (salaMatch) {
+    sala = salaMatch[1]; // es. "H-0"
+    // areola è il segmento dopo la sala
+    const afterSala = nc.split(salaMatch[0])[1] || '';
+    const areaMatch = afterSala.match(/\/([^/]+)/);
+    if (areaMatch) areola = areaMatch[1];
+  } else {
+    showToast('Possibile macchina rimossa', 'error');
+  }
+
+  // Pre-compila campi
+  document.getElementById('isp-sala').value = sala;
+  const anomalia = areola ? `${et} (${areola})` : et;
+  document.getElementById('isp-anomalia').value = anomalia;
+
+  // Controlla se già presente tra le segnalazioni
+  const warn = document.getElementById('isp-asset-warn');
+  // if (ispPrevBatchId) {
+  //   const dup = ispSegnalazioni.find(r => r.batch_id === ispPrevBatchId && r.etichetta_asset === et);
+  // } else {
+  //   warn.style.display = 'none';
+  // }
+  const dup = ispSegnalazioni.find(r => r.etichetta_asset === et);
+  warn.style.display = dup ? 'block' : 'none';
+}
+
+// ── Salva segnalazione ────────────────────────────────────────────────────────
+async function saveIspSegnalazione() {
+  const sala     = document.getElementById('isp-sala').value;
+  const anomalia = document.getElementById('isp-anomalia').value.trim();
+  if (!anomalia || !sala) { showToast('Sala e Anomalia sono obbligatorie', 'error'); return; }
+
+  const owner = document.getElementById('isp-owner').value.trim();
+  const record = {
+    firma:         document.getElementById('ispEttore').value,
+    sala,
+    anomalia,
+    settore_owner: owner,
+    data:          document.getElementById('isp-data').value || null,
+    dettagli:      document.getElementById('isp-dettagli').value.trim(),
+  //  etichetta_asset: document.getElementById('isp-etichetta').value.trim() || null,
+  };
+
+  const editId = document.getElementById('isp-editing-id').value;
+  let error;
+  if (editId) {
+    ({ error } = await db.from('ispezione_segnalazioni').update(record).eq('id', editId));
+  } else {
+    ({ error } = await db.from('ispezione_segnalazioni').insert(record));
+  }
+  if (error) { showToast('Errore: ' + error.message, 'error'); return; }
+
+  // Salva owner se nuovo
+  if (owner) await ispEnsureOwner(owner);
+
+  showToast(editId ? 'Segnalazione modificata' : 'Segnalazione salvata', 'success');
+  closeIspModal();
+  await ispLoadSegnalazioni();
+}
+
+// ── Elimina ───────────────────────────────────────────────────────────────────
+async function ispElimina(id) {
+  if (!confirm('Eliminare questa segnalazione?')) return;
+  const { error } = await db.from('ispezione_segnalazioni').delete().eq('id', id);
+  if (error) { showToast('Errore: ' + error.message, 'error'); return; }
+  showToast('Segnalazione eliminata', 'success');
+  await ispLoadSegnalazioni();
+}
+
+// ── Controlla INC ─────────────────────────────────────────────────────────────
+function ispControllaINC() {
+  const testo = ispSegnalazioni.map(r => r.dettagli || '').join(' ');
+  const regex = /.*?(INC)?(0*)((6|7|8)(\d{6}))/g;
+  const listinc = [];
+  let m;
+  while ((m = regex.exec(testo)) !== null) listinc.push(m[3]);
+  if (!listinc.length) { showToast('Nessun INC trovato nelle segnalazioni', 'error'); return; }
+
+  let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3D';
+  listinc.forEach((inc, i) => {
+    if (i > 0) url += '%255EOR';
+    url += 'number%253DINC00000' + inc;
+  });
+  window.open(url, '_blank');
+}
+
+// ── Genera testo mail (tabella HTML) ─────────────────────────────────────────────────────────────
+function ispGeneraMail() {
+  const ispFirma = document.getElementById('ispEttore').value;
+  const LOGO_SRC = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKoAAAAwCAYAAACBi+GnAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAABfQSURBVHhe7VwJcFxXlT0tdav3vVu7W5stL7IcO5KXeIkTktiJAwEmFWAMWSApwmQywxZmKRi2AkIxA8MUA5MZyEBlplJTWYCEEGKSOE4cG8c23jdJ1r5Lve+L1Jp7X3eruyVZ+qaSCEEf+ZX0X/9+//33z7v33Pvet2yKgAIK+CNHUfp3AQX8UaNA1AKWBApELWBJoEDUApYECkQtYEmgQNQClgQkpacmJycxMTEhfi8WZDIZFAoF5HJ5uqaAtxtMhXg8nveci4uLxZjz78WEJKIePt2GZ0+7cKRjDJPJdz/tWkx236hR4v4bV+HGlRZYzKb0JwW8nejs7sO/7u/DyR4n4mSYFDTwLfWl2Lu5Gtc11abPWhxIIuqjT/wGj50rwlgwTrMuXfkuQkZFrSjC9kYrvr3LjjWNDakPCnhbcfp8Gx56fgxnBvyIk1UtIgOxvtqEB1oNuH/X+vRZiwNJGnXU48eQP4ZoIonYxLtfolQCsQn0OMOIRKLpXhXwdoPUFXkvGZE0SWWKnvcU/NEJ+EKx9BmLB0lELZIVUWG7trjgPrBWLeCdAccAFq1CeLBpyKbAP4sNSURldSBBIbzDkAl9vPj9+NMFGwKFvAhkl6YxSZY1MbF4QXQGkoi60lGGleW69NHioISE/fWNNphNhnRNAW832Fspiai5SJJhmCCyLjYkBVPDI6M42+tEW1CNZJIqxL28Wy54SlxJK09ie7UCNVVlUKlUqY8KeFvR0dWLbx5w4anjg4hQPMJosGlxd7MSX9m7QxwvFiRv8wuHI/AGI4vmehXyYtgtxoJGfQfR2dOPRw848eTRgWmi1ts0+GiTEl//2PXieLEgmah/rJgg/dQ9MIxwJEYadpKi1mKY9BrUVFeIz/sGhzE07oE/GEY8kaDPi6DTqlFmNaPSboFOpxXnLQS314cxlw8efwDBUITcYUq3KUtKYNBpaBKZqBigUatF/ULgYQ+FoxgcdcJFbYciUerfhPhMIZdDq1bCZjaiutxObapmTVC+r+FxL4JkQDjY4fsy6rVorKmke7qyTHO63OgeHBPjwX2QkwGoKrOJsRh1uvCdN9x44nf9RNTU/dVZ1di7pgTfuOcGcTwf3B4vRlxeeHwBhKOpTEEJBWhGGuNSK4+PiQK2P2zBZskTNRBJ4N9e7kK/L4L4RBIqGvgmcxJ7t9WJgXvhvBuHBibR4wojGJtACWmwCqMKLTVGvKdqCusbKmC1WtKtzQav1AyPjuFYfwjHhyfQNhLEiC+KUDxlcUwakiNWDa6pNmBjlRJNFVpYLeZ5LX80GsWYN4iLrgm8fsmDC8N+DPuj1L9JQR6tUk59pLYq9XjPChvWlCpgM2mhVCrTLQBPH7yIX3dE0DkewiR9hzV8HVm/z2+zYHXDsjlXkrjt145fwE9ORdBH48FrN2pFMe64pgJ3NBkwlYjgXw668bPDWaLWCqIq8M17bhTHc4G97RiR/FiXC0fGitE+GoQzGBf61qBSiH611JixaZmGpIQKer3uqj3jkifqGJGm+SuvYSwUT1XQ3aymwO/zu5bjJwd7cG6ILCARQGDG2DRX6fDX6xV48ANzuzVeNu73xPGFp8/htbZxuMMJ0X4K1NiM9tj6/O0N1XhwZx3U81jW0x39ePyYB/9zpB/ecMqKzpb8qQvZdSV4YHst7ttoRSMFtRk89uIJ/OcxP04NeOko++WffaIFd6wxwWycbVUjsTh+dKAfjzxzNu8+Hry+Dg9vs0Ejn8R33/Tgp4f6JBOVl1t/3+PBN39zGW+0O+GN8Pe48ZwbokM2EM2VBnxpTx32rCtHCXmiq4EkonqCPpz39uP8eA+515QlWQg2jRFNhmo0Vc1eRfK53QgdO4MYub0pKfsHyK0pyH2U7dyCYnKHudbC7fFh1/cO47xzQiwM8ERVk1W10gN20ayOkjS40qqvSiHDxgol7m814d7bNqdrU2CSHu924wvPtuE8kd1P1nih5WN+GNXGEnxysw13X1eNyvIssTI4cr4b//HmEF686IebJtdCo8kJeKu2BHddY8HnbqlHfaVN1PeP+/EPz3XgybcGxHEGn9pZiwdb9Fi/uj5dk8XlgTH88M0xfP/VznQNSRe5DI++fzVNLgdGxsZmEbWGibpagW/dO5uowSB5GSLpIz9vR4czgmA0QWM9a8YJcK2KrHe9VYWv3FaDm9eUwmwypj6UgOKvEtJ/XxHPnXwdP3YewsuuCzge6MPvgwuXgYQH+oQcGypXpFvJYqinF3j8WSSPnALOtAPnOhYuFzsho4EJVpdCZ8ymqGKxKH5xgvRaKIlEOo0yQXPPF5lAgvOudMxukR84u8hcEK/hIyk1JSsSA6cqkU+7pJN0vR+/5cFL50fJzWfJLiZCSTEqST6wzOBrZtplIvvJeg8EklhjLxESQ6lMWQ62B/5QFN/7bSdebAtgLBDLGjWCjI601K6SJuEEGYPMZ9w0X98TTaJIVoydq+yiXqssxqWOLlxyE2FoEmXA7WywxtFYW52uyeLM5UG8ejlIUiOQrgEay3T4wAo51i2vgtfnx+G+CFlp/3RKiqXNWjuNz/o6cZwBW9IL/W589aVeHO31IUx9TOVniJA0YZeZ1Sg1KAXhp58LjY+XnkuvdwKt1VqUmzVkgyRlSKUR9X8Pv4in/KfQF3ZhNOqTVIqp06sUdmx1rE23ksXoAFmBn7+CWFsXJsfdmHR6FiwTFBAlYwmEN6+FtSxrqVjvMVEHAxNi2S8DebEM65cZsWOFHdevKkNrnVVoSfZD7lBCEIDBS7SKEiU21VFwRbqQBy5AE2LfyR5yzy542N2nYaaHxlrrfasN2FURwUb7JCwGHfyJIviiKbJwu6zPzEY9GnQJlNvMoj5BgdwbbW48/rsRdDlDoo7BG25WkVS5abUdNzfXYlNDGVllhVjG9JL+zvQzQNYqIVNha4MFZnWR2NHkJs/UE5Sh2xlOnURgYrRWqbDWYZ8VuLxxqh0vd0Ux5M0uQ9/QaMMtDWo4KkspCEoTtT+fqM1zEHWYnttLbSE89kZPXp7VQQTdvVyDv2hI4roKGaqtBoQni+Ghe+HJzmXAE0XTMhtqyd5wICoFkugcTZALncw+MClQFMmhUcyd7yymQZab9JCRlZMMemJJfxCTM1ZJ2AIqiJS5S7xM0nKtHB/foMeXb3XgG++rF+XLu5eR3lLCpOTz0ycTAkSyM31u4e4ZvaNenPKqMZjzQNkitxIx/2qLGV/7YDM+v3c3/vHe2/F3u+txQ60KRnU+KfZfGkfboIu6nXqIsVgMzxztxmggIo4ZZJBRpi3G3iYVvrS7Bl+/3YGv7ammvx34MLlbc04/2RMPuDx4+UyPCPAY6+qXYb3dnvcQPaR5u2IGjHqzk4GRJCvd64qg350lNaO5Wo8Ke2oyXQ3aewax78JonhxiiXILkfSRXfX4zEduwcN33YR/uqMJdzab4bDkc+FA2xg6+4fSRwtDElE59cHlajGv/OVZOM/Hs8CXJz2Vw8dpyMld5kaROnKLmxxq3L1jOZpq7DBqlTBoSrCW/n5o1xo0mMnFMkvSiBH5h72R6X2Y57uHSJf6xd8ZmDRyfHQt6bWdTTDqsoHShpUOsrBabHDk663LYyEMwYRYPEX+SDSGQxxsZIIngp6kxvY6Pf7m1rXUT5YexaI01djwudvXYbVdQTIjO+5e8gSH2senidpAVqlJa4dOlT9JODPR1jeSPkohSBatJ2HGiC8ddBJ48q2t0Exbfang59oz5MSRTk+6JoXrV1ixt6VUjEkG5TYj7mopw+6mfL1+guRC/7AzfbQwJLHvalMJDLbA/lj+7M0gQdHnxLgr5SevAjKKFOfSNDOrOOVSb9fPmaLhOv6Mtw1mwEYhmg4eGMMuP4Z9+bu0NtWSVahI6cOZ2NDoIKLmP2y2NKPeOMa9AbHjq9M7BRdp9oxeY5SThv3wlro5V9o4FXVHSzVF/dmUFMuUfnLzbB0zqC4fIDmSvz/3AgV/F7qH00cpnO4ezXP5TNIGuxZV8gDUquw1pMDtC2JQVk5xQNbLMkXWVBqxqt5BUiCJOE1+LrxPoMxmRZVBm2dkxgJxBMPSd8JJIuqeddvwyeU345aKdbi5vHnBclP5WmwvXYVG22xBzzBYzNBub4VmWyu0C5YWUfQ3bYXlnjtRWlWVbiWLmdOI3SWvZF0JKiJp3m4wmjBTUxTApCeOLxjOewiMWqsWFtKdc8FKD8FOVrtohosIRCfJksUQJbffS6RN8Mc5l9WQRV1ZYZzzrQWeUCvLjSLAyoDnkidWhAQU6RrqV5UFW5fn54EHyTu0B5WCUBmc7BzFIE++9PVZLu0gC2ile7paQ+TyhzFOwV1exoLubR8Fno88fRH3/fQM7vvZ6VR5/AQ+/eQ5/PJUvpuXySj0uorLSiLqhupGfNy2BZ827sgW0zyFPr9b34IW6+wUCcNktyF8xw3wf2wPfPfcvkB5ryjBj9wG2Y5roZOU0ph/BOYaIBIV4jdbq5DcKPbe5oKDiitZHiUFLWyh2Urlghcg2KIkSPt6QnF6llkic3ReQt8xk66by0swecxEfkWOV2BqxOiRJSCfnlQVVhOuNccoHuDwNQVO0/WG5Lg0yDnW1D2dHo6RvMlaMCVFcbvWlMH6B7wtESBLyMFdLrg75wZ9eOHMIAW3/XjuxJAovzw9gl+dHcG5IZ84JwPOlPCCgFRIIqrZYML6utW4vXUn3rvxhlRpvXJ538YbsXPtRtSUz21RdXo96je1oHn3TWi+9WZJZdWNO2Aotb9D70xlCcYyYEJtEamrXHCAVjSDiLlgos+0TJnDJDXKpJ35XJigvK3uSiima+Z0TUC0mXMdXgKusyjF7rbciTJIkfWJzhFBaFcwge6gXGQRGKx6KvRybKxWQy8x6s6FmHw5EiYDvsdQbBK8TyBM2jxVyKvEEilpxQMwXdJfkghJRP1Tg8j3zSBABlxdRMHKTE4mJqYo2JrB3jQSFITFqLA2y0UJyQ+2tswrJlEujzM5RybxlRCjh5trhXkDu4raKZHxwka2MRtJqT3NZSKvm8EQufnTPaMik3FuwA1XKCzymAz2DltrdbDpUi/uXS1YVilmeAHujl2vQkOpDvU27YKlsUxPBlD61tE/S6LOh2JyiZrI4Kx9md4wWQUKAudCIByDNzohrHEuDEo59BoVWWM5DDPSV4wEWaAgfW+u7IiwhIGYsFIZsK40l0xAnsx/NcRqNmLP2jKaGFnyukhqdI14BVHP9nvzFgXseiU+0OrI2ztwNTBo1WINfybu3boMz3xqI/Z9dite+sy2Ocu+z6bK8w9vwW07WtPfXBiSiRpPxOEO++EM+yQVbzRI5n7ud204DZQIBBFzexFzeRYudB6f/27BpFMJq5OLs6Sxhsbc6aN8nO8axHnWgzlWjjVgmVFHwYpO7H5aXqqHfIaZDpHOu0TtZvK3ueAU1IGLI3kLDqyDa+0aMZlyoSLtXGdIos4oE4Eig7nvkpmx/9wwjvYG4A+nshrch3J4sL3eAH71ZCFwj2dKnlKzHmWmfJLzVGOJEY/44TArUGOZu/BnmaKjSSwVklamTradw9Mdb+LJ0aP47fhZvDy2cLkUGIKcIsNac3m6lSycwyNIPrsP4Rf2I/b6UcQOHp+/HDqO0LHTGJ+aQLHFBGVOOocT6c+dGkG3hyxe2voYVHJcU6UVUe3MzQ98/kvnxtDujAn9xNDT+esqNdi50ibO7xv14JJHhj53NjnP51bqZKQHS2AyZKP/gREn/u/oIPa1+0WUn8GKUi3ez0uTDeUpYsXDeP7kMHyx7JIru+8p0no30nVVyixpeDfS2Z5x/OjgEAa88emkeoVBhQ+1VqKl1pJHMm5HRoEW5247XbHpTThkezEUTOJkv1/se+DrOixq3Naow+1bVuXJBwavTB3qjeD0jCXU5tJi3HRNdmWKX6Pu7e3FscG4ePkvgxBp0qJEBA5jMcpsZpG5yC1hmpgXekZwpnMQdroXrUa6PpZE1GdO7sdj/iPYP3IOJ909OCWheOMhOKb0JNhXpVvJYohuMvHfv0DgwFsIn21H5MLl+cvFTsQ7eqEhHkaa6mG0ZNMx7wRRWYt2eydxoi8VNTMidG5UpkYi5CPr7sLIuAftPQP4zSUfnm+PoINIkov3X1uBXSs0qLBbBCGKMIlLwwH0eBNi7Z7Bbt0VnIRNqcVExIVAMEBW24Xftw/gqUtxvNbhmc4+UFCPNXTbD+10oMxqnDtTQHWHu3wiR8ngAIZXo9zh+LQ+5aXi+7bVorZsdvYks4SaS1TeaGNVA3V6zlLIheZm0kUCfgxHFRTNZxdGWG44ozKEQxFE3QMYdXowMOrE5d4hmnhOmgRR/OqCDwd6olhpSpJV1krWyJJcf8doH9rJQk7SrGVxL+WHd1ldaafVFNdP8jo2PzAekAUKnZ+MRhE9dR5BGsx3Go3L7GK9vJS0XC7e6vbgB0eDePRwGN8/GsK36Pd3DozgVL8vfQYHPECZQYlbGw1oWJb1JpzUv3O9HTWGomkJwJtm+nxhfO2VC/j3tzx44nQQPzkZxPePhfHjN3rE5MiAFwc2VZegqb5KEGUm2MJurregguIT1rIMHj3eM5CRwJyTXWNXYnNjalP5THC7Gjon1856QgkcHpzCf50I4uRwHCGy9owVNRVizwOPUS6JLo4E8cO3nPji6xH885EwvnskJMbriy+P4YvPX8Tjh3rx67MjODgIjLiy47YQJBFVqSihaPPq9g9yQl1eNHtAGTzzeZVJjKRUTJFV0urmfEhzYt62578w50u3OpT4y00Vs6J/XrF65aITTx0fwv5LvCSak0+kZpkM92ypJk+iglGfjWqZSLtaGrCpNAmbNjuW7Nb7SWLw3tRHX+zAD17txoE2V/rTFLgP25ab8anbrk3XzAZbbatBg2bT5KwJlsG6aqPYr5ArM3KhUpagjiLyVPIgNUY8mbrJKj9xeAC/PTcqrC6DA7ittRrs3ViRtyjBCMWSODsYwAtnRvELkjuvXBwX+4J5H0IGvCvtUld/+mhhSCIqB0WRybkj3ithcoqX0fKTwhmwRU1Grv4/NUhSQDU5I/Dg6NhP2id3cwT/zXsjrwR+K2D2+fntrnBU4N51Gnxie42wMlLA2/oeuK4SD20xo7Js7uXWv79rK+7fUYd6CoqkgDe73Le1Bg9ttsFhm3tlLBc71jrE0uhcuH6lHTs3zN52mYHFZMR7VlvF2wUZqzwfqspL8ZntNjy8swrVZmmBEU86m64ErbUmVJZa07ULQ5JG7RobRG8RBQsklOWyYkmlSmPBJn0tudCV6Vay8DidkB85g0kXR8r0j6bwvIV1kUYN3Y5WyLe35GlUER23OTHkT4o8Jgt9m16BrXUmsbQ4U6Py+Ycue9BLWpE1Ip9v1Smwpc6A7TmalrWTUatGvSaGarsR6rQVEoEQ/ePvceHNKpwTvHmNHXdvMOODaw2od1RdUXvx5phlqgiWKSPQGixCTHG/yceIXCvvnWXN7LBohBX9xLY63NmkwxqHTdL7WDq1Em1jcXSN+4XL5z4qFUXYQrLgQ6sU2LC88opeSbj+4ilUGjXgDdAJ6lcxWWqjWoHlFBx+kHT36jKtyGJkztfrtHBoEmgs16LMooeaNK3wQlSY67xixsQUr6M4TNjTXI4Htjqwq16J2gqr5BSZpB3+Zzou4GjfRfS58nfkzIcKsw2ty1Zj46p16ZosxkdH0fPqQXj7B6d3LC0EBd2QY+MGlF3TBIMxGwgw8X795im0D4wjlLbSZnKBG1fVYvPahlkpGD7/laPncb57WCwFMsx6GsSVDly3bsWs83n5kV8OPNc1hO6hcbh9IcQSWWutVZeg1GzACtKjKx2l4gU2KRh3unGhj4K6vhGMe/zUJudT2YWTCy5RUJ+0qKu0Y32jAzaTdMnD47n/eBuOUwAaiaX6yTvf1tRVYvOqajiqK0XdlcB04HH83dnLuDwwKjZ7y3kyG3W4fsNKmrSmWZOf4QuEcHlwHJ30HdaeAfoevwApyK8qgUmnISIbUUPkbHSUi8DsarDk35kq4M8DkjRqAQUsNgpELWBJoEDUApYECkQtYEmgQNQClgQKRC1gSaBA1AKWBApELWBJoEDUApYAgP8HONyY5TnSar4AAAAASUVORK5CYII='
+
+  // Raggruppa per sala nell'ordine fisso (solo sale con segnalazioni)
+  // const correnti = ispSegnalazioni.filter(r => r.batch_id === ispBatchId);
+  // const bySala = {};
+  // correnti.forEach(r => {
+  // ispSegnalazioni.forEach(r => {
+  //   if (!bySala[r.sala]) bySala[r.sala] = [];
+  //   bySala[r.sala].push(r);
+  // });
+
+  // Costruisce la tabella HTML in stile Outlook (tabella con bordi inline)
+  const hdStyle = 'border:2px solid #000;padding:0;';
+  const thStyle = 'font-weight:bold;border:2px solid #000;padding:4px 6px;';
+  const tdStyle = 'height:20px;border:1px solid #000;border-right:2px solid #000;padding:3px 6px;';
+
+  let rows = `<tr><td style="${hdStyle}"><img src="${LOGO_SRC}"></td><td style="${hdStyle}" colspan=5>ALLEGATO A dell\’ Istruzione TIIT_INF_IL2000010<br>Visite Ispettive nelle sale sistemi del DCBO</td></tr>`;
+  // Header
+  rows += `<tr>
+    <td style="${thStyle}">FIRMA</td>
+    <td style="${thStyle}">SALA</td>
+    <td style="${thStyle}">ANOMALIA RISCONTRATA</td>
+    <td style="${thStyle}">SETTORE OWNER</td>
+    <td style="${thStyle}">DATA</td>
+    <td style="${thStyle}">DETTAGLI SEGNALAZIONE</td>
+  </tr>`;
+
+  // Genero righe tabella
+  ISP_SALE.forEach(sala => {
+    const ledSala = ispSegnalazioni.filter(s => s.sala === sala) || [];
+    const righe = Math.max(ledSala.length, 2);
+    
+    for (let i = 0; i < righe; i++) {
+      if(i === 0) {
+        rows += `<tr style="border-top:2px solid #000;">
+          <td rowspan=${righe} style="${thStyle}">${ledSala.length ? (ispFirma || '') : ''}</td>
+          <td rowspan=${righe} style="${thStyle}">${sala}</td>`;
+      } else {
+        rows += `<tr>`;
+      }
+      if (i < ledSala.length) {
+        const [dataStr, isNew] = ispDataChk(ledSala[i]);
+        const cellStyle = isNew ? tdStyle + 'background:#ff0;' : tdStyle;
+        rows += `<td style="${cellStyle}">${(ledSala[i].anomalia||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
+          <td style="${cellStyle}">${(ledSala[i].settore_owner || '').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
+          <td style="${cellStyle}">${dataStr}</td>
+          <td style="font-weight:bold;${cellStyle}">${(ledSala[i].dettagli||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td></tr>`;
+      } else {
+        rows += `<td style="${tdStyle}"></td><td style="${tdStyle}"></td><td style="${tdStyle}"></td><td style="${tdStyle}"></td></tr>`;
+      }
+    }
+  })
+
+  // Righe per sala nell'ordine fisso
+  // ISP_SALE.forEach(sala => {
+  //   const rige = bySala[sala] || [];
+  //   // if (!rige || !rige.length) return;
+  //   rige.forEach((r, i) => {
+  //     const dataStr = r.data ? new Date(r.data + 'T00:00:00').toLocaleDateString('it-IT') : '';
+  //     rows += `<tr style="${trStyle}">
+  //       <td style="${tdStyle}">${i === 0 ? (r.firma || '') : ''}</td>
+  //       <td style="${tdStyle}">${i === 0 ? sala : ''}</td>
+  //       <td style="${tdStyle}">${(r.anomalia||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
+  //       <td style="${tdStyle}">${(r.settore_owner||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
+  //       <td style="${tdStyle};text-align:center;">${dataStr}</td>
+  //       <td style="${tdStyle};font-weight:bold;">${(r.dettagli||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
+  //     </tr>`;
+  //   });
+  // });
+
+  return `<table style="border-collapse:collapse;font-family:Tahoma;font-size:10pt;text-align:center;border:2px solid #000;">${rows}</table>`;
+}
+
+// ── Visualizza Anteprima mail Ispezione ──────────────────────────────────────────
+function ispAnteprima() {
+  if (document.getElementById('ispEttore').value === '') { showToast('Prima scegli un ispettore', 'error'); return; }
+  const tabella = ispGeneraMail();
+  const w = window.open('', '_blank');
+  w.document.write(`<html><body style="padding:20px;">${tabella}</body></html>`);
+  w.document.close();
+}
+
+// ── Copia testo mail (tabella HTML) ──────────────────────────────────────────
+function ispCopiaMail() {
+  if (!ispSegnalazioni.length) { showToast('Nessuna segnalazione da copiare', 'error'); return; }
+  if (document.getElementById('ispEttore').value === '') { showToast('Prima scegli un ispettore', 'error'); return; }
+
+  const html = ispGeneraMail();
+
+  // Copia HTML negli appunti
+  const blob = new Blob([html], { type: 'text/html' });
+  const data = new ClipboardItem({ 'text/html': blob });
+  navigator.clipboard.write([data]).then(() => {
+    showToast('Tabella copiata negli appunti', 'success');
+  }).catch(() => {
+    // Fallback: apri finestra con la tabella per copia manuale
+    const w = window.open('', '_blank');
+    w.document.write(`<html><body style="padding:20px;">${html}<p style="margin-top:20px;font-family:sans-serif;color:#666;">Seleziona tutto (Ctrl+A) e copia (Ctrl+C)</p></body></html>`);
+    w.document.close();
+  });
+}
+
+// ── Genera PDF ispezione ──────────────────────────────────────────────────────
+// function ispGeneraPDF() {
+//   // const correnti = ispSegnalazioni.filter(r => r.batch_id === ispBatchId);
+//   const correnti = ispSegnalazioni;
+//   if (!correnti.length) { showToast('Nessuna segnalazione corrente da stampare', 'error'); return; }
+//   sessionStorage.setItem('ispezione_data', JSON.stringify(correnti));
+//   window.open('ispezione_template.html', '_blank');
+// }
+
+// Close modal on overlay click
+document.getElementById('isp-modal').addEventListener('click', function(e) { if (e.target === this) closeIspModal(); });
 
 </script>
 </body>
