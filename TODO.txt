@@ -2,15 +2,12 @@ ispezione
     check non segnalare
     check call hw
 
-SN TOOLS
-    genera testo call hw
+site - bolla
+    switch senza perdere dati
 
 CSS
     temi
     versione mobile
-
-site - bolla
-    switch senza perdere dati
 
 google drive
     possibili integrazioni

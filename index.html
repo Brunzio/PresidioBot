@@ -220,7 +220,7 @@
 <div class="tabs">
   <div class="tab active" onclick="switchTab('browse')">Sfoglia</div>
   <div class="tab" onclick="switchTab('chiave')">Cerca Chiave</div>
-  <div class="tab" onclick="switchTab('ricercasn')">Ricerca SN</div>
+  <div class="tab" onclick="switchTab('strumentisn')">Strumenti SN</div>
   <div class="tab" onclick="switchTab('clienti')">Clienti</div>
   <div class="tab" onclick="switchTab('site')">Site</div>
   <div class="tab" onclick="switchTab('bolle')">Bolle</div>
@@ -317,12 +317,12 @@
     </div>
   </div>
 
-  <!-- RICERCA SN PANEL -->
-  <div class="panel" id="panel-ricercasn">
-    <div style="max-width:680px;margin:0 auto;">
+  <!-- STRUMENTI SN PANEL -->
+  <div class="panel" id="panel-strumentisn">
+    <div style="max-width:440px;margin-bottom:50px">
       <div style="margin-bottom:20px;">
-        <div style="font-family:var(--mono);font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Lista</div>
-        <textarea id="sn-input" placeholder="Incolla qui la lista" style="width:100%;min-height:200px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:6px;font-family:var(--mono);font-size:12px;resize:vertical;outline:none;transition:border .2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;border-bottom:var(--border) solid 1px;">Ricerche multiple</div>
+        <textarea id="sn-input" placeholder="Incolla qui la lista" style="width:100%;min-height:100px;"></textarea>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="snCercaIncident()">Cerca Incident</button>
@@ -330,6 +330,23 @@
         <button class="btn btn-primary" onclick="snCercaMoncall()">Cerca MONCALL</button>
       </div>
     </div>
+
+    <!-- COMPILA CALL HW -->
+    <div style="max-width:690px;">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;border-bottom:var(--border) solid 1px;">Compila Call HW</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+        <input type="text" size="10" id="snAsset" oninput="onSnAssetSearch()" placeholder="Etichetta">
+        <input type="text" size="35" id="snReferente" oninput="onSnSearch()" placeholder="Referente per la call" list="snRefList" autocomplete="off">
+        <datalist id="snRefList"></datalist>
+        <input type="text" size="15" id="snIncident" oninput="onSnSearch()" placeholder="Incident">
+      </div>
+      <div style="max-width:690px;margin-bottom:10px;">
+        <textarea id="snText1" style="margin:0;border:0px;resize:none;border-radius:0;width:100%;min-height:125px;"></textarea>
+        <textarea id="snText2" style="margin:0;border:0px;resize:none;border-radius:0;width:100%;min-height:180px;"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="snCopiaText()">📋 Copia testo</button>
+
+      </div>
   </div>
 
   <!-- CLIENTI PANEL -->
@@ -1377,7 +1394,7 @@ let parsedRows = [];
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function switchTab(name) {
-  const tabs = ['browse','chiave','ricercasn','clienti','site','bolle','ispezione','admin'];
+  const tabs = ['browse','chiave','strumentisn','clienti','site','bolle','ispezione','admin'];
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
@@ -1386,6 +1403,7 @@ function switchTab(name) {
   if (name === 'bolle') { switchBolleTab('nuova'); initNuovaBolla(); }
   if (name === 'site') { switchSiteTab('nuova'); initNuovaSite(); }
   if (name === 'ispezione') initIspezione();
+  if (name === 'strumentisn') initSN();
 }
 
 // ─── CERCA CHIAVE ─────────────────────────────────────────────────────────────
@@ -2707,7 +2725,71 @@ async function loadChiaviCCondivise() {
   `;
 }
 
-// ─── RICERCA SN ───────────────────────────────────────────────────────────────
+// ─── STRUMENTI SN ───────────────────────────────────────────────────────────────
+let snSearchTimeout = null;
+let snListaRef = [];
+
+async function initSN() {
+  snLoadRef();
+  loadSnCall();
+  snCompila();
+}
+function onSnSearch() {
+  clearTimeout(snSearchTimeout);
+  snSearchTimeout = setTimeout(snCompila, 300);
+}
+
+function onSnAssetSearch() {
+  clearTimeout(snSearchTimeout);
+  snSearchTimeout = setTimeout(loadSnCall, 350);
+}
+
+async function loadSnCall() {
+  const asset = document.getElementById('snAsset').value.trim();
+  let host = '';
+  let sn = '';
+  let modello = '';
+  const { data } = await db.from('sn_main').select('*').eq('etichetta_asset', asset).single();
+  if(data) {
+    host = data.hostname || '';
+    sn = data.asset_sn || data.numero_di_serie || '';
+    modello = data.produttore || '' + ' ' + data.asset_model || '';
+  }
+  testo = `Si richiede apertura call Hw sul seguente apparato:\n\nHost: ${host}\nSerial number: ${sn}\nAsset: ${asset}\nModello: ${modello}`;
+  document.getElementById('snText1').value = testo;
+}
+
+async function snLoadRef() {
+  const { data } = await db.from('referenti_call').select('nome').order('nome');
+  snListaRef = (data || []).map(r => r.nome);
+  const dl = document.getElementById('snRefList');
+  if (dl) dl.innerHTML = snListaRef.map(n => `<option value="${escHtml(n)}">`).join('');
+}
+
+async function snSaveRef(nome) {
+  if (!nome || snListaRef.includes(nome)) return;
+  await db.from('referenti_call').upsert({ nome }, { onConflict: 'nome' });
+  snListaRef.push(nome);
+  const dl = document.getElementById('snRefList');
+  if (dl) dl.innerHTML += `<option value="${escHtml(nome)}">`;
+}
+
+function snCompila() {
+  incident = document.getElementById('snIncident').value.trim();
+  contact = document.getElementById('snReferente').value.trim();
+  testo = `Persona/Gruppo referente della chiamata: ${contact}\ninserire in CC presidioh24.dcbo@noovle.com\n\nLocation: Via della Centralinista n.3, Bologna, 40138\n\nNumero incident: ${incident}\n\nDescrizione guasto:\n`;
+    document.getElementById('snText2').value = testo;
+}
+
+async function snCopiaText() {
+  const text1 = document.getElementById('snText1').value;
+  const text2 = document.getElementById('snText2').value;
+  navigator.clipboard.writeText(text1 + '\n\n' + text2);
+  const ref = document.getElementById('snReferente').value.trim();
+  await snSaveRef(ref);
+  showToast('Testo copiato');
+}
+
 function snCercaIncident() {
   const input = document.getElementById('sn-input').value;
   const listinc = [];
