@@ -1,9 +1,11 @@
 ispezione
-    check non segnalare
     check call hw
 
 site - bolla
     switch senza perdere dati
+
+clienti
+    foglio chiavi
 
 CSS
     temi
