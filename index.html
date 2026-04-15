@@ -2008,12 +2008,87 @@ async function saveRecord() {
 }
 
 // ─── DELETE ───────────────────────────────────────────────────────────────────
-function openDeleteModal(key) {
-  deleteKey = key;
-  document.getElementById('delete-label').textContent = key;
-  document.getElementById('delete-detail').textContent = 'Record sn_main. Tutti i dati associati verranno rimossi.';
-  document.getElementById('delete-modal').dataset.mode = '';
-  document.getElementById('delete-modal').classList.add('open');
+let currentDelete = null;
+const DELETE_CONFIG = {
+  cliente: {
+    table: 'clienti_chiave',
+    column: 'nome_cliente',
+    reload: loadClienti,
+    message: 'Tipo: <strong>Chiave Cliente</strong><br>Tutti gli apparati di questo cliente perderanno la chiave derivata.'
+  },
+  bolla: {
+    table: 'bolle_ddt',
+    column: 'id',
+    reload: loadArchivio,
+    message: 'Tipo: <strong>Bolla DDT</strong><br>La bolla verrà eliminata definitivamente dall\'archivio.'
+  },
+  site: {
+    table: 'site_report',
+    column: 'id',
+    reload: loadSiteArchivio,
+    message: 'Tipo: <strong>Site</strong><br>La site verrà eliminata definitivamente dall\'archivio.'
+  },
+  cert: {
+    table: 'cert_elettrica',
+    column: 'id',
+    reload: loadCertArchivio,
+    message: 'Tipo: <strong>Certificazione Elettrica</strong><br>La certificazione verrà eliminata definitivamente dall\'archivio.'
+  },
+  nonSegnalare: {
+    table: 'non_segnalare',
+    column: 'etichetta',
+    reload: ispLoadNonSegnalare,
+    message: 'Tipo: <strong>LED da non segnalare</strong><br>Questo apparato verrà eliminato definitivamente dalla lista.'
+  },
+  eccezioni: {
+    table: 'eccezioni_chiave',
+    column: 'etichetta_asset',
+    reload: loadEccezioni,
+    message: 'Tipo: <strong>Eccezione Chiave</strong><br>Questa etichetta tornerà a usare la logica di risoluzione standard.'
+  },
+  modelli: {
+    table: 'modelli_chiave',
+    column: 'modello',
+    reload: loadModelli,
+    message: 'Tipo: <strong>Modello Chiave</strong><br>Tutti gli apparati con questo modello perderanno la chiave derivata.'
+  }
+};
+
+function openDeleteModal(type, payload) {
+  const config = DELETE_CONFIG[type];
+  if (!config) return;
+
+  currentDelete = { type, payload };
+
+  const modal = document.getElementById('delete-modal');
+  document.getElementById('delete-label').textContent = payload.record;
+  document.getElementById('delete-detail').innerHTML = config.message;
+
+  modal.classList.add('open');
+}
+
+async function confirmDelete() {
+  if (!currentDelete) return;
+
+  const { type, payload } = currentDelete;
+  const config = DELETE_CONFIG[type];
+  const value = payload.value;
+
+  if (value === undefined || value === null) { showToast('Valore mancante', 'error'); return; }
+
+  const { error } = await db.from(config.table).delete().eq(config.column, value);
+  if (error) { showToast('Errore: ' + error.message, 'error'); return; }
+
+  closeDeleteModal();
+  config.reload();
+  showToast('Record eliminato', 'success');
+
+  currentDelete = null;
+}
+
+function closeDeleteModal() {
+  document.getElementById('delete-modal').classList.remove('open');
+  currentDelete = null;
 }
 
 // ─── CSV IMPORT ───────────────────────────────────────────────────────────────
@@ -2167,7 +2242,7 @@ async function loadEccezioni() {
       <td><span class="badge badge-active">${r.chiave}</span></td>
       <td><div class="td-actions">
         <button class="btn btn-secondary btn-sm" onclick="openLookupModal('eccezioni','${escHtml(r.etichetta_asset)}','${escHtml(r.chiave)}')">✎</button>
-        <button class="btn btn-danger btn-sm" onclick="openLookupDelete('eccezioni','${escHtml(r.etichetta_asset)}','${escHtml(r.chiave)}')">✕</button>
+        <button class="btn btn-danger btn-sm" onclick="openDeleteModal('eccezioni', { value: '${escHtml(r.etichetta_asset)}', record: '${escHtml(r.etichetta_asset)} - Chiave ${escHtml(r.chiave)}' })">✕</button>
       </div></td>
     </tr>
   `).join('') || '<tr><td colspan="3"><div class="empty">Nessun record</div></td></tr>';
@@ -2197,7 +2272,7 @@ async function loadModelli() {
       <td><span class="tag">${r.tipo || ''}</span></td>
       <td><div class="td-actions">
         <button class="btn btn-secondary btn-sm" onclick="openLookupModal('modelli','${escHtml(r.modello)}','${escHtml(r.chiave)}','${escHtml(r.tipo||'')}')">✎</button>
-        <button class="btn btn-danger btn-sm" onclick="openLookupDelete('modelli','${escHtml(r.modello)}','${escHtml(r.chiave)}')">✕</button>
+        <button class="btn btn-danger btn-sm" onclick="openDeleteModal('modelli', { value: '${escHtml(r.modello)}', record: '${escHtml(r.modello)} - Chiave ${escHtml(r.chiave)}' })">✕</button>
       </div></td>
     </tr>
   `).join('') || '<tr><td colspan="4"><div class="empty">Nessun record</div></td></tr>';
@@ -2249,56 +2324,6 @@ async function saveLookup() {
   showToast('Record salvato', 'success');
   closeLookupModal();
   if (isEcc) loadEccezioni(); else loadModelli();
-}
-
-// LOOKUP DELETE
-function openLookupDelete(table, key, chiave) {
-  lookupDeleteTable = table;
-  lookupDeleteKey = key;
-  const isEcc = table === 'eccezioni';
-  document.getElementById('delete-label').textContent = key;
-  document.getElementById('delete-detail').innerHTML = isEcc
-    ? `Tipo: <strong>Eccezione Chiave</strong><br>Chiave associata: <strong>${chiave || '—'}</strong><br>Questa etichetta tornerà a usare la logica di risoluzione standard.`
-    : `Tipo: <strong>Modello Chiave</strong><br>Chiave associata: <strong>${chiave || '—'}</strong><br>Tutti gli apparati con questo modello perderanno la chiave derivata da esso.`;
-  document.getElementById('delete-modal').classList.add('open');
-  document.getElementById('delete-modal').dataset.mode = 'lookup';
-}
-
-async function confirmDelete() {
-  const mode = document.getElementById('delete-modal').dataset.mode;
-  if (mode === 'lookup') {
-    const isEcc = lookupDeleteTable === 'eccezioni';
-    const dbTable = isEcc ? 'eccezioni_chiave' : 'modelli_chiave';
-    const col = isEcc ? 'etichetta_asset' : 'modello';
-    const { error } = await db.from(dbTable).delete().eq(col, lookupDeleteKey);
-    if (error) { showToast('Errore: ' + error.message, 'error'); return; }
-    showToast('Record eliminato', 'success');
-    closeDeleteModal();
-    if (isEcc) loadEccezioni(); else loadModelli();
-  } else if (mode === 'cliente') {
-    const nomeCliente = document.getElementById('delete-modal').dataset.clienteKey;
-    const { error } = await db.from('clienti_chiave').delete().eq('nome_cliente', nomeCliente);
-    if (error) { showToast('Errore: ' + error.message, 'error'); return; }
-    showToast('Cliente eliminato', 'success');
-    closeDeleteModal();
-    loadClienti();
-  } else {
-    if (!deleteKey) return;
-    const { error } = await db.from(TABLE).delete().eq('etichetta_asset', deleteKey);
-    if (error) { showToast('Errore: ' + error.message, 'error'); return; }
-    showToast('Record eliminato', 'success');
-    closeDeleteModal();
-    loadData();
-  }
-}
-
-function closeDeleteModal() {
-  document.getElementById('delete-modal').classList.remove('open');
-  deleteKey = null;
-  lookupDeleteKey = null;
-  lookupDeleteTable = null;
-  document.getElementById('delete-modal').dataset.mode = '';
-  document.getElementById('delete-modal').dataset.clienteKey = '';
 }
 
 // ─── AGGIORNA DB ──────────────────────────────────────────────────────────────
@@ -2605,7 +2630,7 @@ async function loadClienti() {
       <td><span class="badge badge-active">${r.chiave}</span></td>
       <td><div class="td-actions">
         <button class="btn btn-secondary btn-sm" onclick="openClienteModal('${escHtml(r.nome_cliente)}','${escHtml(r.chiave)}')">✎</button>
-        <button class="btn btn-danger btn-sm" onclick="openClienteDelete('${escHtml(r.nome_cliente)}','${escHtml(r.chiave)}')">✕</button>
+        <button class="btn btn-danger btn-sm" onclick="openDeleteModal('cliente', { value: '${escHtml(r.nome_cliente)}', record: '${escHtml(r.nome_cliente)} - Chiave ${escHtml(r.chiave)}' })">✕</button>
       </div></td>
     </tr>
   `).join('') || '<tr><td colspan="3"><div class="empty">Nessun cliente</div></td></tr>';
@@ -2639,15 +2664,6 @@ async function saveCliente() {
   showToast(clienteEditingKey ? 'Cliente aggiornato' : 'Cliente aggiunto', 'success');
   closeClienteModal();
   loadClienti();
-}
-
-function openClienteDelete(nome, chiave) {
-  document.getElementById('delete-label').textContent = nome;
-  document.getElementById('delete-detail').innerHTML =
-    `Tipo: <strong>Cliente Chiave</strong><br>Chiave associata: <strong>${chiave}</strong><br>Tutti gli apparati di questo cliente perderanno la chiave derivata.`;
-  document.getElementById('delete-modal').dataset.mode = 'cliente';
-  document.getElementById('delete-modal').dataset.clienteKey = nome;
-  document.getElementById('delete-modal').classList.add('open');
 }
 
 // ─── CLIENTI SENZA CHIAVE ─────────────────────────────────────────────────────
@@ -3217,7 +3233,7 @@ async function loadArchivio() {
       <td><div class="td-actions">
         <button class="btn btn-secondary btn-sm" onclick="archivioRiapri(${r.id})">⬇ PDF</button>
         <button class="btn btn-secondary btn-sm" onclick="archivioModifica(${r.id})">✎</button>
-        <button class="btn btn-danger btn-sm" onclick="archivioElimina(${r.id},'${escHtml(r.numero)}')">✕</button>
+        <button class="btn btn-danger btn-sm" onclick="openDeleteModal('bolla', { value: ${r.id}, record: 'Bolla ${escHtml(r.numero)} - ${escHtml(r.cessionario.split('\n')[0])}' })">✕</button>
       </div></td>
     </tr>
   `).join('') || '<tr><td colspan="5"><div class="empty">Nessuna bolla</div></td></tr>';
@@ -3277,30 +3293,6 @@ async function archivioModifica(id) {
   banner.style.display = 'flex';
   document.getElementById('bolla-banner-msg').textContent = '✎ Stai modificando una bolla esistente — genera il PDF e poi salva.';
 }
-
-async function archivioElimina(id, numero) {
-  document.getElementById('delete-label').textContent = `Bolla ${numero}`;
-  document.getElementById('delete-detail').textContent = 'La bolla verrà eliminata definitivamente dall\'archivio.';
-  document.getElementById('delete-modal').dataset.mode = 'bolla';
-  document.getElementById('delete-modal').dataset.bollaId = id;
-  document.getElementById('delete-modal').classList.add('open');
-}
-
-// estendi confirmDelete per le bolle
-const _origConfirmDelete = confirmDelete;
-confirmDelete = async function() {
-  const mode = document.getElementById('delete-modal').dataset.mode;
-  if (mode === 'bolla') {
-    const id = document.getElementById('delete-modal').dataset.bollaId;
-    const { error } = await db.from('bolle_ddt').delete().eq('id', id);
-    if (error) { showToast('Errore: ' + error.message, 'error'); return; }
-    showToast('Bolla eliminata', 'success');
-    closeDeleteModal();
-    loadArchivio();
-  } else {
-    _origConfirmDelete();
-  }
-};
 
 // ── ANAGRAFICHE ───────────────────────────────────────────────────────────────
 let anagraficaSearch = '';
@@ -3799,7 +3791,7 @@ async function loadSiteArchivio() {
       <td><div class="td-actions">
         <button class="btn btn-secondary btn-sm" onclick="siteArchivioRiapri(${r.id})">⬇ PDF</button>
         <button class="btn btn-secondary btn-sm" onclick="siteArchivioModifica(${r.id})">✎</button>
-        <button class="btn btn-danger btn-sm" onclick="siteArchivioElimina(${r.id},'${escHtml(r.cliente||'')}')">✕</button>
+        <button class="btn btn-danger btn-sm" onclick="openDeleteModal('site', { value: ${r.id}, record: 'Site - ${escHtml(r.cliente||'')}'})">✕</button>
       </div></td>
     </tr>`;
   }).join('') || '<tr><td colspan="7"><div class="empty">Nessuna site</div></td></tr>';
@@ -3864,30 +3856,6 @@ async function siteArchivioModifica(id) {
   document.getElementById('site-unsaved-banner').style.display = 'flex';
   document.getElementById('site-banner-msg').textContent = '✎ Stai modificando una site esistente — salva quando hai finito.';
 }
-
-async function siteArchivioElimina(id, cliente) {
-  document.getElementById('delete-label').textContent = `Site — ${cliente}`;
-  document.getElementById('delete-detail').textContent = 'La site verrà eliminata definitivamente dall\'archivio.';
-  document.getElementById('delete-modal').dataset.mode = 'site';
-  document.getElementById('delete-modal').dataset.siteId = id;
-  document.getElementById('delete-modal').classList.add('open');
-}
-
-// Estendi confirmDelete per le site (pattern già usato per bolle)
-const _origConfirmDeleteSite = confirmDelete;
-confirmDelete = async function() {
-  const mode = document.getElementById('delete-modal').dataset.mode;
-  if (mode === 'site') {
-    const id = document.getElementById('delete-modal').dataset.siteId;
-    const { error } = await db.from('site_report').delete().eq('id', id);
-    if (error) { showToast('Errore: ' + error.message, 'error'); return; }
-    showToast('Site eliminata', 'success');
-    closeDeleteModal();
-    loadSiteArchivio();
-  } else {
-    _origConfirmDeleteSite();
-  }
-};
 
 // ─── TAB CERTIFICAZIONI ────────────────────────────────────────────────────────
 
@@ -4001,7 +3969,7 @@ async function loadCertArchivio() {
       <td><div class="td-actions">
         <button class="btn btn-secondary btn-sm" onclick="certArchivioRiapri(${r.id})">⬇ PDF</button>
         <button class="btn btn-secondary btn-sm" onclick="certArchivioModifica(${r.id})">✎</button>
-        <button class="btn btn-danger btn-sm" onclick="certArchivioElimina(${r.id},'${escHtml(r.cliente||'')}')">✕</button>
+        <button class="btn btn-danger btn-sm" onclick="openDeleteModal('cert', { value: ${r.id}, record: 'Certificazione - ${escHtml(r.cliente||'')}'})">✕</button>
       </div></td>
     </tr>`;
   }).join('') || '<tr><td colspan="6"><div class="empty">Nessuna certificazione</div></td></tr>';
@@ -4037,30 +4005,6 @@ async function certArchivioModifica(id) {
   if (!data) return;
   openCertModal(null, data);
 }
-
-function certArchivioElimina(id, cliente) {
-  document.getElementById('delete-label').textContent = `Cert — ${cliente}`;
-  document.getElementById('delete-detail').textContent = 'La certificazione verrà eliminata definitivamente.';
-  document.getElementById('delete-modal').dataset.mode = 'cert';
-  document.getElementById('delete-modal').dataset.certId = id;
-  document.getElementById('delete-modal').classList.add('open');
-}
-
-// Estendi confirmDelete per cert
-const _origConfirmDeleteCert = confirmDelete;
-confirmDelete = async function() {
-  const mode = document.getElementById('delete-modal').dataset.mode;
-  if (mode === 'cert') {
-    const id = document.getElementById('delete-modal').dataset.certId;
-    const { error } = await db.from('cert_elettrica').delete().eq('id', id);
-    if (error) { showToast('Errore: ' + error.message, 'error'); return; }
-    showToast('Certificazione eliminata', 'success');
-    closeDeleteModal();
-    loadCertArchivio();
-  } else {
-    _origConfirmDeleteCert();
-  }
-};
 
 // ── Modal certificazione ──────────────────────────────────────────────────────
 
@@ -4422,7 +4366,7 @@ async function ispLoadNonSegnalare() {
       <td>${r.incident}</td>
       <td>
         <button class="btn btn-secondary btn-sm" onclick="openNonSegnalareModal('${i}')">✎</button>
-        <button class="btn btn-danger btn-sm" onclick="ispRimuoviNonSegnalare('${r.etichetta}')">✕</button></td>
+        <button class="btn btn-danger btn-sm" onclick="openDeleteModal('nonSegnalare', { value: '${r.etichetta}', record: '${r.etichetta}' })">✕</button></td>
     </tr>`).join('');
 }
 
@@ -4455,30 +4399,6 @@ async function saveNonSegnalare() {
   closeNonSegnalareModal();
   ispLoadNonSegnalare();
 }
-
-function ispRimuoviNonSegnalare(etichetta) {
-  document.getElementById('delete-label').textContent = `Non Segnalare — ${etichetta}`;
-  document.getElementById('delete-detail').textContent = 'L\'elemento verrà eliminato definitivamente.';
-  document.getElementById('delete-modal').dataset.mode = 'nonSegnalare';
-  document.getElementById('delete-modal').dataset.nonSegnalareKey = etichetta;
-  document.getElementById('delete-modal').classList.add('open');
-}
-
-// Estendi confirmDelete per non segnalare
-const _origConfirmDeleteNonSegnalare = confirmDelete;
-confirmDelete = async function() {
-  const mode = document.getElementById('delete-modal').dataset.mode;
-  if (mode === 'nonSegnalare') {
-    const key = document.getElementById('delete-modal').dataset.nonSegnalareKey;
-    const { error } = await db.from('non_segnalare').delete().eq('etichetta', key);
-    if (error) { showToast('Errore: ' + error.message, 'error'); return; }
-    showToast('Elemento eliminato', 'success');
-    closeDeleteModal();
-    ispLoadNonSegnalare();
-  } else {
-    _origConfirmDeleteNonSegnalare();
-  }
-};
 
 // ── Controllo data per nuove segnalazioni ──────────────────────────────────────────
 function ispDataChk(row) {
