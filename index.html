@@ -1449,8 +1449,8 @@ function switchTab(name) {
   document.getElementById('panel-' + name).classList.add('active');
   if (name === 'admin') loadAdminTables();
   if (name === 'clienti') loadClienti();
-  if (name === 'bolle') { switchBolleTab('nuova'); initNuovaBolla(); }
-  if (name === 'site') { switchSiteTab('nuova'); initNuovaSite(); }
+  if (name === 'bolle') { switchBolleTab('nuova'); if(!document.getElementById('bolla-numero').value) initNuovaBolla(); }
+  if (name === 'site') { switchSiteTab('nuova');   if(!document.getElementById('site-data').value) initNuovaSite(); }
   if (name === 'ispezione') initIspezione();
   if (name === 'strumentisn') initSN();
 }
@@ -2814,11 +2814,11 @@ async function loadSnCall() {
   let host = '';
   let sn = '';
   let modello = '';
-  const { data } = await db.from('sn_main').select('*').eq('etichetta_asset', asset).single();
-  if(data) {
-    host = data.hostname || '';
-    sn = data.asset_sn || data.numero_di_serie || '';
-    modello = data.produttore || '' + ' ' + data.asset_model || '';
+  const { data } = await db.from('sn_main').select('*').eq('etichetta_asset', asset);
+  if(data.length === 1) {
+    host = data[0].hostname;
+    sn = data[0].asset_sn || data[0].numero_di_serie || '';
+    modello = data[0].produttore + ' ' + data[0].asset_model;
   }
   testo = `Si richiede apertura call Hw sul seguente apparato:\n\nHost: ${host}\nSerial number: ${sn}\nAsset: ${asset}\nModello: ${modello}`;
   document.getElementById('snText1').value = testo;
@@ -3091,7 +3091,7 @@ function bollaRenderApparati() {
     <tr>
       <td><input type="number" min="1" value="${b.qty}" onchange="bollaApparati[${i}].qty=+this.value" style="width:48px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
       <td><input type="text" value="${escHtml(b.desc)}" onchange="bollaApparati[${i}].desc=this.value" placeholder="Modello/descrizione" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
-      <td><span style="font-family:var(--mono);font-size:11px;">${b.asset || '—'}</span></td>
+      <td><input type="text" value="${escHtml(b.asset)}" onchange="bollaApparati[${i}].asset=this.value" placeholder="Etichetta" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
       <td><input type="text" value="${escHtml(b.sn)}" onchange="bollaApparati[${i}].sn=this.value" placeholder="Seriale" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
       <td><input type="number" min="1" value="${b.colli}" onchange="bollaApparati[${i}].colli=+this.value" style="width:48px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
       <td><button class="btn btn-danger btn-sm" onclick="bollaRimuovi(${i})">✕</button></td>
@@ -3184,6 +3184,7 @@ async function bollaSalva() {
   archivioEditingId = null;
   document.getElementById('bolla-unsaved-banner').style.display = 'none';
   _resetArchivioMesiCache();
+  bollaReset();
   switchBolleTab('archivio');
 }
 
@@ -3368,22 +3369,22 @@ async function deleteAnagrafica(id) {
 // ── BOLLA → SITE ──────────────────────────────────────────────────────────────
 function bollaCompilasite() {
   if (!bollaApparati.length) { showToast('Aggiungi almeno un apparato', 'error'); return; }
-  siteFromBolla = bollaApparati.map(b => ({
-    tipologia: '',
-    modello: b.desc || '',
-    rack_mount: '',
-    serial_number: b.sn || '',
-    asset: b.asset || '',
-    rack: ''
-  }));
+  const assetBolla = bollaApparati.map(b => (b.asset)).filter(Boolean);
   switchTab('site');
+  siteReset();
+  document.getElementById('site-cerca-apparato').value = assetBolla.join(' ');
+  document.getElementById('site-cliente').value = document.getElementById('bolla-cessionario').value;
+  document.getElementById('site-bolla-numero').value = document.getElementById('bolla-numero').value;
+  document.getElementById('site-bolla-data').value = document.getElementById('bolla-data').value;
+  document.getElementById('site-tipo').value = 'Rimozione';
+  switchSiteType();
+  siteAggiungiDaRicerca();
 }
 
 // ─── TAB SITE ─────────────────────────────────────────────────────────────────
 
 let siteApparati = [];
 let siteUnsavedData = null;
-let siteFromBolla = null;
 let siteEditingId = null;
 let siteArchivioPage = 0;
 let siteArchivioSearch = '';
@@ -3444,11 +3445,6 @@ async function initNuovaSite() {
   document.getElementById('site-data').value = new Date().toISOString().split('T')[0];
   await loadAnagraficheCache();
   switchSiteType();
-  if (siteFromBolla) {
-    siteApparati = siteFromBolla;
-    siteFromBolla = null;
-    siteRenderApparati();
-  }
 }
 
 // ── APPARATI SITE ─────────────────────────────────────────────────────────────
@@ -3485,7 +3481,7 @@ async function siteAggiungiDaRicerca() {
     const app = {
       tipologia:    r.asset_subcategory || '',
       modello:      [r.produttore, r.asset_model].filter(Boolean).join(' '),
-      serial_number: r.numero_di_serie || r.asset_sn || '',
+      serial_number: r.asset_sn || r.numero_di_serie || '',
       asset:        r.etichetta_asset || '',
       rack:         r.rack || '',
     };
@@ -3692,18 +3688,21 @@ async function siteSalva() {
   document.getElementById('site-unsaved-banner').style.display = 'none';
   _resetSiteArchivioMesiCache();
   switchSiteTab('archivio');
+  siteReset();
 }
 
 // ── SITE → BOLLA ──────────────────────────────────────────────────────────────
 function siteCompilaDDT() {
   if (!siteApparati.length) { showToast('Aggiungi almeno un apparato', 'error'); return; }
+  switchTab('bolle');
+  bollaReset();
   const tipo = document.getElementById('site-tipo').value;
   const cfg  = SITE_TYPE_CONFIG[tipo] || SITE_TYPE_CONFIG.Rimozione;
 
   // Per Sostituzione: solo gli apparati con azione 'R' (rimossi)
   const sorgente = tipo === 'Sostituzione'
-    ? siteApparati.filter(b => b.azione === 'R')
-    : siteApparati;
+    ? siteApparati.filter(b => b.azione === 'R').map(a => a.serial_number)
+    : siteApparati.map(a => a.serial_number);
   if (!sorgente.length) { showToast('Nessun apparato rimosso da trasferire al DDT', 'error'); return; }
 
   const num  = cfg.bolla === 'doppia' ? document.getElementById('site-bolla-uscita-numero').value.trim()
@@ -3711,20 +3710,14 @@ function siteCompilaDDT() {
   const data = cfg.bolla === 'doppia' ? document.getElementById('site-bolla-uscita-data').value
              : cfg.bolla === 'singola' ? document.getElementById('site-bolla-data').value : '';
 
-  bollaApparati = sorgente.map(b => ({
-    qty:   1,
-    desc:  b.modello || '',
-    asset: b.asset   || '',
-    sn:    b.serial_number || '',
-    colli: 1
-  }));
-
-  switchTab('bolle');
   setTimeout(() => {
     if (num)  document.getElementById('bolla-numero').value = num;
     if (data) document.getElementById('bolla-data').value   = data;
-    bollaRenderApparati();
-  }, 250);
+    document.getElementById('bolla-cerca-apparato').value = sorgente.join(' ');
+    const idCli = document.getElementById('site-cliente').value;
+    document.getElementById('bolla-cessionario').value = idCli;
+    bollaAggiungiDaRicerca();
+  }, 500);
 }
 
 // ── ARCHIVIO SITE ─────────────────────────────────────────────────────────────

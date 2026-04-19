@@ -1,11 +1,16 @@
+site installazione
+    copia riga
+    nuova cert scelta cliente da select
+
 ispezione
     check call hw
 
-site - bolla
-    switch senza perdere dati
-
 clienti
     foglio chiavi
+
+chiavi
+    move admin modelli
+    move admin eccezioni
 
 CSS
     temi
