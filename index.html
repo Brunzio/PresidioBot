@@ -83,9 +83,9 @@
 
   /* TABLE */
   .table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
-  .table-wrapper.scrollable { max-height: 460px; overflow-y: auto; }
+  .table-wrapper.scrollable { max-height: 457px; overflow-y: auto; }
   .table-wrapper.scrollable thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
-  .table-wrapper.scrollable-sm { max-height: 220px; overflow-y: auto; }
+  .table-wrapper.scrollable-sm { max-height: 248px; overflow-y: auto; }
   .table-wrapper.scrollable-sm thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
   thead { background: var(--surface); position: sticky; top: 0; }
@@ -270,7 +270,7 @@
 
   <!-- CHIAVE PANEL -->
   <div class="panel" id="panel-chiave">
-    <div style="max-width:680px;margin:0 auto;">
+    <div style="max-width:900px;">
       <div style="margin-bottom:28px;">
         <div style="font-family:var(--mono);font-size:11px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Etichetta Asset</div>
         <div style="display:flex;gap:10px;">
@@ -314,6 +314,64 @@
       <div id="chiave-loading" style="display:none;" class="loading">
         <div class="spinner"></div><br>Ricerca in corso...
       </div>
+
+      <!-- SEZIONE 2: MODELLI CHIAVE -->
+      <div class="admin-section" style="margin:70px 0 36px 0">
+        <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Modelli Chiave</span>
+          <button class="btn btn-primary btn-sm" onclick="openLookupModal('modelli')">+ Aggiungi</button>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="search-box" style="max-width:320px;">
+            <input type="text" id="modelli-search" placeholder="Cerca modello o chiave..." oninput="onModelliSearch()">
+          </div>
+        </div>
+        <div class="table-wrapper scrollable-sm" style="margin-top:12px;">
+          <table>
+            <thead><tr>
+              <th>Modello</th>
+              <th>Chiave</th>
+              <th>Tipo</th>
+              <th style="width:80px;"></th>
+            </tr></thead>
+            <tbody id="modelli-body">
+              <tr><td colspan="4"><div class="loading"><div class="spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px;">
+          <span class="pagination-info" id="modelli-info"></span>
+        </div>
+      </div>
+
+      <!-- SEZIONE 3: ECCEZIONI CHIAVE -->
+      <div class="admin-section">
+        <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Eccezioni Chiave</span>
+          <button class="btn btn-primary btn-sm" onclick="openLookupModal('eccezioni')">+ Aggiungi</button>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div class="search-box" style="max-width:320px;">
+            <input type="text" id="eccezioni-search" placeholder="Cerca etichetta o chiave..." oninput="onEccezioniSearch()">
+          </div>
+        </div>
+        <div class="table-wrapper scrollable-sm" style="margin-top:12px;">
+          <table>
+            <thead><tr>
+              <th>Etichetta Asset</th>
+              <th>Chiave</th>
+              <th style="width:80px;"></th>
+            </tr></thead>
+            <tbody id="eccezioni-body">
+              <tr><td colspan="3"><div class="loading"><div class="spinner"></div></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px;">
+          <span class="pagination-info" id="eccezioni-info"></span>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -464,63 +522,6 @@
         <div id="aggiorna-preview" style="display:none;margin-top:14px;">
           <div class="progress-bar"><div class="progress-fill" id="aggiorna-progress"></div></div>
           <div class="import-log" id="aggiorna-log"></div>
-        </div>
-      </div>
-
-      <!-- SEZIONE 2: MODELLI CHIAVE -->
-      <div class="admin-section">
-        <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
-          <span>Modelli Chiave</span>
-          <button class="btn btn-primary btn-sm" onclick="openLookupModal('modelli')">+ Aggiungi</button>
-        </div>
-        <div style="margin-bottom:10px;">
-          <div class="search-box" style="max-width:320px;">
-            <input type="text" id="modelli-search" placeholder="Cerca modello o chiave..." oninput="onModelliSearch()">
-          </div>
-        </div>
-        <div class="table-wrapper scrollable-sm" style="margin-top:12px;">
-          <table>
-            <thead><tr>
-              <th>Modello</th>
-              <th>Chiave</th>
-              <th>Tipo</th>
-              <th style="width:80px;"></th>
-            </tr></thead>
-            <tbody id="modelli-body">
-              <tr><td colspan="4"><div class="loading"><div class="spinner"></div></div></td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div style="margin-top:8px;">
-          <span class="pagination-info" id="modelli-info"></span>
-        </div>
-      </div>
-
-      <!-- SEZIONE 3: ECCEZIONI CHIAVE -->
-      <div class="admin-section">
-        <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
-          <span>Eccezioni Chiave</span>
-          <button class="btn btn-primary btn-sm" onclick="openLookupModal('eccezioni')">+ Aggiungi</button>
-        </div>
-        <div style="margin-bottom:10px;">
-          <div class="search-box" style="max-width:320px;">
-            <input type="text" id="eccezioni-search" placeholder="Cerca etichetta o chiave..." oninput="onEccezioniSearch()">
-          </div>
-        </div>
-        <div class="table-wrapper scrollable-sm" style="margin-top:12px;">
-          <table>
-            <thead><tr>
-              <th>Etichetta Asset</th>
-              <th>Chiave</th>
-              <th style="width:80px;"></th>
-            </tr></thead>
-            <tbody id="eccezioni-body">
-              <tr><td colspan="3"><div class="loading"><div class="spinner"></div></div></td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div style="margin-top:8px;">
-          <span class="pagination-info" id="eccezioni-info"></span>
         </div>
       </div>
 
@@ -894,7 +895,7 @@
         <button class="btn btn-secondary" onclick="ispCopiaMail()">📋 Copia testo mail</button>
         <span id="isp-batch-info" style="font-family:var(--mono);font-size:11px;color:var(--text-muted);margin-left:8px;"></span>
       </div>
-      <div class="table-wrapper scrollable" style="max-height: 370px;">
+      <div class="table-wrapper scrollable">
         <table id="isp-table">
           <thead>
             <tr>
@@ -1447,7 +1448,7 @@ function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
-  if (name === 'admin') loadAdminTables();
+  if (name === 'chiave') loadChiaviTables();
   if (name === 'clienti') loadClienti();
   if (name === 'bolle') { switchBolleTab('nuova'); if(!document.getElementById('bolla-numero').value) initNuovaBolla(); }
   if (name === 'site') { switchSiteTab('nuova');   if(!document.getElementById('site-data').value) initNuovaSite(); }
@@ -2215,7 +2216,7 @@ const CLI_PAGE = 5;
 let cliCurrentPage = 0, cliTotal = 0, cliSearch = '';
 let clienteEditingKey = null;
 
-async function loadAdminTables() {
+async function loadChiaviTables() {
   loadEccezioni();
   loadModelli();
 }

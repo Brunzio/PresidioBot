@@ -8,10 +8,6 @@ ispezione
 clienti
     foglio chiavi
 
-chiavi
-    move admin modelli
-    move admin eccezioni
-
 CSS
     temi
     versione mobile
