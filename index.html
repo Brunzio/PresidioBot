@@ -3394,10 +3394,10 @@ const SITE_PAGE_SIZE = 10;
 
 // ── Mappa dichiarativa per tipo ───────────────────────────────────────────────
 const SITE_TYPE_CONFIG = {
-  Rimozione:     { bolla: 'singola', bollaDir: 'uscita',   colAzione: false, colDaRack: false },
-  Installazione: { bolla: 'singola', bollaDir: 'ingresso', colAzione: false, colDaRack: false },
-  Spostamento:   { bolla: 'nessuna', bollaDir: null,       colAzione: false, colDaRack: true  },
-  Sostituzione:  { bolla: 'doppia',  bollaDir: null,       colAzione: true,  colDaRack: false },
+  Rimozione:     { bolla: 'singola', bollaDir: 'uscita',   colAzione: false, colDaRack: false, copiaRiga: false },
+  Installazione: { bolla: 'singola', bollaDir: 'ingresso', colAzione: false, colDaRack: false, copiaRiga: true },
+  Spostamento:   { bolla: 'nessuna', bollaDir: null,       colAzione: false, colDaRack: true,  copiaRiga: false  },
+  Sostituzione:  { bolla: 'doppia',  bollaDir: null,       colAzione: true,  colDaRack: false, copiaRiga: true },
 };
 
 function switchSiteType() {
@@ -3517,8 +3517,7 @@ function siteRimuovi(idx) {
 
 function siteRenderApparati() {
   const tbody = document.getElementById('site-apparati-body');
-  const tipoSite = document.getElementById('site-tipo').value;
-  const cfg = SITE_TYPE_CONFIG[tipoSite] || SITE_TYPE_CONFIG.Rimozione;
+  const cfg = SITE_TYPE_CONFIG[document.getElementById('site-tipo').value] || SITE_TYPE_CONFIG.Rimozione;
   const colSpan = 6 + (cfg.colAzione ? 1 : 0) + (cfg.colDaRack ? 1 : 0);
 
   if (!siteApparati.length) {
@@ -3548,7 +3547,7 @@ function siteRenderApparati() {
       <td style="font-family:var(--mono);font-size:11px;">${escHtml(b.rack)||'—'}</td>
       <td><div class="td-actions">
         <button class="btn btn-secondary btn-sm" onclick="openSiteApparatoModal(${i})">✎</button>
-        ${tipoSite === 'Installazione' ? '<button class="btn btn-secondary btn-sm" onclick="siteCopiaRiga(${i})">➕</button>' : ''}
+        ${cfg.copiaRiga ? `<button class="btn btn-secondary btn-sm" onclick="siteCopiaRiga(${i})">➕</button>` : ''}
         <button class="btn btn-danger btn-sm" onclick="siteRimuovi(${i})">✕</button>
       </div></td>
     </tr>`;

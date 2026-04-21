@@ -1,7 +1,8 @@
 site installazione
-    togliere cert -> site
-    sistemare logica salvataggi site
+    sistemare logica salvataggi site, banner, pulsante salva
+    togliere tipologia, aggiungere livello rack unit
     nuova cert scelta cliente da select
+    da rack a rack giusto ordine
 
 ispezione
     check call hw
