@@ -1,5 +1,6 @@
 site installazione
-    copia riga
+    togliere cert -> site
+    sistemare logica salvataggi site
     nuova cert scelta cliente da select
 
 ispezione

@@ -3501,7 +3501,13 @@ function siteAggiungiManuale() {
   if (tipo === 'Sostituzione') app.azione = 'I';
   if (tipo === 'Spostamento')  app.da_rack = '';
   siteApparati.push(app);
+  siteRenderApparati();
   openSiteApparatoModal(siteApparati.length - 1);
+}
+
+function siteCopiaRiga(id) {
+  siteApparati.push(siteApparati[id]);
+  siteRenderApparati();
 }
 
 function siteRimuovi(idx) {
@@ -3511,7 +3517,8 @@ function siteRimuovi(idx) {
 
 function siteRenderApparati() {
   const tbody = document.getElementById('site-apparati-body');
-  const cfg = SITE_TYPE_CONFIG[document.getElementById('site-tipo').value] || SITE_TYPE_CONFIG.Rimozione;
+  const tipoSite = document.getElementById('site-tipo').value;
+  const cfg = SITE_TYPE_CONFIG[tipoSite] || SITE_TYPE_CONFIG.Rimozione;
   const colSpan = 6 + (cfg.colAzione ? 1 : 0) + (cfg.colDaRack ? 1 : 0);
 
   if (!siteApparati.length) {
@@ -3541,6 +3548,7 @@ function siteRenderApparati() {
       <td style="font-family:var(--mono);font-size:11px;">${escHtml(b.rack)||'—'}</td>
       <td><div class="td-actions">
         <button class="btn btn-secondary btn-sm" onclick="openSiteApparatoModal(${i})">✎</button>
+        ${tipoSite === 'Installazione' ? '<button class="btn btn-secondary btn-sm" onclick="siteCopiaRiga(${i})">➕</button>' : ''}
         <button class="btn btn-danger btn-sm" onclick="siteRimuovi(${i})">✕</button>
       </div></td>
     </tr>`;
@@ -4225,8 +4233,8 @@ async function siteSalvaEVaiCert() {
   showToast(siteEditingId ? 'Site aggiornata' : 'Site salvata', 'success');
   document.getElementById('site-unsaved-banner').style.display = 'none';
   _resetSiteArchivioMesiCache();
-  siteUnsavedData = null;
-  siteEditingId = null;
+//  siteUnsavedData = null;
+//  siteEditingId = null;
 
   openCertModal({ ...d, id: savedId });
 }
