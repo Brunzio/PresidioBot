@@ -785,8 +785,8 @@
 
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:12px;align-items:center;">
           <button class="btn btn-secondary" onclick="siteReset()">↺ Svuota</button>
-          <button class="btn btn-secondary" id="btn-compila-ddt" onclick="siteCompilaDDT()">📋 Compila DDT</button>
-          <button class="btn btn-secondary" id="btn-vai-cert" style="display:none;" onclick="siteSalvaEVaiCert()">📄 Vai alla Cert</button>
+          <button class="btn btn-secondary" id="btn-compila-ddt" onclick="siteCompilaDDT()">📋 Crea Bolla</button>
+          <button class="btn btn-secondary" id="btn-vai-cert" style="display:none;" onclick="siteSalvaEVaiCert()">📄 Crea Certificazione</button>
           <select id="site-layout" style="font-size:11px;padding:6px 10px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px;">
             <option value="colonne">Layout colonne (5xPagina)</option>
             <option value="righe">Layout righe (16xPagina)</option>
@@ -1096,12 +1096,11 @@
       </div>
       <div style="display:flex;gap:10px;margin-bottom:4px;">
         <button class="btn btn-secondary btn-sm" onclick="certAggiungiRiga()">+ Riga manuale</button>
-        <button class="btn btn-secondary btn-sm" onclick="compilaSiteDaCert()">📋 Compila Site</button>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeCertModal()">Annulla</button>
-      <button class="btn btn-secondary" onclick="certGenera()">⬇ Genera PDF</button>
+      <button class="btn btn-secondary" onclick="certGenera()">⌕ Anteprima</button>
       <button class="btn btn-primary" onclick="certSalva()">✓ Salva</button>
     </div>
   </div>
@@ -3613,6 +3612,7 @@ function siteReset() {
   document.getElementById('site-bolla-ingresso-data').value = '';
   document.getElementById('site-bolla-uscita-numero').value = '';
   document.getElementById('site-bolla-uscita-data').value = '';
+  document.getElementById('stab-nuova').textContent = 'Nuova Site';
   document.getElementById('site-unsaved-banner').style.display = 'none';
 }
 
@@ -3835,6 +3835,7 @@ async function siteArchivioModifica(id) {
   document.getElementById('site-tipo').value     = data.tipo || 'Rimozione';
   document.getElementById('site-data').value     = data.data_site;
   document.getElementById('site-incident').value = data.incident || '';
+  document.getElementById('stab-nuova').textContent = 'Modifica Site';
   switchSiteType();
 
   const cfg = SITE_TYPE_CONFIG[data.tipo] || SITE_TYPE_CONFIG.Rimozione;
@@ -4236,58 +4237,6 @@ async function siteSalvaEVaiCert() {
 //  siteEditingId = null;
 
   openCertModal({ ...d, id: savedId });
-}
-
-// ── Compila Site da modal cert ────────────────────────────────────────────────
-async function compilaSiteDaCert() {
-  // salva certificazione in corso
-  const payload = _certDatiDaModal();
-  if (!payload) return;
-
-  const id = certEditingId || null;
-  let error;
-  if (id) {
-    ({ error } = await db.from('cert_elettrica').update(payload).eq('id', id));
-  } else {
-    const { error: e } = await db.from('cert_elettrica').insert(payload);
-    error = e;
-  }
-  if (error) { showToast('Errore salvataggio cert: ' + error.message, 'error'); return; }
-  _resetCertArchivioMesiCache();
-  showToast('Certificazione salvata', 'success');
-
-  // Converti apparati cert → apparati site (inverso parziale)
-  const apparatiSite = certApparati.map(a => {
-    const mono = String(a.mono_alimentato || '').trim().toUpperCase();
-    const doppiaAlim = (mono === 'NO' || mono === 'N') ? 'S' : (mono === 'SI' || mono === 'SÌ' || mono === 'S') ? 'N' : '';
-    return {
-      tipologia:            '',
-      modello:              [a.costruttore, a.modello].filter(Boolean).join(' '),
-      serial_number:        a.serial_number || '',
-      asset:                a.asset || '',
-      rack:                 a.rack || '',
-      doppia_alimentazione: doppiaAlim,
-      sezione_alimentazione: a.quadro || '',
-    };
-  });
-
-  closeCertModal();
-  switchTab('site');
-
-  setTimeout(async () => {
-    switchSiteTab('nuova');
-    await loadAnagraficheCache();
-    document.getElementById('site-tipo').value = 'Installazione';
-    document.getElementById('site-data').value = payload.data_cert || new Date().toISOString().split('T')[0];
-
-    // Cerca anagrafica per nome cliente
-    const found = anagraficheCache.find(an => an.nome === payload.cliente);
-    if (found) document.getElementById('site-cliente').value = found.id;
-
-    switchSiteType();
-    siteApparati = apparatiSite;
-    siteRenderApparati();
-  }, 250);
 }
 
 // ─── TAB ISPEZIONE ────────────────────────────────────────────────────────────

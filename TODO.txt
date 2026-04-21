@@ -17,3 +17,13 @@ CSS
 google drive
     possibili integrazioni
 
+reminder for save Logic:
+    
+    $ git checkout -b devwork
+    
+    stupid commits here
+    
+    $ git rebase mainline # catch up with mainline as needed
+    $ git rebase -i mainline # squash things
+    $ git checkout mainline
+    $ git rebase devwork # single commit on mainline. 
