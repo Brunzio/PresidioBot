@@ -1,7 +1,5 @@
-site installazione
-    sistemare logica salvataggi site, banner, pulsante salva
-    togliere tipologia, aggiungere livello rack unit
-    nuova cert scelta cliente da select
+site bolle cert
+    sistemare campi visualizzati in edit
     da rack a rack giusto ordine
 
 ispezione
@@ -11,9 +9,25 @@ clienti
     foglio chiavi
 
 CSS
+    uniforma simboli ✓ ⚠ 📋 🔍 ⬇ ➕ ✎ ↺
     temi
     versione mobile
+
+funzioni
+    parametrizzare salvataggi
+        raccolta dati
+        visibilità
 
 google drive
     possibili integrazioni
 
+reminder for save Logic:
+    
+    $ git checkout -b devwork
+    
+    stupid commits here
+    
+    $ git rebase mainline # catch up with mainline as needed
+    $ git rebase -i mainline # squash things
+    $ git checkout mainline
+    $ git rebase devwork # single commit on mainline. 

@@ -72,12 +72,14 @@
 
   /* BUTTONS */
   .btn { padding: 8px 16px; border-radius: 6px; border: none; font-family: var(--mono); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all .2s; }
-  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary { background: var(--accent); color: #000; border: 1px solid var(--accent); }
   .btn-primary:hover { background: #00ffb3; }
   .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
   .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
   .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
   .btn-danger:hover { background: var(--danger); color: #fff; }
+  .btn-warning { background: rgba(255, 184, 0, 0.1); color: var(--warning); border: 1px solid var(--warning); }
+  .btn-warning:hover { background: var(--warning); color: #fff; }
   .btn-sm { padding: 4px 10px; font-size: 10px; }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -174,9 +176,9 @@
   #login-screen.active { display: flex; }
   #login-screen .modal { width: 380px; padding: 40px 44px; }
   #login-screen .logo { margin-bottom: 8px; }
-  #login-screen .subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 32px; }
+  #login-screen .subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
   #login-error { display: none; color: var(--danger); font-size: 12px; margin-bottom: 14px; font-family: var(--mono); }
-  #btn-login { width: 100%; margin-top: 14px; }
+  #btn-login { width: 100%; margin-top: 40px; }
 
   @media print{
     body{background:#fff;padding:0;}
@@ -546,7 +548,7 @@
       </div>
 
       <!-- ── NUOVA BOLLA ── -->
-      <div id="bpanel-nuova">
+      <div id="bpanel-nuova" oninput="isUnsaved('bolla')">
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;">
           <div class="form-group">
             <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Numero Bolla <span style="color:var(--accent)">*</span></label>
@@ -585,7 +587,7 @@
         <div style="font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">Apparati</div>
         <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
           <div class="search-box" style="max-width:360px;">
-            <input type="text" id="bolla-cerca-apparato" placeholder="Etichetta, seriale o lista seriali..." onkeydown="if(event.key==='Enter')bollaAggiungiDaRicerca()">
+            <input type="text" id="cerca-apparato-bolla" placeholder="Etichetta, seriale o lista seriali..." onkeydown="if(event.key==='Enter')bollaAggiungiDaRicerca()">
           </div>
           <button class="btn btn-secondary" onclick="bollaAggiungiDaRicerca()">Cerca e aggiungi</button>
           <button class="btn btn-secondary" onclick="bollaAggiungiManuale()">+ Riga manuale</button>
@@ -610,15 +612,17 @@
 
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:12px;">
           <button class="btn btn-secondary" onclick="bollaReset()">↺ Svuota</button>
-          <button class="btn btn-secondary" onclick="bollaCompilasite()">📋 Compila Site</button>
-          <button class="btn btn-primary" onclick="bollaGenera()">⬇ Genera Bolla</button>
+          <button class="btn btn-secondary" onclick="bollaCompilasite()">📋 Crea Site</button>
+          <button class="btn btn-secondary" onclick="bollaAnteprima()">🔍 Anteprima</button>
+          <button id="bolla-save-button" class="btn btn-primary" onclick="bollaSalva()">✓ Salva</button>
         </div>
 
-        <!-- Banner bolla non salvata — appare dopo Genera -->
+        <!-- Banner bolla non salvata — appare dopo Genera 
         <div id="bolla-unsaved-banner" style="display:none;background:rgba(255,184,0,0.1);border:1px solid var(--warning);border-radius:8px;padding:12px 16px;align-items:center;justify-content:space-between;gap:12px;">
           <div style="font-size:12px;color:var(--warning);" id="bolla-banner-msg">⚠ Bolla generata ma non ancora salvata.</div>
           <button class="btn btn-primary btn-sm" onclick="bollaSalva()">✓ Salva e vai all'archivio</button>
         </div>
+        -->
       </div>
 
       <!-- ── ARCHIVIO ── -->
@@ -693,7 +697,7 @@
       </div>
 
       <!-- ── NUOVA SITE ── -->
-      <div id="spanel-nuova">
+      <div id="spanel-nuova" oninput="isUnsaved('site')">
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:18px;">
           <div class="form-group">
             <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Tipo <span style="color:var(--accent)">*</span></label>
@@ -724,7 +728,7 @@
         <div style="font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">Apparati</div>
         <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
           <div class="search-box" style="max-width:360px;">
-            <input type="text" id="site-cerca-apparato" placeholder="Etichetta, seriale, cliente o lista etichette..." onkeydown="if(event.key==='Enter')siteAggiungiDaRicerca()">
+            <input type="text" id="cerca-apparato-site" placeholder="Etichetta, seriale, cliente o lista etichette..." onkeydown="if(event.key==='Enter')siteAggiungiDaRicerca()">
           </div>
           <button class="btn btn-secondary" onclick="siteAggiungiDaRicerca()">Cerca e aggiungi</button>
           <button class="btn btn-secondary" onclick="siteAggiungiManuale()">+ Riga manuale</button>
@@ -785,20 +789,22 @@
 
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:12px;align-items:center;">
           <button class="btn btn-secondary" onclick="siteReset()">↺ Svuota</button>
-          <button class="btn btn-secondary" id="btn-compila-ddt" onclick="siteCompilaDDT()">📋 Compila DDT</button>
-          <button class="btn btn-secondary" id="btn-vai-cert" style="display:none;" onclick="siteSalvaEVaiCert()">📄 Vai alla Cert</button>
+          <button class="btn btn-secondary" id="btn-compila-ddt" onclick="siteCompilaDDT()">📋 Crea Bolla</button>
+          <button class="btn btn-secondary" id="btn-vai-cert" style="display:none;" onclick="siteSalvaEVaiCert()">📄 Crea Certificazione</button>
           <select id="site-layout" style="font-size:11px;padding:6px 10px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px;">
             <option value="colonne">Layout colonne (5xPagina)</option>
             <option value="righe">Layout righe (16xPagina)</option>
           </select>
-          <button class="btn btn-primary" onclick="siteGenera()">⬇ Genera Site</button>
+          <button class="btn btn-secondary" onclick="siteAnteprima()">⌕ Anteprima</button>
+          <button id="site-save-button" class="btn btn-primary" onclick="siteSalva()">✓ Salva</button>
         </div>
 
-        <!-- Banner site non salvata -->
+        <!-- Banner site non salvata 
         <div id="site-unsaved-banner" style="display:none;background:rgba(255,184,0,0.1);border:1px solid var(--warning);border-radius:8px;padding:12px 16px;align-items:center;justify-content:space-between;gap:12px;">
           <div style="font-size:12px;color:var(--warning);" id="site-banner-msg">⚠ Site generata ma non ancora salvata.</div>
           <button class="btn btn-primary btn-sm" onclick="siteSalva()">✓ Salva e vai all'archivio</button>
         </div>
+        -->
       </div>
 
       <!-- ── ARCHIVIO SITE ── -->
@@ -848,7 +854,7 @@
       <div id="spanel-certificazioni" style="display:none;">
         <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <div class="search-box" style="max-width:300px;">
-            <input type="text" id="cert-archivio-search" placeholder="Cerca cliente o asset..." oninput="onCertArchivioSearch()">
+            <input type="text" id="cert-archivio-search" placeholder="Cerca cliente, incident o asset..." oninput="onCertArchivioSearch()">
           </div>
           <select id="cert-archivio-mese" onchange="certArchivioPage=0;loadCertArchivio()" style="min-width:140px;">
             <option value="">Tutti i mesi</option>
@@ -1044,7 +1050,7 @@
       <h2 id="cert-modal-title">Nuova Certificazione Elettrica</h2>
       <button class="modal-close" onclick="closeCertModal()">✕</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" oninput="isUnsaved('cert')">
       <input type="hidden" id="cert-editing-id">
       <input type="hidden" id="cert-site-report-id">
 
@@ -1063,7 +1069,8 @@
         </div>
         <div class="form-group">
           <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Cliente</label>
-          <input type="text" id="cert-cliente" placeholder="Nome cliente" oninput="onCertClienteInput()">
+          <select id="cert-cliente"  onchange="onCertClienteInput()"><option value="">— seleziona —</option></select>
+          <!-- <input type="text" id="cert-cliente" placeholder="Nome cliente" onchange="onCertClienteInput()"> -->
         </div>
         <div class="form-group full" style="grid-column:1/-1;">
           <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Progetto di Riferimento / Codice Piattaforma</label>
@@ -1096,13 +1103,12 @@
       </div>
       <div style="display:flex;gap:10px;margin-bottom:4px;">
         <button class="btn btn-secondary btn-sm" onclick="certAggiungiRiga()">+ Riga manuale</button>
-        <button class="btn btn-secondary btn-sm" onclick="compilaSiteDaCert()">📋 Compila Site</button>
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeCertModal()">Annulla</button>
-      <button class="btn btn-secondary" onclick="certGenera()">⬇ Genera PDF</button>
-      <button class="btn btn-primary" onclick="certSalva()">✓ Salva</button>
+      <button class="btn btn-secondary" onclick="certGenera()">⌕ Anteprima</button>
+      <button class="btn btn-primary" onclick="certSalva()" id="cert-save-button">✓ Salva</button>
     </div>
   </div>
 </div>
@@ -2984,7 +2990,12 @@ function switchBolleTab(name) {
 }
 
 // ── STATO ────────────────────────────────────────────────────────────────────
-let bollaApparati = [];
+let APPARATI = {
+  bolla: [],
+  site:  [],
+  cert:  []
+};
+// let bollaApparati = [];
 let bollaUnsavedData = null;
 let anagraficheCache = [];
 let anagraficaEditingId = null;
@@ -3005,6 +3016,7 @@ async function initNuovaBolla() {
   document.getElementById('bolla-numero').value = nextNum;
   document.getElementById('bolla-data').value = oggi.toISOString().split('T')[0];
   await loadAnagraficheCache();
+  SAVE_STATE['bolla'].initState = getFormData('bolla');
 }
 
 async function loadAnagraficheCache() {
@@ -3022,11 +3034,14 @@ async function loadAnagraficheCache() {
   // Popola anche il select cliente della tab Site
   const sel4 = document.getElementById('site-cliente');
   if (sel4) { const cv = sel4.value; sel4.innerHTML = optSel + opts; if (cv) sel4.value = cv; }
+  // Popola anche il select cliente della cert modal
+  const sel5 = document.getElementById('cert-cliente');
+  if (sel5) sel5.innerHTML = optSel + opts;
 }
 
 // ── APPARATI ─────────────────────────────────────────────────────────────────
 async function bollaAggiungiDaRicerca() {
-  const q = document.getElementById('bolla-cerca-apparato').value.trim();
+  const q = document.getElementById('cerca-apparato-bolla').value.trim();
   if (!q) return;
 
   const tokens = q.split(/[\s,;\n]+/).map(t => t.trim()).filter(Boolean);
@@ -3065,52 +3080,56 @@ async function bollaAggiungiDaRicerca() {
   data.forEach(r => {
     const sn = r.numero_di_serie || r.asset_sn || '';
     const desc = [r.produttore, r.asset_model].filter(Boolean).join(' ');
-    bollaApparati.push({ qty: 1, desc, asset: r.etichetta_asset || '', sn, colli: 1 });
+    APPARATI['bolla'].push({ qty: 1, desc, asset: r.etichetta_asset || '', sn, colli: 1 });
   });
-  document.getElementById('bolla-cerca-apparato').value = '';
+  document.getElementById('cerca-apparato-bolla').value = '';
   bollaRenderApparati();
   if (data.length > 1) showToast(`${data.length} apparati aggiunti`, 'success');
 }
 
 function bollaAggiungiManuale() {
-  bollaApparati.push({ qty: 1, desc: '', asset: '', sn: '', colli: 1 });
+  APPARATI['bolla'].push({ qty: 1, desc: '', asset: '', sn: '', colli: 1 });
   bollaRenderApparati();
 }
 
 function bollaRimuovi(idx) {
-  bollaApparati.splice(idx, 1);
+  APPARATI['bolla'].splice(idx, 1);
   bollaRenderApparati();
 }
 
 function bollaRenderApparati() {
   const tbody = document.getElementById('bolla-apparati-body');
-  if (!bollaApparati.length) {
+
+  isUnsaved('bolla');
+
+  if (!APPARATI['bolla'].length) {
     tbody.innerHTML = '<tr id="bolla-empty-row"><td colspan="6"><div class="empty">Nessun apparato aggiunto</div></td></tr>';
     return;
   }
-  tbody.innerHTML = bollaApparati.map((b, i) => `
+  tbody.innerHTML = APPARATI['bolla'].map((b, i) => `
     <tr>
-      <td><input type="number" min="1" value="${b.qty}" onchange="bollaApparati[${i}].qty=+this.value" style="width:48px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
-      <td><input type="text" value="${escHtml(b.desc)}" onchange="bollaApparati[${i}].desc=this.value" placeholder="Modello/descrizione" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
-      <td><input type="text" value="${escHtml(b.asset)}" onchange="bollaApparati[${i}].asset=this.value" placeholder="Etichetta" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
-      <td><input type="text" value="${escHtml(b.sn)}" onchange="bollaApparati[${i}].sn=this.value" placeholder="Seriale" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
-      <td><input type="number" min="1" value="${b.colli}" onchange="bollaApparati[${i}].colli=+this.value" style="width:48px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
+      <td><input type="number" min="1" value="${b.qty}" oninput="APPARATI['bolla'][${i}].qty=+this.value" style="width:48px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
+      <td><input type="text" value="${escHtml(b.desc)}" oninput="APPARATI['bolla'][${i}].desc=this.value" placeholder="Modello/descrizione" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
+      <td><input type="text" value="${escHtml(b.asset)}" oninput="APPARATI['bolla'][${i}].asset=this.value" placeholder="Etichetta" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
+      <td><input type="text" value="${escHtml(b.sn)}" oninput="APPARATI['bolla'][${i}].sn=this.value" placeholder="Seriale" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
+      <td><input type="number" min="1" value="${b.colli}" oninput="APPARATI['bolla'][${i}].colli=+this.value" style="width:48px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
       <td><button class="btn btn-danger btn-sm" onclick="bollaRimuovi(${i})">✕</button></td>
     </tr>
   `).join('');
 }
 
 function bollaReset() {
-  bollaApparati = [];
+  APPARATI['bolla'] = [];
   bollaUnsavedData = null;
   archivioEditingId = null;
-  bollaRenderApparati();
   ['bolla-proprietario','bolla-cessionario','bolla-destinazione'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.selectedIndex = 0;
   });
-  document.getElementById('bolla-unsaved-banner').style.display = 'none';
+  // document.getElementById('bolla-unsaved-banner').style.display = 'none';
+  document.getElementById('btab-nuova').textContent = 'Nuova Bolla';
   initNuovaBolla();
+  bollaRenderApparati();
 }
 
 // ── GENERA (solo PDF, niente salvataggio) ─────────────────────────────────────
@@ -3121,12 +3140,12 @@ function _anagraficaById(id) {
   return a.indirizzo ? a.nome + '\n' + a.indirizzo : a.nome;
 }
 
-function bollaGenera() {
+function _bollaRaccogliDati() {
   const numero = document.getElementById('bolla-numero').value.trim();
   const dataVal = document.getElementById('bolla-data').value;
   const cessionarioId = document.getElementById('bolla-cessionario').value;
   if (!numero || !dataVal || !cessionarioId) { showToast('Numero, data e cessionario sono obbligatori', 'error'); return; }
-  if (!bollaApparati.length) { showToast('Aggiungi almeno un apparato', 'error'); return; }
+  if (!APPARATI['bolla'].length) { showToast('Aggiungi almeno un apparato', 'error'); return; }
 
   const proprietarioId = document.getElementById('bolla-proprietario').value;
   const destinazioneId = document.getElementById('bolla-destinazione').value;
@@ -3135,20 +3154,25 @@ function bollaGenera() {
   const proprietario  = proprietarioId ? _anagraficaById(proprietarioId) : null;
   const destinazione  = destinazioneId ? _anagraficaById(destinazioneId) : null;
 
-  bollaUnsavedData = {
+  return {
     numero,
     data_bolla: dataVal,
     mese_anno: dataVal.slice(0, 7),
     proprietario: proprietario || null,
     cessionario,
     luogo_destinazione: destinazione || null,
-    apparati: bollaApparati.map(b => ({ qty: b.qty, desc: b.desc, asset: b.asset, sn: b.sn, colli: b.colli }))
+    apparati: APPARATI['bolla'].map(b => ({ qty: b.qty, desc: b.desc, asset: b.asset, sn: b.sn, colli: b.colli }))
   };
 
+}
+
+function bollaAnteprima() {
+  bollaUnsavedData = _bollaRaccogliDati();
+  if (!bollaUnsavedData) return;
   _apriDDT(bollaUnsavedData);
-  const banner = document.getElementById('bolla-unsaved-banner');
-  banner.style.display = 'flex';
-  document.getElementById('bolla-banner-msg').textContent = '⚠ Bolla generata ma non ancora salvata.';
+  // const banner = document.getElementById('bolla-unsaved-banner');
+  // banner.style.display = 'flex';
+  // document.getElementById('bolla-banner-msg').textContent = '⚠ Bolla generata ma non ancora salvata.';
 }
 
 function _apriDDT(d) {
@@ -3166,6 +3190,7 @@ function _apriDDT(d) {
 
 // ── SALVA ─────────────────────────────────────────────────────────────────────
 async function bollaSalva() {
+  bollaUnsavedData = _bollaRaccogliDati();
   if (!bollaUnsavedData) return;
   const btn = document.querySelector('[onclick="bollaSalva()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Salvo...'; }
@@ -3177,13 +3202,13 @@ async function bollaSalva() {
     ({ error } = await db.from('bolle_ddt').insert(bollaUnsavedData));
   }
 
-  if (btn) { btn.disabled = false; btn.textContent = '✓ Salva e vai all\'archivio'; }
+  if (btn) { btn.disabled = false; btn.textContent = '✓ Salva'; }
   if (error) { showToast('Errore salvataggio: ' + error.message, 'error'); return; }
 
   showToast(archivioEditingId ? 'Bolla aggiornata' : 'Bolla salvata', 'success');
   bollaUnsavedData = null;
   archivioEditingId = null;
-  document.getElementById('bolla-unsaved-banner').style.display = 'none';
+  // document.getElementById('bolla-unsaved-banner').style.display = 'none';
   _resetArchivioMesiCache();
   bollaReset();
   switchBolleTab('archivio');
@@ -3288,12 +3313,14 @@ async function archivioModifica(id) {
   _setSelectByNome('bolla-proprietario', data.proprietario);
   _setSelectByNome('bolla-cessionario', data.cessionario);
   _setSelectByNome('bolla-destinazione', data.luogo_destinazione);
-  bollaApparati = (data.apparati || []).map(b => ({ ...b }));
-  bollaRenderApparati();
+  APPARATI['bolla'] = (data.apparati || []).map(b => ({ ...b }));
   bollaUnsavedData = { ...data };
-  const banner = document.getElementById('bolla-unsaved-banner');
-  banner.style.display = 'flex';
-  document.getElementById('bolla-banner-msg').textContent = '✎ Stai modificando una bolla esistente — genera il PDF e poi salva.';
+  document.getElementById('btab-nuova').textContent = 'Modifica Bolla';
+  SAVE_STATE['bolla'].initState = getFormData('bolla');
+  bollaRenderApparati();
+  // const banner = document.getElementById('bolla-unsaved-banner');
+  // banner.style.display = 'flex';
+  // document.getElementById('bolla-banner-msg').textContent = '✎ Stai modificando una bolla esistente — genera il PDF e poi salva.';
 }
 
 // ── ANAGRAFICHE ───────────────────────────────────────────────────────────────
@@ -3369,11 +3396,11 @@ async function deleteAnagrafica(id) {
 }
 // ── BOLLA → SITE ──────────────────────────────────────────────────────────────
 function bollaCompilasite() {
-  if (!bollaApparati.length) { showToast('Aggiungi almeno un apparato', 'error'); return; }
-  const assetBolla = bollaApparati.map(b => (b.asset)).filter(Boolean);
+  if (!APPARATI['bolla'].length) { showToast('Aggiungi almeno un apparato', 'error'); return; }
+  const assetBolla = APPARATI['bolla'].map(b => (b.asset)).filter(Boolean);
   switchTab('site');
   siteReset();
-  document.getElementById('site-cerca-apparato').value = assetBolla.join(' ');
+  document.getElementById('cerca-apparato-site').value = assetBolla.join(' ');
   document.getElementById('site-cliente').value = document.getElementById('bolla-cessionario').value;
   document.getElementById('site-bolla-numero').value = document.getElementById('bolla-numero').value;
   document.getElementById('site-bolla-data').value = document.getElementById('bolla-data').value;
@@ -3384,7 +3411,7 @@ function bollaCompilasite() {
 
 // ─── TAB SITE ─────────────────────────────────────────────────────────────────
 
-let siteApparati = [];
+// let siteApparati = [];
 let siteUnsavedData = null;
 let siteEditingId = null;
 let siteArchivioPage = 0;
@@ -3444,15 +3471,16 @@ function switchSiteTab(name) {
 
 async function initNuovaSite() {
   document.getElementById('site-data').value = new Date().toISOString().split('T')[0];
+  SAVE_STATE['site'].initState = getFormData('site');
   await loadAnagraficheCache();
-  switchSiteType();
+  // switchSiteType();
 }
 
 // ── APPARATI SITE ─────────────────────────────────────────────────────────────
 async function siteAggiungiDaRicerca() {
 
   // cerca apparati in base al input
-  const q = document.getElementById('site-cerca-apparato').value.trim();
+  const q = document.getElementById('cerca-apparato-site').value.trim();
   if (!q) return;
   const tokens = q.split(/[\s,;\n]+/).map(t => t.trim()).filter(Boolean);
 
@@ -3488,9 +3516,9 @@ async function siteAggiungiDaRicerca() {
     };
     if (tipo === 'Sostituzione') app.azione = 'R';
     if (tipo === 'Spostamento')  app.da_rack = r.rack || '';
-    siteApparati.push(app);
+    APPARATI['site'].push(app);
   });
-  document.getElementById('site-cerca-apparato').value = '';
+  document.getElementById('cerca-apparato-site').value = '';
   siteRenderApparati();
   if (data.length > 1) showToast(`${data.length} apparati aggiunti`, 'success');
 }
@@ -3500,18 +3528,18 @@ function siteAggiungiManuale() {
   const app = { tipologia:'', modello:'', rack_mount:'', serial_number:'', asset:'', rack:'' };
   if (tipo === 'Sostituzione') app.azione = 'I';
   if (tipo === 'Spostamento')  app.da_rack = '';
-  siteApparati.push(app);
+  APPARATI['site'].push(app);
   siteRenderApparati();
-  openSiteApparatoModal(siteApparati.length - 1);
+  openSiteApparatoModal(APPARATI['site'].length - 1);
 }
 
 function siteCopiaRiga(id) {
-  siteApparati.push(siteApparati[id]);
+  APPARATI['site'].push(APPARATI['site'][id]);
   siteRenderApparati();
 }
 
 function siteRimuovi(idx) {
-  siteApparati.splice(idx, 1);
+  APPARATI['site'].splice(idx, 1);
   siteRenderApparati();
 }
 
@@ -3520,15 +3548,17 @@ function siteRenderApparati() {
   const cfg = SITE_TYPE_CONFIG[document.getElementById('site-tipo').value] || SITE_TYPE_CONFIG.Rimozione;
   const colSpan = 6 + (cfg.colAzione ? 1 : 0) + (cfg.colDaRack ? 1 : 0);
 
-  if (!siteApparati.length) {
+  isUnsaved('site');
+
+  if (!APPARATI['site'].length) {
     tbody.innerHTML = `<tr><td colspan="${colSpan}"><div class="empty">Nessun apparato aggiunto</div></td></tr>`;
     return;
   }
 
-  tbody.innerHTML = siteApparati.map((b, i) => {
+  tbody.innerHTML = APPARATI['site'].map((b, i) => {
     const azioneCell = cfg.colAzione
       ? `<td style="text-align:center;font-weight:700;font-family:var(--mono);font-size:11px;color:${b.azione==='I'?'var(--accent)':'var(--danger)'}">
-           <select onchange="siteApparati[${i}].azione=this.value;siteRenderApparati()" style="background:transparent;border:none;color:inherit;font-weight:700;font-size:11px;cursor:pointer;padding:0;font-family:var(--mono);">
+           <select onchange="APPARATI['site'][${i}].azione=this.value;siteRenderApparati()" style="background:transparent;border:none;color:inherit;font-weight:700;font-size:11px;cursor:pointer;padding:0;font-family:var(--mono);">
              <option value="I" ${b.azione==='I'?'selected':''}>INST</option>
              <option value="R" ${b.azione==='R'?'selected':''}>RIM</option>
            </select>
@@ -3560,11 +3590,11 @@ const SITE_APP_FIELDS = ['tipologia','modello','rack_mount','serial_number','ass
   'sezione_alimentazione','livello_rack_unit','componente_di'];
 
 function openSiteApparatoModal(idx) {
-  const b = siteApparati[idx] || {};
+  const b = APPARATI['site'][idx] || {};
   const tipo = document.getElementById('site-tipo').value;
   document.getElementById('site-apparato-idx').value = idx;
   document.getElementById('site-apparato-modal-title').textContent =
-    idx < siteApparati.length && (b.modello || b.asset) ? `Modifica — ${b.modello || b.asset}` : 'Nuovo Apparato';
+    idx < APPARATI['site'].length && (b.modello || b.asset) ? `Modifica — ${b.modello || b.asset}` : 'Nuovo Apparato';
 
   // mostra/nascondi campo Azione
   const azioneRow = document.getElementById('site-app-azione-row');
@@ -3594,16 +3624,15 @@ function saveSiteApparato() {
     if (el) app[f] = el.value.trim();
   });
   if (tipo === 'Sostituzione') app.azione = document.getElementById('site-app-azione').value;
-  siteApparati[idx] = app;
+  APPARATI['site'][idx] = app;
   closeSiteApparatoModal();
   siteRenderApparati();
 }
 
 function siteReset() {
-  siteApparati = [];
+  APPARATI['site'] = [];
   siteUnsavedData = null;
   siteEditingId = null;
-  siteRenderApparati();
   document.getElementById('site-data').value = new Date().toISOString().split('T')[0];
   document.getElementById('site-incident').value = '';
   document.getElementById('site-cliente').value = '';
@@ -3613,7 +3642,10 @@ function siteReset() {
   document.getElementById('site-bolla-ingresso-data').value = '';
   document.getElementById('site-bolla-uscita-numero').value = '';
   document.getElementById('site-bolla-uscita-data').value = '';
-  document.getElementById('site-unsaved-banner').style.display = 'none';
+  document.getElementById('stab-nuova').textContent = 'Nuova Site';
+  SAVE_STATE['site'].initState = getFormData('site');
+  siteRenderApparati();
+  // document.getElementById('site-unsaved-banner').style.display = 'none';
 }
 
 // ── GENERA SITE ───────────────────────────────────────────────────────────────
@@ -3623,7 +3655,7 @@ function _siteRaccogliDati() {
   const dataVal   = document.getElementById('site-data').value;
   const clienteId = document.getElementById('site-cliente').value;
   if (!dataVal || !clienteId) { showToast('Data e cliente sono obbligatori', 'error'); return null; }
-  if (!siteApparati.length)  { showToast('Aggiungi almeno un apparato', 'error'); return null; }
+  if (!APPARATI['site'].length)  { showToast('Aggiungi almeno un apparato', 'error'); return null; }
 
   const cfg         = SITE_TYPE_CONFIG[tipo] || SITE_TYPE_CONFIG.Rimozione;
   const clienteNome = anagraficheCache.find(a => String(a.id) === String(clienteId))?.nome || '';
@@ -3653,19 +3685,19 @@ function _siteRaccogliDati() {
     mese_anno: dataVal.slice(0, 7),
     cliente:   clienteNome,
     incident:  incident || null,
-    apparati:  siteApparati.map(b => ({ ...b })),
+    apparati:  APPARATI['site'].map(b => ({ ...b })),
     ...bollaFields,
   };
 }
 
-function siteGenera() {
+function siteAnteprima() {
   const d      = _siteRaccogliDati();
   if (!d) return;
   const layout = document.getElementById('site-layout').value;
   siteUnsavedData = d;
   _apriSite(d, layout);
-  document.getElementById('site-unsaved-banner').style.display = 'flex';
-  document.getElementById('site-banner-msg').textContent = '⚠ Site generata ma non ancora salvata.';
+  // document.getElementById('site-unsaved-banner').style.display = 'flex';
+  // document.getElementById('site-banner-msg').textContent = '⚠ Site generata ma non ancora salvata.';
 }
 
 function _apriSite(d, layout) {
@@ -3687,13 +3719,13 @@ async function siteSalva() {
     ({ error } = await db.from('site_report').insert(d));
   }
 
-  if (btn) { btn.disabled = false; btn.textContent = "✓ Salva e vai all'archivio"; }
+  if (btn) { btn.disabled = false; btn.textContent = "✓ Salva"; }
   if (error) { showToast('Errore salvataggio: ' + error.message, 'error'); return; }
 
   showToast(siteEditingId ? 'Site aggiornata' : 'Site salvata', 'success');
   siteUnsavedData = null;
   siteEditingId = null;
-  document.getElementById('site-unsaved-banner').style.display = 'none';
+  // document.getElementById('site-unsaved-banner').style.display = 'none';
   _resetSiteArchivioMesiCache();
   switchSiteTab('archivio');
   siteReset();
@@ -3701,7 +3733,7 @@ async function siteSalva() {
 
 // ── SITE → BOLLA ──────────────────────────────────────────────────────────────
 function siteCompilaDDT() {
-  if (!siteApparati.length) { showToast('Aggiungi almeno un apparato', 'error'); return; }
+  if (!APPARATI['site'].length) { showToast('Aggiungi almeno un apparato', 'error'); return; }
   switchTab('bolle');
   bollaReset();
   const tipo = document.getElementById('site-tipo').value;
@@ -3709,8 +3741,8 @@ function siteCompilaDDT() {
 
   // Per Sostituzione: solo gli apparati con azione 'R' (rimossi)
   const sorgente = tipo === 'Sostituzione'
-    ? siteApparati.filter(b => b.azione === 'R').map(a => a.serial_number)
-    : siteApparati.map(a => a.serial_number);
+    ? APPARATI['site'].filter(b => b.azione === 'R').map(a => a.serial_number)
+    : APPARATI['site'].map(a => a.serial_number);
   if (!sorgente.length) { showToast('Nessun apparato rimosso da trasferire al DDT', 'error'); return; }
 
   const num  = cfg.bolla === 'doppia' ? document.getElementById('site-bolla-uscita-numero').value.trim()
@@ -3721,7 +3753,7 @@ function siteCompilaDDT() {
   setTimeout(() => {
     if (num)  document.getElementById('bolla-numero').value = num;
     if (data) document.getElementById('bolla-data').value   = data;
-    document.getElementById('bolla-cerca-apparato').value = sorgente.join(' ');
+    document.getElementById('cerca-apparato-bolla').value = sorgente.join(' ');
     const idCli = document.getElementById('site-cliente').value;
     document.getElementById('bolla-cessionario').value = idCli;
     bollaAggiungiDaRicerca();
@@ -3835,7 +3867,7 @@ async function siteArchivioModifica(id) {
   document.getElementById('site-tipo').value     = data.tipo || 'Rimozione';
   document.getElementById('site-data').value     = data.data_site;
   document.getElementById('site-incident').value = data.incident || '';
-  switchSiteType();
+  document.getElementById('stab-nuova').textContent = 'Modifica Site';
 
   const cfg = SITE_TYPE_CONFIG[data.tipo] || SITE_TYPE_CONFIG.Rimozione;
   if (cfg.bolla === 'singola') {
@@ -3852,10 +3884,11 @@ async function siteArchivioModifica(id) {
 
   const found = anagraficheCache.find(a => a.nome === data.cliente);
   document.getElementById('site-cliente').value = found ? found.id : '';
-  siteApparati = (data.apparati || []).map(b => ({ ...b }));
-  siteRenderApparati();
-  document.getElementById('site-unsaved-banner').style.display = 'flex';
-  document.getElementById('site-banner-msg').textContent = '✎ Stai modificando una site esistente — salva quando hai finito.';
+  APPARATI['site'] = (data.apparati || []).map(b => ({ ...b }));
+  SAVE_STATE['site'].initState = getFormData('site');
+  switchSiteType();
+  // document.getElementById('site-unsaved-banner').style.display = 'flex';
+  // document.getElementById('site-banner-msg').textContent = '✎ Stai modificando una site esistente — salva quando hai finito.';
 }
 
 // ─── TAB CERTIFICAZIONI ────────────────────────────────────────────────────────
@@ -3866,7 +3899,7 @@ const CERT_PROGETTO_CSE = 'CLIENTE CSE – PROGETTO TIM TLC23MSLTPATO- SALA L0';
 let certArchivioPage = 0;
 let certArchivioSearch = '';
 let certArchivioSearchTimeout = null;
-let certApparati = [];   // apparati nel modal cert corrente
+// let certApparati = [];   // apparati nel modal cert corrente
 let certEditingId = null;
 
 // ── Helpers pre-compilazione ──────────────────────────────────────────────────
@@ -4014,7 +4047,7 @@ async function certArchivioModifica(id) {
 // existingCert: record cert_elettrica esistente (per modifica), oppure null
 function openCertModal(siteData, existingCert) {
   certEditingId = existingCert?.id || null;
-  certApparati = [];
+  APPARATI['cert'] = [];
 
   document.getElementById('cert-modal-title').textContent =
     certEditingId ? 'Modifica Certificazione' : 'Nuova Certificazione Elettrica';
@@ -4025,22 +4058,24 @@ function openCertModal(siteData, existingCert) {
     // Modalità modifica: carica dati esistenti
     document.getElementById('cert-tipo').value      = existingCert.tipo_cert || 'standard';
     document.getElementById('cert-data').value      = existingCert.data_cert || '';
-    document.getElementById('cert-cliente').value   = existingCert.cliente || '';
+    const found = anagraficheCache.find(a => a.nome === existingCert.cliente);
+    document.getElementById('cert-cliente').value   = found ? found.id : '';
     document.getElementById('cert-progetto').value  = existingCert.progetto_riferimento || '';
     document.getElementById('cert-incident').value  = existingCert.incident || '';
-    certApparati = (existingCert.apparati || []).map(a => ({ ...a }));
+    APPARATI['cert'] = (existingCert.apparati || []).map(a => ({ ...a }));
   } else if (siteData) {
     // Pre-compilazione da site di installazione
     const isCse = /\bCSE\b/i.test(siteData.cliente || '');
     const tipo  = isCse ? 'cse' : 'standard';
     document.getElementById('cert-tipo').value      = tipo;
     document.getElementById('cert-data').value      = siteData.data_site || '';
-    document.getElementById('cert-cliente').value   = siteData.cliente || '';
+    const found = anagraficheCache.find(a => a.nome === siteData.cliente);
+    document.getElementById('cert-cliente').value   = found ? found.id : '';
     document.getElementById('cert-incident').value  = siteData.incident || '';
     document.getElementById('cert-progetto').value  = isCse
       ? CERT_PROGETTO_CSE
       : _certProgettoDefault(siteData.cliente, siteData.apparati);
-    certApparati = _siteApparatiToCert(siteData.apparati, siteData.cliente, isCse);
+    APPARATI['cert'] = _siteApparatiToCert(siteData.apparati, siteData.cliente, isCse);
   } else {
     // Nuova cert standalone: campi vuoti
     document.getElementById('cert-tipo').value      = 'standard';
@@ -4050,6 +4085,7 @@ function openCertModal(siteData, existingCert) {
     document.getElementById('cert-incident').value  = '';
   }
 
+  SAVE_STATE['cert'].initState = getFormData('cert');
   certRenderApparati();
   document.getElementById('cert-modal').classList.add('open');
 }
@@ -4057,19 +4093,19 @@ function openCertModal(siteData, existingCert) {
 function closeCertModal() {
   document.getElementById('cert-modal').classList.remove('open');
   certEditingId = null;
-  certApparati = [];
+  APPARATI['cert'] = [];
 }
 
 // Aggiorna il campo progetto quando l'utente cambia il tipo cert
 function onCertTipoChange() {
   const tipo    = document.getElementById('cert-tipo').value;
-  const cliente = document.getElementById('cert-cliente').value.trim();
+  const cliente = anagraficheCache.find(c => String(c.id) === String(document.getElementById('cert-cliente').value))?.nome || '';
   if (tipo === 'cse') {
     document.getElementById('cert-progetto').value = CERT_PROGETTO_CSE;
-    certApparati.forEach(a => { a.fornitore = 'CSE'; a.sala = 'L0'; });
+    APPARATI['cert'].forEach(a => { a.fornitore = 'CSE'; a.sala = 'L0'; });
   } else {
-    document.getElementById('cert-progetto').value = _certProgettoDefault(cliente, certApparati);
-    certApparati.forEach(a => { a.fornitore = cliente; a.sala = ''; });
+    document.getElementById('cert-progetto').value = _certProgettoDefault(cliente, APPARATI['cert']);
+    APPARATI['cert'].forEach(a => { a.fornitore = cliente; a.sala = ''; });
   }
   certRenderApparati();
 }
@@ -4078,19 +4114,22 @@ function onCertTipoChange() {
 function onCertClienteInput() {
   const tipo = document.getElementById('cert-tipo').value;
   if (tipo === 'cse') return;
-  const cliente = document.getElementById('cert-cliente').value.trim();
-  document.getElementById('cert-progetto').value = _certProgettoDefault(cliente, certApparati);
+  const cliente = anagraficheCache.find(a => String(a.id) === String(document.getElementById('cert-cliente').value))?.nome || '';
+  document.getElementById('cert-progetto').value = _certProgettoDefault(cliente, APPARATI['cert']);
 }
 
 // ── Render tabella apparati cert ──────────────────────────────────────────────
 
 function certRenderApparati() {
   const tbody = document.getElementById('cert-apparati-body');
-  if (!certApparati.length) {
+
+  isUnsaved('cert');
+
+  if (!APPARATI['cert'].length) {
     tbody.innerHTML = '<tr id="cert-empty-row"><td colspan="6"><div class="empty">Nessun apparato</div></td></tr>';
     return;
   }
-  tbody.innerHTML = certApparati.map((a, i) => `
+  tbody.innerHTML = APPARATI['cert'].map((a, i) => `
     <tr>
       <td style="font-size:11px;">${escHtml(a.costruttore)}</td>
       <td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;">${escHtml(a.modello)}</td>
@@ -4105,14 +4144,14 @@ function certRenderApparati() {
 }
 
 function certRimuoviApp(i) {
-  certApparati.splice(i, 1);
+  APPARATI['cert'].splice(i, 1);
   certRenderApparati();
 }
 
 function certAggiungiRiga() {
   const tipo    = document.getElementById('cert-tipo').value;
-  const cliente = document.getElementById('cert-cliente').value.trim();
-  certApparati.push({
+  const cliente = anagraficheCache.find(cli => String(cli.id) === String(document.getElementById('cert-cliente').value))?.nome || '';
+  APPARATI['cert'].push({
     costruttore: '', modello: '', asset: '', serial_number: '',
     mono_alimentato: '', rack: '',
     fornitore: tipo === 'cse' ? 'CSE' : cliente,
@@ -4120,7 +4159,7 @@ function certAggiungiRiga() {
     inter: '', quadro: ''
   });
   certRenderApparati();
-  openCertAppModal(certApparati.length - 1);
+  openCertAppModal(APPARATI['cert'].length - 1);
 }
 
 // ── Modal singolo apparato cert ───────────────────────────────────────────────
@@ -4128,7 +4167,7 @@ function certAggiungiRiga() {
 const CERT_APP_FIELDS = ['costruttore','modello','asset','serial_number','mono_alimentato','rack','fornitore','sala','inter','quadro'];
 
 function openCertAppModal(idx) {
-  const a = certApparati[idx] || {};
+  const a = APPARATI['cert'][idx] || {};
   document.getElementById('cert-app-idx').value = idx;
   CERT_APP_FIELDS.forEach(f => {
     const el = document.getElementById('cert-app-' + f);
@@ -4144,10 +4183,10 @@ function closeCertAppModal() {
 function saveCertApp() {
   const idx = parseInt(document.getElementById('cert-app-idx').value, 10);
   if (isNaN(idx) || idx < 0) return;
-  if (!certApparati[idx]) certApparati[idx] = {};
+  if (!APPARATI['cert'][idx]) APPARATI['cert'][idx] = {};
   CERT_APP_FIELDS.forEach(f => {
     const el = document.getElementById('cert-app-' + f);
-    if (el) certApparati[idx][f] = el.value.trim();
+    if (el) APPARATI['cert'][idx][f] = el.value.trim();
   });
   closeCertAppModal();
   certRenderApparati();
@@ -4169,16 +4208,17 @@ function certGenera() {
 function _certDatiDaModal() {
   const dataVal = document.getElementById('cert-data').value;
   if (!dataVal) { showToast('La data è obbligatoria', 'error'); return null; }
-  if (!certApparati.length) { showToast('Aggiungi almeno un apparato', 'error'); return null; }
+  if (!APPARATI['cert'].length) { showToast('Aggiungi almeno un apparato', 'error'); return null; }
+  const cliente = anagraficheCache.find(cli => String(cli.id) === String(document.getElementById('cert-cliente').value))?.nome || '';
   return {
     tipo_cert:            document.getElementById('cert-tipo').value,
     progetto_riferimento: document.getElementById('cert-progetto').value.trim(),
-    cliente:              document.getElementById('cert-cliente').value.trim(),
+    cliente,
     incident:             document.getElementById('cert-incident').value.trim() || null,
     data_cert:            dataVal,
     mese_anno:            dataVal.slice(0, 7),
     site_report_id:       document.getElementById('cert-site-report-id').value || null,
-    apparati:             certApparati.map(a => ({ ...a })),
+    apparati:             APPARATI['cert'].map(a => ({ ...a })),
   };
 }
 
@@ -4226,11 +4266,11 @@ async function siteSalvaEVaiCert() {
     if (ins) savedId = ins.id;
   }
 
-  if (btn) { btn.disabled = false; btn.textContent = '📄 Vai alla Cert'; }
+  if (btn) { btn.disabled = false; btn.textContent = '📄 Crea Certificazione'; }
   if (error) { showToast('Errore salvataggio site: ' + error.message, 'error'); return; }
 
   showToast(siteEditingId ? 'Site aggiornata' : 'Site salvata', 'success');
-  document.getElementById('site-unsaved-banner').style.display = 'none';
+  // document.getElementById('site-unsaved-banner').style.display = 'none';
   _resetSiteArchivioMesiCache();
 //  siteUnsavedData = null;
 //  siteEditingId = null;
@@ -4238,56 +4278,65 @@ async function siteSalvaEVaiCert() {
   openCertModal({ ...d, id: savedId });
 }
 
-// ── Compila Site da modal cert ────────────────────────────────────────────────
-async function compilaSiteDaCert() {
-  // salva certificazione in corso
-  const payload = _certDatiDaModal();
-  if (!payload) return;
+// ─── CONTROLLO SALVATAGGI ─────────────────────────────────────────────────────
 
-  const id = certEditingId || null;
-  let error;
-  if (id) {
-    ({ error } = await db.from('cert_elettrica').update(payload).eq('id', id));
-  } else {
-    const { error: e } = await db.from('cert_elettrica').insert(payload);
-    error = e;
+const SAVE_STATE = {
+  site:  { initState: null, idPanel: 'spanel-nuova' },
+  bolla: { initState: null, idPanel: 'bpanel-nuova' },
+  cert:  { initState: null, idPanel: 'cert-modal' }
+};
+
+// Object.values(SAVE_STATE).forEach(a => {
+//   document.getElementById(a.idPanel).addEventListener("input", handleChange);
+//   // document.getElementById(a.idPanel).addEventListener("change", handleChange);
+// });
+
+// function handleChange(e) {
+//   const el = e.target;
+
+//   if (el.tagName !== "INPUT" && el.tagName !== "SELECT") return;
+//   if (!el.id) return;
+
+//   const prefix = Object.keys(SAVE_STATE).find(cfg => el.id.startsWith(cfg + "-"));
+//   if (!prefix) return;
+
+//   isUnsaved(prefix);
+// }
+
+function getFormData(prefix) {
+  const container = document.getElementById(SAVE_STATE[prefix].idPanel);
+  const data = {};
+
+  container
+    .querySelectorAll(`input[id^='${prefix}-'], select[id^='${prefix}-']`)
+    .forEach(el => {
+      data[el.id] = el.value;
+    });
+  data["apparati"] = JSON.stringify(APPARATI[prefix]);
+
+  return data;
+}
+
+function isDifferent(a, b) {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (let k of keys) {
+    if ((a[k] || "") !== (b[k] || "")) {
+      // console.log('differenze in '+k);
+      // console.log('Prima: ' + b[k]);
+      // console.log('Dopo:  ' + a[k]);
+      return true;
+    }
   }
-  if (error) { showToast('Errore salvataggio cert: ' + error.message, 'error'); return; }
-  _resetCertArchivioMesiCache();
-  showToast('Certificazione salvata', 'success');
+  return false;
+}
 
-  // Converti apparati cert → apparati site (inverso parziale)
-  const apparatiSite = certApparati.map(a => {
-    const mono = String(a.mono_alimentato || '').trim().toUpperCase();
-    const doppiaAlim = (mono === 'NO' || mono === 'N') ? 'S' : (mono === 'SI' || mono === 'SÌ' || mono === 'S') ? 'N' : '';
-    return {
-      tipologia:            '',
-      modello:              [a.costruttore, a.modello].filter(Boolean).join(' '),
-      serial_number:        a.serial_number || '',
-      asset:                a.asset || '',
-      rack:                 a.rack || '',
-      doppia_alimentazione: doppiaAlim,
-      sezione_alimentazione: a.quadro || '',
-    };
-  });
+function isUnsaved(prefix) {
+  const current = getFormData(prefix);
+  const dirty = isDifferent(current, SAVE_STATE[prefix].initState);
 
-  closeCertModal();
-  switchTab('site');
-
-  setTimeout(async () => {
-    switchSiteTab('nuova');
-    await loadAnagraficheCache();
-    document.getElementById('site-tipo').value = 'Installazione';
-    document.getElementById('site-data').value = payload.data_cert || new Date().toISOString().split('T')[0];
-
-    // Cerca anagrafica per nome cliente
-    const found = anagraficheCache.find(an => an.nome === payload.cliente);
-    if (found) document.getElementById('site-cliente').value = found.id;
-
-    switchSiteType();
-    siteApparati = apparatiSite;
-    siteRenderApparati();
-  }, 250);
+  const btn=document.getElementById(prefix+'-save-button');
+  btn.classList.toggle("btn-warning", dirty);
+  btn.textContent = dirty ? '⚠ Salva' : '✓ Salva';
 }
 
 // ─── TAB ISPEZIONE ────────────────────────────────────────────────────────────
