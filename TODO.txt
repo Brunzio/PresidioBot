@@ -11,6 +11,7 @@ clienti
     foglio chiavi
 
 CSS
+    uniforma simboli ✓ ⚠ 📋 🔍 ⬇ ➕ ✎ ↺
     temi
     versione mobile
 

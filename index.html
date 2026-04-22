@@ -791,14 +791,16 @@
             <option value="colonne">Layout colonne (5xPagina)</option>
             <option value="righe">Layout righe (16xPagina)</option>
           </select>
-          <button class="btn btn-primary" onclick="siteGenera()">⬇ Genera Site</button>
+          <button class="btn btn-secondary" onclick="siteGenera()">⌕ Anteprima</button>
+          <button id="site-salva" class="btn btn-primary" onclick="siteSalva()">✓ Salva</button>
         </div>
 
-        <!-- Banner site non salvata -->
+        <!-- Banner site non salvata 
         <div id="site-unsaved-banner" style="display:none;background:rgba(255,184,0,0.1);border:1px solid var(--warning);border-radius:8px;padding:12px 16px;align-items:center;justify-content:space-between;gap:12px;">
           <div style="font-size:12px;color:var(--warning);" id="site-banner-msg">⚠ Site generata ma non ancora salvata.</div>
           <button class="btn btn-primary btn-sm" onclick="siteSalva()">✓ Salva e vai all'archivio</button>
         </div>
+        -->
       </div>
 
       <!-- ── ARCHIVIO SITE ── -->
@@ -848,7 +850,7 @@
       <div id="spanel-certificazioni" style="display:none;">
         <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <div class="search-box" style="max-width:300px;">
-            <input type="text" id="cert-archivio-search" placeholder="Cerca cliente o asset..." oninput="onCertArchivioSearch()">
+            <input type="text" id="cert-archivio-search" placeholder="Cerca cliente, incident o asset..." oninput="onCertArchivioSearch()">
           </div>
           <select id="cert-archivio-mese" onchange="certArchivioPage=0;loadCertArchivio()" style="min-width:140px;">
             <option value="">Tutti i mesi</option>
@@ -2972,6 +2974,18 @@ document.getElementById('cliente-modal').addEventListener('click', function(e) {
 document.getElementById('anagrafica-modal').addEventListener('click', function(e) { if (e.target === this) closeAnagraficaModal(); });
 
 // ─── TAB BOLLE ────────────────────────────────────────────────────────────────
+
+function unsavedBtn(tipo) {
+  const saveButton = document.getElementById(tipo+'-salva');
+  saveButton.classList.add('btn-danger');
+  saveButton.textContent = '⚠ Salva';
+}
+
+function savedBtn(tipo) {
+  const saveButton = document.getElementById(tipo+'-salva');
+  saveButton.classList.remove('btn-danger');
+  saveButton.textContent = '✓ Salva';
+}
 
 function switchBolleTab(name) {
   ['nuova','archivio','anagrafiche'].forEach(t => {
