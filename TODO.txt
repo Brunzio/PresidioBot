@@ -1,6 +1,5 @@
 site bolle cert
     sistemare campi visualizzati in edit
-    controllo isUnsaved su campi aggiunti
     da rack a rack giusto ordine
 
 ispezione
