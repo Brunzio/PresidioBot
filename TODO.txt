@@ -1,7 +1,6 @@
-site installazione
-    sistemare logica salvataggi site, banner, pulsante salva
-    togliere tipologia, aggiungere livello rack unit
-    nuova cert scelta cliente da select
+site bolle cert
+    sistemare campi visualizzati in edit
+    controllo isUnsaved su campi aggiunti
     da rack a rack giusto ordine
 
 ispezione
@@ -14,6 +13,11 @@ CSS
     uniforma simboli ✓ ⚠ 📋 🔍 ⬇ ➕ ✎ ↺
     temi
     versione mobile
+
+funzioni
+    parametrizzare salvataggi
+        raccolta dati
+        visibilità
 
 google drive
     possibili integrazioni
