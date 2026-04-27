@@ -23,6 +23,7 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+  a { text-decoration: none; }
 
   /* HEADER */
   header {
@@ -85,6 +86,7 @@
 
   /* TABLE */
   .table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+  .table-wrapper input { border: 1px solid var(--border); font-size: 12px; padding: 3px; width: 100%; border-radius: 3px; text-align: center; }
   .table-wrapper.scrollable { max-height: 457px; overflow-y: auto; }
   .table-wrapper.scrollable thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
   .table-wrapper.scrollable-sm { max-height: 248px; overflow-y: auto; }
@@ -596,11 +598,11 @@
           <table id="bolla-apparati-table">
             <thead>
               <tr>
-                <th style="width:40px;">Qt</th>
+                <th style="width:70px;">Qt</th>
                 <th>Descrizione (Modello)</th>
-                <th style="width:120px;">Asset TIM</th>
-                <th style="width:140px;">S/N</th>
-                <th style="width:60px;">Colli</th>
+                <th style="width:120px;">Asset</th>
+                <th>Seriale</th>
+                <th style="width:70px;">Colli</th>
                 <th style="width:40px;"></th>
               </tr>
             </thead>
@@ -611,9 +613,9 @@
         </div>
 
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:12px;">
-          <button class="btn btn-secondary" onclick="bollaReset()">↺ Svuota</button>
+          <button class="btn btn-secondary" onclick="bollaReset()">↺ Nuova</button>
           <button class="btn btn-secondary" onclick="bollaCompilasite()">📋 Crea Site</button>
-          <button class="btn btn-secondary" onclick="bollaAnteprima()">🔍 Anteprima</button>
+          <button class="btn btn-secondary" onclick="bollaAnteprima()">🖨️ Anteprima</button>
           <button id="bolla-save-button" class="btn btn-primary" onclick="bollaSalva()">✓ Salva</button>
         </div>
 
@@ -737,12 +739,12 @@
           <table>
             <thead>
               <tr id="site-apparati-head">
-                <th>Tipologia</th>
+                <th style="width: 120px;;">Asset</th>
                 <th>Marca – Modello</th>
-                <th style="width:130px;">Serial Number</th>
-                <th style="width:100px;">Asset</th>
-                <th style="width:100px;">Rack</th>
-                <th style="width:40px;"></th>
+                <th>Serial Number</th>
+                <th style="width: 120px;">Rack</th>
+                <th style="width: 90px;">Rack Unit</th>
+                <th style="width: 40px;"></th>
               </tr>
             </thead>
             <tbody id="site-apparati-body">
@@ -788,14 +790,14 @@
         </div>
 
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:12px;align-items:center;">
-          <button class="btn btn-secondary" onclick="siteReset()">↺ Svuota</button>
+          <button class="btn btn-secondary" onclick="siteReset()">↺ Nuova</button>
           <button class="btn btn-secondary" id="btn-compila-ddt" onclick="siteCompilaDDT()">📋 Crea Bolla</button>
           <button class="btn btn-secondary" id="btn-vai-cert" style="display:none;" onclick="siteSalvaEVaiCert()">📄 Crea Certificazione</button>
           <select id="site-layout" style="font-size:11px;padding:6px 10px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px;">
             <option value="colonne">Layout colonne (5xPagina)</option>
             <option value="righe">Layout righe (16xPagina)</option>
           </select>
-          <button class="btn btn-secondary" onclick="siteAnteprima()">⌕ Anteprima</button>
+          <button class="btn btn-secondary" onclick="siteAnteprima()">🖨️ Anteprima</button>
           <button id="site-save-button" class="btn btn-primary" onclick="siteSalva()">✓ Salva</button>
         </div>
 
@@ -897,7 +899,7 @@
         <select id="ispEttore"><option value="">— ispettore —</option></select>
         <button class="btn btn-primary" onclick="ispAggiungi()">+ Aggiungi</button>
         <button class="btn btn-secondary" onclick="ispControllaINC()">🔍 Controlla INC</button>
-        <button class="btn btn-secondary" onclick="ispAnteprima()">⬇ Anteprima</button>
+        <button class="btn btn-secondary" onclick="ispAnteprima()">🖨️ Anteprima</button>
         <button class="btn btn-secondary" onclick="ispCopiaMail()">📋 Copia testo mail</button>
         <span id="isp-batch-info" style="font-family:var(--mono);font-size:11px;color:var(--text-muted);margin-left:8px;"></span>
       </div>
@@ -1088,11 +1090,11 @@
         <table id="cert-apparati-table">
           <thead>
             <tr>
-              <th>Costruttore</th>
-              <th>Modello</th>
-              <th>Asset</th>
-              <th>Serial Number</th>
-              <th>Rack</th>
+              <th style="width: 120px;">Asset</th>
+              <th>Seriale</th>
+              <th style="width: 80px;">Sala</th>
+              <th style="width: 90px;">Inter.</th>
+              <th style="width: 70px;">Quadro</th>
               <th style="width:40px;"></th>
             </tr>
           </thead>
@@ -1107,7 +1109,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeCertModal()">Annulla</button>
-      <button class="btn btn-secondary" onclick="certGenera()">⌕ Anteprima</button>
+      <button class="btn btn-secondary" onclick="certGenera()">🖨️ Anteprima</button>
       <button class="btn btn-primary" onclick="certSalva()" id="cert-save-button">✓ Salva</button>
     </div>
   </div>
@@ -3108,11 +3110,11 @@ function bollaRenderApparati() {
   }
   tbody.innerHTML = APPARATI['bolla'].map((b, i) => `
     <tr>
-      <td><input type="number" min="1" value="${b.qty}" oninput="APPARATI['bolla'][${i}].qty=+this.value" style="width:48px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
-      <td><input type="text" value="${escHtml(b.desc)}" oninput="APPARATI['bolla'][${i}].desc=this.value" placeholder="Modello/descrizione" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
-      <td><input type="text" value="${escHtml(b.asset)}" oninput="APPARATI['bolla'][${i}].asset=this.value" placeholder="Etichetta" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
-      <td><input type="text" value="${escHtml(b.sn)}" oninput="APPARATI['bolla'][${i}].sn=this.value" placeholder="Seriale" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
-      <td><input type="number" min="1" value="${b.colli}" oninput="APPARATI['bolla'][${i}].colli=+this.value" style="width:48px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:12px;"></td>
+      <td><input type="number" min="1" value="${b.qty}" oninput="APPARATI['bolla'][${i}].qty=+this.value" style="width:48px;background:var(--surface);color:var(--text);"></td>
+      <td><input type="text" value="${escHtml(b.desc)}" oninput="APPARATI['bolla'][${i}].desc=this.value" placeholder="Modello/descrizione"></td>
+      <td><input type="text" value="${escHtml(b.asset)}" oninput="APPARATI['bolla'][${i}].asset=this.value" placeholder="Etichetta"></td>
+      <td><input type="text" value="${escHtml(b.sn)}" oninput="APPARATI['bolla'][${i}].sn=this.value" placeholder="Seriale"></td>
+      <td><input type="number" min="1" value="${b.colli}" oninput="APPARATI['bolla'][${i}].colli=+this.value" style="width:48px;background:var(--surface);color:var(--text);"></td>
       <td><button class="btn btn-danger btn-sm" onclick="bollaRimuovi(${i})">✕</button></td>
     </tr>
   `).join('');
@@ -3449,12 +3451,12 @@ function switchSiteType() {
   const head = document.getElementById('site-apparati-head');
   head.innerHTML =
     (cfg.colAzione  ? '<th style="width:50px;">Az.</th>' : '') +
-    `<th>Tipologia</th>
+    `<th style="width:120px;">Asset</th>
      <th>Marca – Modello</th>
-     <th style="width:130px;">Serial Number</th>
-     <th style="width:100px;">Asset</th>` +
-    (cfg.colDaRack  ? '<th style="width:100px;">Da Rack</th>' : '') +
-    `<th style="width:100px;">Rack</th>
+     <th>Serial Number</th>` +
+    (cfg.colDaRack  ? '<th style="width:120px;">Da Rack</th>' : '') +
+    `<th style="width:120px;">${cfg.colDaRack ? 'A ' : ''}Rack</th>
+     <th style="width:90px;">Rack Unit</th>
      <th style="width:40px;"></th>`;
 
   siteRenderApparati();
@@ -3565,16 +3567,16 @@ function siteRenderApparati() {
          </td>`
       : '';
     const daRackCell = cfg.colDaRack
-      ? `<td style="font-family:var(--mono);font-size:11px;">${escHtml(b.da_rack)||'—'}</td>`
+      ? `<td><input type="text" oninput="APPARATI['site'][${i}].da_rack=this.value" value="${escHtml(b.da_rack)||''}"></td>`
       : '';
     return `<tr>
       ${azioneCell}
-      <td style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;">${escHtml(b.tipologia)||'—'}</td>
-      <td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;">${escHtml(b.modello)||'—'}</td>
-      <td style="font-family:var(--mono);font-size:11px;">${escHtml(b.serial_number)||'—'}</td>
-      <td style="font-family:var(--mono);font-size:11px;">${escHtml(b.asset)||'—'}</td>
+      <td><input type="text" oninput="APPARATI['site'][${i}].asset=this.value" value="${escHtml(b.asset)||''}"}></td>
+      <td><input type="text" oninput="APPARATI['site'][${i}].modello=this.value" value="${escHtml(b.modello)||''}"}></td>
+      <td><input type="text" oninput="APPARATI['site'][${i}].serial_number=this.value" value="${escHtml(b.serial_number)||''}"}></td>
       ${daRackCell}
-      <td style="font-family:var(--mono);font-size:11px;">${escHtml(b.rack)||'—'}</td>
+      <td><input type="text" oninput="APPARATI['site'][${i}].rack=this.value" value="${escHtml(b.rack)||''}"}></td>
+      <td><input type="text" oninput="APPARATI['site'][${i}].livello_rack_unit=this.value" value="${escHtml(b.livello_rack_unit)||''}"}></td>
       <td><div class="td-actions">
         <button class="btn btn-secondary btn-sm" onclick="openSiteApparatoModal(${i})">✎</button>
         ${cfg.copiaRiga ? `<button class="btn btn-secondary btn-sm" onclick="siteCopiaRiga(${i})">➕</button>` : ''}
@@ -4063,8 +4065,10 @@ function openCertModal(siteData, existingCert) {
     document.getElementById('cert-progetto').value  = existingCert.progetto_riferimento || '';
     document.getElementById('cert-incident').value  = existingCert.incident || '';
     APPARATI['cert'] = (existingCert.apparati || []).map(a => ({ ...a }));
+    SAVE_STATE['cert'].initState = getFormData('cert');
   } else if (siteData) {
     // Pre-compilazione da site di installazione
+    SAVE_STATE['cert'].initState = getFormData('cert');
     const isCse = /\bCSE\b/i.test(siteData.cliente || '');
     const tipo  = isCse ? 'cse' : 'standard';
     document.getElementById('cert-tipo').value      = tipo;
@@ -4083,9 +4087,9 @@ function openCertModal(siteData, existingCert) {
     document.getElementById('cert-cliente').value   = '';
     document.getElementById('cert-progetto').value  = '';
     document.getElementById('cert-incident').value  = '';
+    SAVE_STATE['cert'].initState = getFormData('cert');
   }
 
-  SAVE_STATE['cert'].initState = getFormData('cert');
   certRenderApparati();
   document.getElementById('cert-modal').classList.add('open');
 }
@@ -4131,11 +4135,11 @@ function certRenderApparati() {
   }
   tbody.innerHTML = APPARATI['cert'].map((a, i) => `
     <tr>
-      <td style="font-size:11px;">${escHtml(a.costruttore)}</td>
-      <td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;">${escHtml(a.modello)}</td>
-      <td style="font-family:var(--mono);font-size:11px;">${escHtml(a.asset)}</td>
-      <td style="font-family:var(--mono);font-size:11px;">${escHtml(a.serial_number)}</td>
-      <td style="font-family:var(--mono);font-size:11px;">${escHtml(a.rack)}</td>
+      <td><input type="text" oninput="APPARATI['cert'][${i}].asset=this.value" value="${escHtml(a.asset)}"></td>
+      <td><input type="text" oninput="APPARATI['cert'][${i}].serial_number=this.value" value="${escHtml(a.serial_number)}"></td>
+      <td><input type="text" oninput="APPARATI['cert'][${i}].sala=this.value" value="${escHtml(a.sala)}"></td>
+      <td><input type="text" oninput="APPARATI['cert'][${i}].inter=this.value" value="${escHtml(a.inter)}"></td>
+      <td><input type="text" oninput="APPARATI['cert'][${i}].quadro=this.value" value="${escHtml(a.quadro)}"></td>
       <td><div class="td-actions">
         <button class="btn btn-secondary btn-sm" onclick="openCertAppModal(${i})">✎</button>
         <button class="btn btn-danger btn-sm" onclick="certRimuoviApp(${i})">✕</button>
@@ -4272,6 +4276,7 @@ async function siteSalvaEVaiCert() {
   showToast(siteEditingId ? 'Site aggiornata' : 'Site salvata', 'success');
   // document.getElementById('site-unsaved-banner').style.display = 'none';
   _resetSiteArchivioMesiCache();
+  siteReset();
 //  siteUnsavedData = null;
 //  siteEditingId = null;
 

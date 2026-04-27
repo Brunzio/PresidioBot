@@ -1,6 +1,5 @@
 site bolle cert
-    sistemare campi visualizzati in edit
-    da rack a rack giusto ordine
+    cert stato isUnsaved
 
 ispezione
     check call hw
@@ -9,7 +8,7 @@ clienti
     foglio chiavi
 
 CSS
-    uniforma simboli ✓ ⚠ 📋 🔍 ⬇ ➕ ✎ ↺
+    uniforma simboli ✓ ⚠ 📋 🔍 ⬇ ➕ ✎ ↺ ✚ ⌕ 🖨️ ➚ ↗
     temi
     versione mobile
 

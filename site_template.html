@@ -82,7 +82,9 @@ const CAMPI_COLONNE = [
   { lbl: 'Livello Rack Unit',     key: 'livello_rack_unit' },
   { lbl: 'Componente di',         key: 'componente_di' },
   { lbl: 'ASSET',                 key: 'asset' },
-  { lbl: 'RACK',                  key: 'rack' },
+  { lbl: 'DA RACK',               key: 'da_rack', solo: ['Spostamento'] },
+  { lbl: 'A RACK',                key: 'rack',    solo: ['Spostamento'] },
+  { lbl: 'RACK',                  key: 'rack',    solo: ['Installazione', 'Rimozione', 'Sostituzione'] },
 ];
 
 const N_COL = 5;   // apparati per pagina (layout colonne)
@@ -178,6 +180,7 @@ function renderColonne(d) {
       rows += tr;
     }
     CAMPI_COLONNE.forEach(f => {
+      if (f.solo && !f.solo.includes(d.tipo)) return;
       let tr = `<tr><td class="col-lbl">${esc(f.lbl)}</td>`;
       for (let c = 0; c < nCol; c++) {
         if (c < chunk.length) {
@@ -190,17 +193,6 @@ function renderColonne(d) {
       tr += '</tr>';
       rows += tr;
     });
-    // Per Spostamento: riga Da Rack in fondo
-    if (d.tipo === 'Spostamento') {
-      let tr = `<tr><td class="col-lbl">Da Rack</td>`;
-      for (let c = 0; c < nCol; c++) {
-        tr += c < chunk.length
-          ? `<td class="col-val">${esc(chunk[c].da_rack || '')}</td>`
-          : `<td class="col-empty"></td>`;
-      }
-      tr += '</tr>';
-      rows += tr;
-    }
 
     page.innerHTML =
       headerHTML(d, pi + 1, totPag) +
@@ -261,9 +253,13 @@ function renderRighe(d) {
       cols.push({ th: 'A-B-STS', key: 'sezione_alimentazione'});
       cols.push({ th: 'Livello RU', key: 'livello_rack_unit'});
     }
-    if (isSpostamento) cols.push({ th: 'Da Rack', key: 'da_rack'});
     cols.push({ th: 'ASSET', key: 'asset'});
-    cols.push({ th: 'Rack', key: 'rack'});
+    if (isSpostamento) {
+      cols.push({ th: 'DA RACK', key: 'da_rack'});
+      cols.push({ th: 'A RACK', key: 'rack'});
+    } else {
+      cols.push({ th: 'RACK', key: 'rack'});
+    }
 
     const emptyTds = cols.map(() => '<td></td>').join('');
     const tbody = rows.map(r => {
