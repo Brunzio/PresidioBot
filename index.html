@@ -4491,16 +4491,22 @@ function ispRenderTabella() {
 
   tbody.innerHTML = tutte.map((r, index) => {
     const [dataStr, isNew] = ispDataChk(r);
+    let asset = r.anomalia.match(/\d{10}/) || [];
+    const isAsset = asset[0] || null;
     const rowStyle = isNew ? 'background:#660;' : ''
-    const newBadge = isNew ? '<span class="badge badge-default" style="margin-left:6px;font-size:9px;">new</span>' : '';
+    // const newBadge = isNew ? '<span class="badge badge-default" style="margin-left:6px;font-size:9px;">new</span>' : '';
     return `<tr style="${rowStyle}">
       <td style="font-size:12px;">${escHtml(r.firma||'—')}</td>
-      <td><span class="badge badge-default">${escHtml(r.sala||'—')}</span>${newBadge}</td>
+      <td><span class="badge badge-default">${escHtml(r.sala||'—')}</span></td>
       <td style="max-width:260px;" title="${escHtml(r.anomalia||'')}">${escHtml(r.anomalia||'—')}</td>
       <td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.settore_owner||'')}">${escHtml(r.settore_owner||'—')}</td>
       <td style="font-size:11px;">${dataStr}</td>
       <td style="font-family:var(--mono);font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.dettagli||'')}">${escHtml(r.dettagli||'—')}</td>
-      <td><button class="btn btn-secondary btn-sm" style="margin: 0 6px" onclick="ispModifica(${index})">✎</button><button class="btn btn-danger btn-sm" onclick="ispElimina(${r.id})">✕</button></td>
+      <td>
+        <button class="btn btn-secondary btn-sm" style="margin: 0 6px" onclick="ispModifica(${index})">✎</button>
+        <button class="btn btn-danger btn-sm" onclick="ispElimina(${r.id})">✕</button>
+        ${isNew && isAsset ? `<button class="btn btn-secondary btn-sm" style="margin: 0 6px" onclick="ispCallHW('${isAsset}')">🔍</button>` : ''}
+      </td>
     </tr>`;
   }).join('');
 }
@@ -4657,6 +4663,20 @@ function ispControllaINC() {
     if (i > 0) url += '%255EOR';
     url += 'number%253DINC00000' + inc;
   });
+  window.open(url, '_blank');
+}
+
+// ── Cerca Call HW già aperte ──────────────────────────────────────────────────────
+async function ispCallHW(asset) {
+  console.log(asset);
+  let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3Dactive%253Dtrue%255Estate!%253D6%255Ecmdb_ciSTARTSWITH';
+  const { data } = await db.from('sn_main').select('hostname').eq('etichetta_asset', asset).single();
+  console.log(data);
+  if (!data || !data.hostname) {
+    showToast('Nessun host trovato', 'error');
+    return;
+  }
+  url += data.hostname;
   window.open(url, '_blank');
 }
 

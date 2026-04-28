@@ -1,9 +1,3 @@
-site bolle cert
-    cert stato isUnsaved
-
-ispezione
-    check call hw
-
 clienti
     foglio chiavi
 
