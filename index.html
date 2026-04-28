@@ -421,10 +421,11 @@
           <span>Clienti Chiave</span>
           <button class="btn btn-primary btn-sm" onclick="openClienteModal()">+ Aggiungi</button>
         </div>
-        <div style="margin-bottom:10px;">
+        <div style="margin-bottom:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <div class="search-box" style="max-width:320px;">
             <input type="text" id="clienti-search" placeholder="Cerca cliente o chiave..." oninput="onClientiSearch()">
           </div>
+          <button class="btn btn-secondary" onclick="apriFoglioChiavi()">🖨️ Foglio Chiavi</button>
         </div>
         <div class="table-wrapper scrollable">
           <table>
@@ -2645,7 +2646,6 @@ async function loadClienti() {
   `).join('') || '<tr><td colspan="3"><div class="empty">Nessun cliente</div></td></tr>';
 }
 
-
 function openClienteModal(nome, chiave) {
   clienteEditingKey = nome || null;
   document.getElementById('cliente-modal-title').textContent = nome ? 'Modifica Cliente' : 'Nuovo Cliente';
@@ -2797,6 +2797,155 @@ async function loadChiaviCCondivise() {
     </div>
     <div style="margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--text-muted);">${Object.keys(grouped).length} chiavi condivise</div>
   `;
+}
+
+// ─── FOGLIO CHIAVI ────────────────────────────────────────────────────────────
+async function apriFoglioChiavi() {
+  showToast('Caricamento dati...', 'success');
+
+  // 1. Carica tutti i clienti_chiave
+  const { data: clientiData, error: cliErr } = await db.from('clienti_chiave').select('nome_cliente,chiave').order('nome_cliente');
+  if (cliErr || !clientiData.length) { showToast('Errore caricamento clienti', 'error'); return; }
+
+  const clientiMap = {};
+  clientiData.forEach(r => { clientiMap[r.nome_cliente] = r.chiave; });
+  const nomiClienti = clientiData.map(r => r.nome_cliente);
+
+  // 2. Carica apparati in sala con piattaforma_supportata tra i clienti mappati
+  // Supabase non supporta IN su stringhe lunghe illimitate — carico in batch da 50
+  const BATCH = 50;
+  let apparati = [];
+  for (let i = 0; i < nomiClienti.length; i += BATCH) {
+    const batch = nomiClienti.slice(i, i + BATCH);
+    const { data: snData } = await db.from('sn_main')
+      .select('etichetta_asset,piattaforma_supportata,nome_completo,rack')
+      .in('piattaforma_supportata', batch)
+      .ilike('nome_completo', '%/sala%')
+      .not('rack', 'is', null)
+      .neq('rack', '');
+    if (snData) apparati = apparati.concat(snData);
+  }
+
+  if (!apparati.length) { showToast('Nessun apparato trovato in sala', 'error'); return; }
+
+  // 3. Raggruppa: per ogni rack tieni un record (cliente, sala, rack, chiave)
+  // Più apparati nello stesso rack → una sola riga (rack unico per cliente)
+  const righeMap = {}; // key: cliente|rack
+  apparati.forEach(r => {
+    const cliente = r.piattaforma_supportata || '';
+    const rack    = r.rack || '';
+    const chiave  = clientiMap[cliente] || '—';
+
+    // Estrai sala da nome_completo: /BO1/SalaH-0/D5/ → "SalaH-0"
+    let sala = '—';
+    const nc = r.nome_completo || '';
+    const salaMatch = nc.match(/[Ss]ala([^/]+)/);
+    if (salaMatch) {
+      // estrai anche l'areola (segmento successivo)
+      const afterSala = nc.split(salaMatch[0])[1] || '';
+      const areaMatch = afterSala.match(/\/([^/]+)/);
+      sala = 'Sala' + salaMatch[1] + (areaMatch ? '/' + areaMatch[1] : '');
+    }
+
+    const key = cliente + '|' + rack;
+    if (!righeMap[key]) {
+      righeMap[key] = { cliente, sala, rack, chiave };
+    }
+  });
+
+  // 4. Ordina per cliente alfabetico, poi rack
+  const righe = Object.values(righeMap).sort((a, b) => {
+    const c = a.cliente.localeCompare(b.cliente, 'it');
+    if (c !== 0) return c;
+    return a.rack.localeCompare(b.rack, 'it');
+  });
+
+  // 5. Genera HTML a pagine (max 45 righe per pagina)
+  const MAX_ROWS = 30;
+  const oggi = new Date().toLocaleDateString('it-IT');
+  const chunks = [];
+  for (let i = 0; i < righe.length; i += MAX_ROWS) chunks.push(righe.slice(i, i + MAX_ROWS));
+  const totPag = chunks.length;
+
+  function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  const paginaHTML = (chunk, pag) => {
+    const isFirst = pag === 1;
+    // const header = isFirst ? `
+    //   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10mm;">
+    //     <div style="font-family:'Space Mono',monospace;font-size:20pt;font-weight:700;color:#00e5a0;letter-spacing:2px;">FOGLIO CHIAVI</div>
+    //     <div style="font-family:'Space Mono',monospace;font-size:9pt;color:#666;">Generato il ${escH(oggi)}</div>
+    //   </div>` : `
+    //   <div style="font-family:'Space Mono',monospace;font-size:9pt;color:#666;margin-bottom:6mm;text-align:right;">Foglio Chiavi — segue</div>`;
+
+    const rows = chunk.map((r, i) => {
+      // Sfondo alternato per cliente (raggruppa visivamente)
+      return `<tr style="background:${i % 2 === 0 ? '#fff' : '#ddd'};">
+        <td style="padding:5px 8px;border-bottom:1px solid #2a2a2a;font-size:9.5pt;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(r.cliente)}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #2a2a2a;font-size:9.5pt;white-space:nowrap;">${escH(r.sala)}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #2a2a2a;font-family:'Space Mono',monospace;font-size:9pt;">${escH(r.rack)}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid #2a2a2a;font-family:'Space Mono',monospace;font-size:10pt;font-weight:700;color:#00e5a0;">${escH(r.chiave)}</td>
+      </tr>`;
+    }).join('');
+
+    return `
+    <div style="width:210mm;min-height:297mm;background:#fff;color:#000;padding:12mm 14mm 14mm;box-sizing:border-box;page-break-after:always;display:flex;flex-direction:column;font-family:'DM Sans',sans-serif;">
+      <table style="width:100%;border-collapse:collapse;flex:1;">
+        ${isFirst ? `<thead><tr>
+          <th style="padding:6px 8px;border-bottom:2px solid #00e5a0;text-align:left;font-family:'Space Mono',monospace;font-size:8.5pt;letter-spacing:1px;text-transform:uppercase;color:#666;">Cliente</th>
+          <th style="padding:6px 8px;border-bottom:2px solid #00e5a0;text-align:left;font-family:'Space Mono',monospace;font-size:8.5pt;letter-spacing:1px;text-transform:uppercase;color:#666;">Sala</th>
+          <th style="padding:6px 8px;border-bottom:2px solid #00e5a0;text-align:left;font-family:'Space Mono',monospace;font-size:8.5pt;letter-spacing:1px;text-transform:uppercase;color:#666;">Rack</th>
+          <th style="padding:6px 8px;border-bottom:2px solid #00e5a0;text-align:left;font-family:'Space Mono',monospace;font-size:8.5pt;letter-spacing:1px;text-transform:uppercase;color:#666;">Chiave</th>
+        </tr></thead>` : `<thead><tr>
+          <th style="padding:6px 8px;border-bottom:2px solid #00e5a0;text-align:left;font-family:'Space Mono',monospace;font-size:8.5pt;letter-spacing:1px;text-transform:uppercase;color:#666;">Cliente</th>
+          <th style="padding:6px 8px;border-bottom:2px solid #00e5a0;text-align:left;font-family:'Space Mono',monospace;font-size:8.5pt;letter-spacing:1px;text-transform:uppercase;color:#666;">Sala</th>
+          <th style="padding:6px 8px;border-bottom:2px solid #00e5a0;text-align:left;font-family:'Space Mono',monospace;font-size:8.5pt;letter-spacing:1px;text-transform:uppercase;color:#666;">Rack</th>
+          <th style="padding:6px 8px;border-bottom:2px solid #00e5a0;text-align:left;font-family:'Space Mono',monospace;font-size:8.5pt;letter-spacing:1px;text-transform:uppercase;color:#666;">Chiave</th>
+        </tr></thead>`}
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6mm;padding-top:4mm;border-top:1px solid #2a2a2a;">
+        <div style="font-family:'Space Mono',monospace;font-size:8pt;color:#666;">${escH(oggi)}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:8pt;color:#666;">${pag}/${totPag}</div>
+      </div>
+    </div>`;
+  };
+
+  const pagesHTML = chunks.map((chunk, i) => paginaHTML(chunk, i + 1)).join('');
+
+  const fullHTML = `<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Foglio Chiavi</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #fff; padding: 20px; }
+  .toolbar { max-width: 210mm; margin: 0 auto 14px; display: flex; gap: 10px; }
+  .toolbar button { padding: 7px 18px; background: #00e5a0; color: #000; border: none; border-radius: 5px; font-size: 13px; cursor: pointer; font-family: 'Space Mono', monospace; font-weight: 700; }
+  .toolbar button:hover { background: #00ffb3; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .toolbar { display: none !important; }
+    div[style*="page-break-after"] { page-break-after: always; }
+    div[style*="page-break-after"]:last-of-type { page-break-after: auto; }
+    @page { size: A4 portrait; margin: 0; }
+    * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button onclick="window.print()">🖨 Stampa / Salva PDF</button>
+</div>
+${pagesHTML}
+</body>
+</html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(fullHTML);
+  w.document.close();
 }
 
 // ─── STRUMENTI SN ───────────────────────────────────────────────────────────────
