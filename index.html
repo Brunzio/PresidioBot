@@ -2800,6 +2800,134 @@ async function loadChiaviCCondivise() {
 }
 
 // ─── FOGLIO CHIAVI ────────────────────────────────────────────────────────────
+// chatGPT
+async function apriFoglioChiavi() {
+
+  // 1. QUERY — adattata ai campi reali
+  const { data, error } = await supabase
+    .from('sn_main') // o la tua tabella reale
+    .select(`
+      cliente,
+      rack,
+      sala,
+      chiave
+    `)
+    .order('cliente', { ascending: true })
+    .order('rack', { ascending: true });
+
+  if (error) {
+    alert('Errore caricamento dati');
+    console.error(error);
+    return;
+  }
+
+  // 2. GROUPING PER CLIENTE
+  const grouped = Object.values(
+    data.reduce((acc, row) => {
+      const cliente = row.cliente || '—';
+
+      if (!acc[cliente]) {
+        acc[cliente] = {
+          cliente,
+          items: []
+        };
+      }
+
+      acc[cliente].items.push(row);
+      return acc;
+    }, {})
+  );
+
+  // 3. HTML + STILE STAMPA
+  const MAX_RIGHE = 30;
+  let righePagina = 0;
+
+  let html = `
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial; background:#fff; color:#000; }
+        table { width:100%; border-collapse: collapse; }
+        th, td { border:1px solid #000; padding:4px; font-size:12px; }
+        th { background:#eee; }
+        .separator td { border:none; height:10px; }
+        .page-break { page-break-before: always; }
+      </style>
+    </head>
+    <body>
+
+      ${creaTabellaHeader()}
+      <tbody>
+  `;
+
+  function creaTabellaHeader() {
+    return `
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Sala</th>
+            <th>Rack</th>
+            <th>Chiave</th>
+          </tr>
+        </thead>
+    `;
+  }
+
+  // 4. LOOP
+  grouped.forEach(group => {
+
+    group.items.forEach((row, index) => {
+
+      // nuova pagina
+      if (righePagina >= MAX_RIGHE) {
+        html += `
+          </tbody></table>
+          <div class="page-break"></div>
+          ${creaTabellaHeader()}
+          <tbody>
+        `;
+        righePagina = 0;
+
+        // forza ristampa cliente
+        index = 0;
+      }
+
+      const sala = row.nome_completo?.match(/sala[^/]+/i)?.[0] || '';
+
+      html += `
+        <tr>
+          <td>${index === 0 ? group.cliente : ''}</td>
+          <td>${sala || ''}</td>
+          <td>${row.rack || ''}</td>
+          <td>${row.chiave || ''}</td>
+        </tr>
+      `;
+
+      righePagina++;
+    });
+
+    // separatore tra clienti
+    if (righePagina < MAX_RIGHE) {
+      html += `<tr class="separator"><td colspan="4"></td></tr>`;
+      righePagina++;
+    }
+
+  });
+
+  html += `
+      </tbody>
+    </table>
+    </body>
+    </html>
+  `;
+
+  // 5. OUTPUT
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+}
+
 async function apriFoglioChiavi() {
   showToast('Caricamento dati...', 'success');
 
