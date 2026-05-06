@@ -1,5 +1,15 @@
+Bolla
+    aggiungi colonna peso
+
 clienti
     foglio chiavi
+
+apparati da non segnalare
+    titolo modal nuovo/modifica
+    svuota campi se nuovo
+
+site
+    da rack a rack in modal nuova riga
 
 CSS
     uniforma simboli ✓ ⚠ 📋 🔍 ⬇ ➕ ✎ ↺ ✚ ⌕ 🖨️ ➚ ↗

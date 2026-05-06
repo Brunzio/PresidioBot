@@ -560,7 +560,13 @@
             <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Data Bolla <span style="color:var(--accent)">*</span></label>
             <input type="date" id="bolla-data">
           </div>
-          <div></div>
+          <div class="form-group">
+            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Cessionario <span style="color:var(--accent)">*</span></label>
+            <div style="display:flex;gap:6px;">
+              <select id="bolla-cessionario" style="flex:1;"><option value="">— seleziona —</option></select>
+              <button class="btn btn-secondary btn-sm" onclick="openAnagraficaModal()" title="Nuova anagrafica">+</button>
+            </div>
+          </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:18px;">
           <div class="form-group">
@@ -571,16 +577,16 @@
             </div>
           </div>
           <div class="form-group">
-            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Cessionario <span style="color:var(--accent)">*</span></label>
+            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Luogo Destinazione <span style="color:var(--text-muted);font-size:9px;">(opzionale)</span></label>
             <div style="display:flex;gap:6px;">
-              <select id="bolla-cessionario" style="flex:1;"><option value="">— seleziona —</option></select>
+              <select id="bolla-destinazione" style="flex:1;"><option value="">— nessuno —</option></select>
               <button class="btn btn-secondary btn-sm" onclick="openAnagraficaModal()" title="Nuova anagrafica">+</button>
             </div>
           </div>
           <div class="form-group">
-            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Luogo Destinazione <span style="color:var(--text-muted);font-size:9px;">(opzionale)</span></label>
+            <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Vettori <span style="color:var(--text-muted);font-size:9px;">(opzionale)</span></label>
             <div style="display:flex;gap:6px;">
-              <select id="bolla-destinazione" style="flex:1;"><option value="">— nessuno —</option></select>
+              <select id="bolla-vettori" style="flex:1;"><option value="">— nessuno —</option></select>
               <button class="btn btn-secondary btn-sm" onclick="openAnagraficaModal()" title="Nuova anagrafica">+</button>
             </div>
           </div>
@@ -3039,6 +3045,9 @@ async function loadAnagraficheCache() {
   // Popola anche il select cliente della cert modal
   const sel5 = document.getElementById('cert-cliente');
   if (sel5) sel5.innerHTML = optSel + opts;
+  // Popola anche il select vettori in bolla
+  const sel6 = document.getElementById('bolla-vettori');
+  if (sel6) sel6.innerHTML = optNone + opts;
 }
 
 // ── APPARATI ─────────────────────────────────────────────────────────────────
@@ -3124,7 +3133,7 @@ function bollaReset() {
   APPARATI['bolla'] = [];
   bollaUnsavedData = null;
   archivioEditingId = null;
-  ['bolla-proprietario','bolla-cessionario','bolla-destinazione'].forEach(id => {
+  ['bolla-proprietario','bolla-cessionario','bolla-destinazione','bolla-vettori'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.selectedIndex = 0;
   });
@@ -3151,10 +3160,12 @@ function _bollaRaccogliDati() {
 
   const proprietarioId = document.getElementById('bolla-proprietario').value;
   const destinazioneId = document.getElementById('bolla-destinazione').value;
+  const vettoriId      = document.getElementById('bolla-vettori').value;
 
   const cessionario   = _anagraficaById(cessionarioId);
   const proprietario  = proprietarioId ? _anagraficaById(proprietarioId) : null;
   const destinazione  = destinazioneId ? _anagraficaById(destinazioneId) : null;
+  const vettori       = vettoriId      ? _anagraficaById(vettoriId) : null;
 
   return {
     numero,
@@ -3163,6 +3174,7 @@ function _bollaRaccogliDati() {
     proprietario: proprietario || null,
     cessionario,
     luogo_destinazione: destinazione || null,
+    vettori: vettori || null,
     apparati: APPARATI['bolla'].map(b => ({ qty: b.qty, desc: b.desc, asset: b.asset, sn: b.sn, colli: b.colli }))
   };
 
@@ -3184,6 +3196,7 @@ function _apriDDT(d) {
     proprietario: d.proprietario || '',
     cessionario: d.cessionario,
     destinazione: d.luogo_destinazione || '',
+    vettori: d.vettori || '',
     beni: d.apparati
   };
   sessionStorage.setItem('ddt_data', JSON.stringify(ddtData));
@@ -3315,6 +3328,7 @@ async function archivioModifica(id) {
   _setSelectByNome('bolla-proprietario', data.proprietario);
   _setSelectByNome('bolla-cessionario', data.cessionario);
   _setSelectByNome('bolla-destinazione', data.luogo_destinazione);
+  _setSelectByNome('bolla-vettori', data.vettori);
   APPARATI['bolla'] = (data.apparati || []).map(b => ({ ...b }));
   bollaUnsavedData = { ...data };
   document.getElementById('btab-nuova').textContent = 'Modifica Bolla';
@@ -4668,10 +4682,10 @@ function ispControllaINC() {
 
 // ── Cerca Call HW già aperte ──────────────────────────────────────────────────────
 async function ispCallHW(asset) {
-  console.log(asset);
+  // console.log(asset);
   let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3Dactive%253Dtrue%255Estate!%253D6%255Ecmdb_ciSTARTSWITH';
   const { data } = await db.from('sn_main').select('hostname').eq('etichetta_asset', asset).single();
-  console.log(data);
+  // console.log(data);
   if (!data || !data.hostname) {
     showToast('Nessun host trovato', 'error');
     return;

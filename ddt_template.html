@@ -41,7 +41,7 @@ body{background:#e0e0e0;font-family:Calibri,Arial,sans-serif;font-size:10pt;padd
 .vettori-table{width:100%;border-collapse:collapse;margin-bottom:2mm;}
 .vettori-table td{font-size:10pt;border:1px solid #000;text-align:center;}
 .v-cell{width:18px;padding:0!important;text-align:center;vertical-align:middle;}
-.v-inner{writing-mode:vertical-lr;text-orientation:upright;font-weight:700;letter-spacing:3px;font-size:8.5pt;display:block;text-align:center;padding:4px 2px;}
+.v-inner{writing-mode:vertical-lr;text-orientation:upright;font-weight:700;letter-spacing:0px;font-size:8.5pt;display:block;text-align:center;padding:4px 2px;}
 tr.sub-header td{height:14px!important;}
 tr.nrm-header td{height:30px;}
 .td-data{height:auto;}
@@ -179,7 +179,7 @@ tr.nrm-header td{height:30px;}
       <td>FIRMA CONDUCENTE</td>
     </tr>
     <tr class="sub-header">
-      <td rowspan="2"></td>
+      <td rowspan="2" id="f-vettori"></td>
       <td class="th-sub">DATA</td>
       <td class="th-sub">ORA</td>
       <td rowspan="2"></td>
@@ -396,6 +396,7 @@ function render(dati) {
     document.getElementById('f-proprietario').innerHTML = esc(dati.proprietario);
     document.getElementById('f-cessionario').innerHTML = esc(dati.cessionario);
     document.getElementById('f-destinazione').innerHTML = esc(dati.luogo_destinazione || dati.destinazione || '');
+    document.getElementById('f-vettori').innerHTML = esc(dati.vettori);
 
     // Ricostruisce il tbody includendo la riga TOTALI integrata
     let rows = '';
@@ -427,6 +428,7 @@ function render(dati) {
     document.getElementById('f-proprietario').innerHTML = esc(dati.proprietario);
     document.getElementById('f-cessionario').innerHTML = esc(dati.cessionario);
     document.getElementById('f-destinazione').innerHTML = esc(dati.luogo_destinazione || dati.destinazione || '');
+    document.getElementById('f-vettori').innerHTML = esc(dati.vettori);
     document.getElementById('f-beni').innerHTML = righeHTML(chunks[0], N_PAG1, false, totaleColli);
     // document.getElementById('f-tot-colli'); // già nel righeHTML
     document.querySelector('.footer div').textContent = `Pagina  1/${totPag}`;
@@ -464,6 +466,7 @@ if (raw) {
     proprietario: '',
     cessionario: '',
     destinazione: '',
+    vettori: 'test',
     beni: []
   });
 }
