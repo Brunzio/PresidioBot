@@ -62,8 +62,7 @@ tr.nrm-header td{height:30px;}
 .col-peso{width:56px;}
 .totali-row{display:flex;border-left:1px solid #000;border-right:1px solid #000;border-bottom:1px solid #000;font-size:9pt;}
 .totali-lbl{flex:1;text-align:right;padding:2px 6px;font-weight:700;}
-.totali-colli{text-align:center;padding:2px 3px;font-weight:700;}
-.totali-peso{width:56px;padding:2px 3px;}
+.totali-colli .totali-peso{text-align:center;padding:2px 3px;font-weight:700;}
 .acp{display:flex;border:1px solid #000;font-size:8.5pt;}
 .acp-cell{border-right:1px solid #000;padding:3px 5px;}
 .acp-cell:last-child{border-right:none;}
@@ -204,7 +203,11 @@ tr.nrm-header td{height:30px;}
       <td class="th-peso">PESO KG.</td>
     </tr>
     <tbody id="f-beni"></tbody>
-    <tr><td colspan="5"><div class="totali-lbl">TOTALI</div></td><td><div class="totali-colli" id="f-tot-colli"></div></td><td></td></tr>
+    <tr>
+      <td colspan="5"><div class="totali-lbl">TOTALI</div></td>
+      <td><div class="totali-colli" id="f-tot-colli"></div></td>
+      <td><div class="totali-peso" id="f-tot-peso"></div></td>
+    </tr>
   </table>
 
   <div class="acp">
@@ -263,7 +266,7 @@ function esc(s) {
 }
 
 // Genera le righe HTML per un chunk di beni, riempiendo fino a minRighe
-function righeHTML(chunk, minRighe, isLastPage, totaleColli) {
+function righeHTML(chunk, minRighe, isLastPage, totaleColli, totalePeso) {
   let rows = '';
   chunk.forEach(b => {
     rows += `<tr>
@@ -273,25 +276,25 @@ function righeHTML(chunk, minRighe, isLastPage, totaleColli) {
       <td class="fs8 c">${esc(b.sn)}</td>
       <td></td>
       <td class="c">${esc(b.colli)}</td>
-      <td></td>
+      <td class="c">${esc(b.peso)}</td>
     </tr>`;
   });
   for (let i = chunk.length; i < minRighe; i++) {
     rows += '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
   }
   // Riga TOTALI: valorizzata solo sull'ultima pagina
-  if (isLastPage && totaleColli > 0) {
+  if (isLastPage) {
     rows += `<tr>
       <td colspan="5"><div class="totali-lbl">TOTALI</div></td>
       <td><div class="totali-colli">${totaleColli}</div></td>
-      <td></td>
+      <td><div class="totali-peso">${totalePeso}</div></td>
     </tr>`;
   }
   return rows;
 }
 
 // HTML della tabella beni (colgroup + header + tbody)
-function tabellaHTML(chunk, minRighe, isLastPage, totaleColli) {
+function tabellaHTML(chunk, minRighe, isLastPage, totaleColli, totalePeso) {
   return `
   <table class="beni-table">
     <colgroup>
@@ -307,7 +310,7 @@ function tabellaHTML(chunk, minRighe, isLastPage, totaleColli) {
       <td>N&deg; COLLI</td>
       <td class="th-peso">PESO KG.</td>
     </tr>
-    <tbody>${righeHTML(chunk, minRighe, isLastPage, totaleColli)}</tbody>
+    <tbody>${righeHTML(chunk, minRighe, isLastPage, totaleColli, totalePeso)}</tbody>
   </table>`;
 }
 
@@ -370,6 +373,7 @@ function render(dati) {
   const numero = dati.numero || '';
   const data = dati.data || '';
   const totaleColli = beni.reduce((s, b) => s + (parseInt(b.colli) || 0), 0);
+  const totalePeso = beni.reduce((s, b) => s + (parseFloat(b.peso) || 0) * parseInt(b.qty), 0).toFixed(2);
 
   // Calcola i chunk
   const chunks = [];
@@ -408,7 +412,7 @@ function render(dati) {
         <td class="fs8 c">${esc(b.sn)}</td>
         <td></td>
         <td class="c">${esc(b.colli)}</td>
-        <td></td>
+        <td class="c">${esc(b.peso)}</td>
       </tr>`;
     });
     for (let i = beni.length; i < N_PAG1; i++) {
@@ -416,6 +420,7 @@ function render(dati) {
     }
     document.getElementById('f-beni').innerHTML = rows;
     document.getElementById('f-tot-colli').textContent = totaleColli > 0 ? totaleColli : '';
+    document.getElementById('f-tot-peso').textContent = totalePeso > 0 ? totalePeso : '';
     document.querySelector('.footer div').textContent = `Pagina  1/1`;
 
   } else {
@@ -446,7 +451,7 @@ function render(dati) {
       pageDiv.className = 'page page-extra';
       pageDiv.innerHTML =
         intestazioneLeggera(numero, data) +
-        tabellaHTML(chunks[i], N_PAGSEG, isLastPage, totaleColli) +
+        tabellaHTML(chunks[i], N_PAGSEG, isLastPage, totaleColli, totalePeso) +
         postTabella +
         footerHTML(i + 1, totPag);
       container.appendChild(pageDiv);

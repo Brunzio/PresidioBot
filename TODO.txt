@@ -1,6 +1,3 @@
-Bolla
-    aggiungi colonna peso
-
 clienti
     foglio chiavi
 
@@ -12,9 +9,17 @@ site
     da rack a rack in modal nuova riga
 
 CSS
+    color opacity: rgb(from var(--accent) r g b / 0.2)
     uniforma simboli ✓ ⚠ 📋 🔍 ⬇ ➕ ✎ ↺ ✚ ⌕ 🖨️ ➚ ↗
     temi
     versione mobile
+
+import
+    nuovo db solo asset e campi utili
+    testo righe valide ripetuto
+
+sfoglia
+    rimuovere logiche di modifica
 
 funzioni
     parametrizzare salvataggi

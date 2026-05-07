@@ -64,7 +64,7 @@
   .search-box input:focus { border-color: var(--accent); }
   .search-box::before { content: '⌕'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 16px; pointer-events: none; }
   
-  select, input[type="text"], input[type="date"], textarea {
+  select, input, textarea {
     background: var(--surface); border: 1px solid var(--border); color: var(--text);
     padding: 8px 12px; border-radius: 6px; font-family: var(--sans); font-size: 13px; outline: none; transition: border .2s;
   }
@@ -607,13 +607,14 @@
                 <th style="width:70px;">Qt</th>
                 <th>Descrizione (Modello)</th>
                 <th style="width:120px;">Asset</th>
-                <th>Seriale</th>
+                <th style="width:180px;">Seriale</th>
                 <th style="width:70px;">Colli</th>
+                <th style="width:90px;">Peso</th>
                 <th style="width:40px;"></th>
               </tr>
             </thead>
             <tbody id="bolla-apparati-body">
-              <tr id="bolla-empty-row"><td colspan="6"><div class="empty">Nessun apparato aggiunto</div></td></tr>
+              <tr id="bolla-empty-row"><td colspan="7"><div class="empty">Nessun apparato aggiunto</div></td></tr>
             </tbody>
           </table>
         </div>
@@ -1432,6 +1433,7 @@ const COLUMNS = [
   { key: 'scadenza_garanzia',     label: 'Scad. Garanzia' },
   { key: 'fornitore_manutenzione',label: 'Fornitore Manut.' },
   { key: 'container',             label: 'Container' },
+  { key: 'peso',                  label: 'Peso' },
 ];
 
 // Columns shown in table (subset for readability)
@@ -1443,7 +1445,7 @@ const CSV_MAP = [
   'asset_sn','codice_piattaforma','piattaforma_supportata','stato_piattaforma',
   'tipo_piattaforma','produttore','asset_model','nome_completo','rack',
   'componente_di','stato','hostname','societa','ip_management',
-  'sistema_operativo','scadenza_garanzia','fornitore_manutenzione','container'
+  'sistema_operativo','scadenza_garanzia','fornitore_manutenzione','container','peso'
 ];
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
@@ -3061,14 +3063,14 @@ async function bollaAggiungiDaRicerca() {
   // cerca per singolo o lista
   if (tokens.length > 1) {
     const { data: dSN } = await db.from('sn_main')
-    .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn')
+    .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn,peso')
     .in('asset_sn',tokens);
 
     const trovati = new Set((dSN || []).map(t => t.asset_sn));
     const nontrovati = tokens.filter(t => !trovati.has(t));
 
     const { data: dNumeroS } = await db.from('sn_main')
-    .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn')
+    .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn,peso')
     .in('numero_di_serie',nontrovati);
 
     data = (dSN || []).concat(dNumeroS);
@@ -3080,7 +3082,7 @@ async function bollaAggiungiDaRicerca() {
 
   } else {
     const { data: dSingle } = await db.from('sn_main')
-    .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn')
+    .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn,peso')
     .or(`etichetta_asset.eq.${q},numero_di_serie.ilike.%${q}%,asset_sn.ilike.%${q}%`);
     data = dSingle;
   }
@@ -3089,9 +3091,9 @@ async function bollaAggiungiDaRicerca() {
 
   // popola bolla apparati coi dati trovati
   data.forEach(r => {
-    const sn = r.numero_di_serie || r.asset_sn || '';
+    const sn = r.asset_sn || r.numero_di_serie || '';
     const desc = [r.produttore, r.asset_model].filter(Boolean).join(' ');
-    APPARATI['bolla'].push({ qty: 1, desc, asset: r.etichetta_asset || '', sn, colli: 1 });
+    APPARATI['bolla'].push({ qty: 1, desc, asset: r.etichetta_asset || '', sn, colli: 1, peso: parseFloat(r.peso.replace(/\./g,'').replace(',', '.')) || 1 });
   });
   document.getElementById('cerca-apparato-bolla').value = '';
   bollaRenderApparati();
@@ -3099,7 +3101,7 @@ async function bollaAggiungiDaRicerca() {
 }
 
 function bollaAggiungiManuale() {
-  APPARATI['bolla'].push({ qty: 1, desc: '', asset: '', sn: '', colli: 1 });
+  APPARATI['bolla'].push({ qty: 1, desc: '', asset: '', sn: '', colli: 1, peso: null });
   bollaRenderApparati();
 }
 
@@ -3114,16 +3116,17 @@ function bollaRenderApparati() {
   isUnsaved('bolla');
 
   if (!APPARATI['bolla'].length) {
-    tbody.innerHTML = '<tr id="bolla-empty-row"><td colspan="6"><div class="empty">Nessun apparato aggiunto</div></td></tr>';
+    tbody.innerHTML = '<tr id="bolla-empty-row"><td colspan="7"><div class="empty">Nessun apparato aggiunto</div></td></tr>';
     return;
   }
   tbody.innerHTML = APPARATI['bolla'].map((b, i) => `
     <tr>
-      <td><input type="number" min="1" value="${b.qty}" oninput="APPARATI['bolla'][${i}].qty=+this.value" style="width:48px;background:var(--surface);color:var(--text);"></td>
+      <td><input type="number" min="1" value="${b.qty}" oninput="APPARATI['bolla'][${i}].qty=+this.value"></td>
       <td><input type="text" value="${escHtml(b.desc)}" oninput="APPARATI['bolla'][${i}].desc=this.value" placeholder="Modello/descrizione"></td>
       <td><input type="text" value="${escHtml(b.asset)}" oninput="APPARATI['bolla'][${i}].asset=this.value" placeholder="Etichetta"></td>
       <td><input type="text" value="${escHtml(b.sn)}" oninput="APPARATI['bolla'][${i}].sn=this.value" placeholder="Seriale"></td>
-      <td><input type="number" min="1" value="${b.colli}" oninput="APPARATI['bolla'][${i}].colli=+this.value" style="width:48px;background:var(--surface);color:var(--text);"></td>
+      <td><input type="number" min="1" value="${b.colli}" oninput="APPARATI['bolla'][${i}].colli=+this.value"></td>
+      <td><input type="number" lang="en" step="0.1" value="${b.peso}" oninput="APPARATI['bolla'][${i}].peso=+this.value" placeholder="kg"></td>
       <td><button class="btn btn-danger btn-sm" onclick="bollaRimuovi(${i})">✕</button></td>
     </tr>
   `).join('');
@@ -3175,7 +3178,7 @@ function _bollaRaccogliDati() {
     cessionario,
     luogo_destinazione: destinazione || null,
     vettori: vettori || null,
-    apparati: APPARATI['bolla'].map(b => ({ qty: b.qty, desc: b.desc, asset: b.asset, sn: b.sn, colli: b.colli }))
+    apparati: APPARATI['bolla'].map(b => ({ qty: b.qty, desc: b.desc, asset: b.asset, sn: b.sn, colli: b.colli, peso: b.peso }))
   };
 
 }
