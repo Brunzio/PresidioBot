@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Foglio Chiavi</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#e0e0e0;padding:20px;}
+.tb button{padding:7px 18px;background:#1a56db;color:#fff;border:none;border-radius:5px;font-size:13px;cursor:pointer;margin-bottom: 15px;}
+.tb button:hover{background:#1e40af;}
+.pg{width:210mm;min-height:297mm;background:#fff;color:#111;padding:12mm 14mm;box-sizing:border-box;page-break-after:always;font-family:Arial,sans-serif;}
+table{width:100%;border-collapse:collapse;}
+th{padding:5px 8px;border-bottom:2px solid #333;text-align:left;font-family:monospace;font-size:8pt;letter-spacing:1px;text-transform:uppercase;color:#444;}
+th.r{text-align:right;}
+td{padding:4px 10px;border-bottom:1px solid #ddd;font-size:9.5pt;vertical-align:middle;}
+tr:nth-child(even) td.alt{background:#f5f5f5;}
+tr:nth-child(odd) td.alt{background:#fff;}
+td.cli{background:#ddd;font-weight:600;}
+.mono{font-family:monospace;font-size:10pt;text-align:right;}
+.chiave{font-weight:700;}
+tr.sep td{border:none;}
+.footer{display:flex;justify-content:space-between;padding-top:4mm;border-top:1px solid #ccc;margin-top:4mm;font-family:monospace;font-size:8pt;color:#888;}
+@media print{
+  *{print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+  body{background:#fff;padding:0;}
+  .tb{display:none!important;}
+  @page{size:A4 portrait;margin:0;}
+};
+</style>
+</head>
+<body>
+<div class="tb"><button onclick="window.print()">&#x1F5A8; Stampa / Salva PDF</button></div>
+
+<div id="foglio"></div>
+  
+<script>
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+const MAX_ROWS = 37;
+const SEP_ROW = 0.2;
+const oggi = new Date().toLocaleDateString('it-IT');
+
+const thead = '<thead><tr>' +
+  '<th style="width:60%;">Cliente</th>' +
+  '<th style="width:15%;">Sala</th>' +
+  '<th class="r" style="width:15%;">Rack</th>' +
+  '<th class="r"  style="width:10%;">Chiave</th>' +
+  '</tr></thead>';
+
+const pageOpen  = '<div class="pg"><table>' + thead + '<tbody>';
+const pageClose = '</tbody></table><div class="footer"><span>' + oggi + '</span>';
+
+let html = '';
+let count = 0;
+let pagina = 1;
+let lastCliente = null;
+
+function openPage()  { html += pageOpen; }
+function closePage() {
+  html += pageClose;
+  html += '<span>Pagina ' + pagina + '</span></div></div>';
+  count = 0;
+  pagina++;
+}
+
+function render(righe) {
+  openPage();
+
+  righe.forEach(r => {
+    const newCliente = r.cliente !== lastCliente;
+
+    if (newCliente && lastCliente !== null) {
+      if (count >= MAX_ROWS) { closePage(); openPage(); }
+      else { html += '<tr class="sep"><td colspan="4"></td></tr>'; count += SEP_ROW; }
+    }
+
+    if (count >= MAX_ROWS) { closePage(); openPage(); }
+
+    const label = (newCliente || count === 0) ? escH(r.cliente) : '';
+    html += '<tr>' +
+      '<td class="cli">' + label + '</td>' +
+      '<td class="alt">' + escH(r.sala.slice(8)) + '</td>' +
+      '<td class="alt mono">' + escH(r.rack) + '</td>' +
+      '<td class="alt mono chiave">' + escH(r.chiave) + '</td>' +
+      '</tr>';
+    count++;
+    lastCliente = r.cliente;
+  });
+
+  closePage();
+  document.getElementById('foglio').innerHTML = html;
+}
+
+// Carica da sessionStorage
+const raw = sessionStorage.getItem('foglio_chiavi');
+if (raw) {
+  try { render(JSON.parse(raw)); } catch(e) { console.error('errore nel parsing', e); }
+} else {
+  // fallback: dati di esempio se aperto direttamente
+  render([
+    { cliente: 'cliente 1', sala: 'B01/SalaA0/B3', rack: '2020013598', chiave: 'C38' },
+    { cliente: 'cliente 2', sala: 'B01/SalaC0/H7', rack: '2020013598', chiave: 'C4' },
+    { cliente: 'cliente 2', sala: 'B01/SalaC0/H8', rack: '2020013598', chiave: 'C4' },
+    { cliente: 'cliente 2', sala: 'B01/SalaC0/H9', rack: '2020013598', chiave: 'C4' },
+    { cliente: 'cliente 3', sala: 'B01/SalaL0/M2', rack: '2020013598', chiave: 'C55' },
+  ]);
+}
+</script>
+</body>
+</html>

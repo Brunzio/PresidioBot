@@ -1,9 +1,6 @@
 import
     test nuovo link all'export
 
-clienti
-    foglio chiavi - num righe
-
 apparati da non segnalare
     titolo modal nuovo/modifica
     svuota campi se nuovo
