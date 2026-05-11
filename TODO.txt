@@ -1,9 +1,3 @@
-import
-    test nuovo link all'export
-
-site
-    da rack a rack in modal nuova riga
-
 CSS
     temi dark light
     bg and color per ogni tema

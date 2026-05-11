@@ -1007,13 +1007,13 @@
           <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Asset</label>
           <input type="text" id="site-app-asset" placeholder="">
         </div>
-        <div class="form-group">
-          <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Rack</label>
-          <input type="text" id="site-app-rack" placeholder="">
-        </div>
         <div id="site-app-da_rack-row" class="form-group" style="display:none;">
           <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Da Rack</label>
           <input type="text" id="site-app-da_rack" placeholder="">
+        </div>
+        <div class="form-group">
+          <label id="site-app-rack-label" style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Rack</label>
+          <input type="text" id="site-app-rack" placeholder="">
         </div>
         <div class="form-group">
           <label style="font-size:10px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Montaggio a Rack [S/N]</label>
@@ -3467,6 +3467,9 @@ const SITE_TYPE_CONFIG = {
 function switchSiteType() {
   const tipo = document.getElementById('site-tipo').value;
   const cfg = SITE_TYPE_CONFIG[tipo] || SITE_TYPE_CONFIG.Rimozione;
+
+  // modal apparato
+  document.getElementById('site-app-rack-label').textContent = tipo === 'Spostamento' ? 'A Rack' : 'Rack';
 
   // sezione bolla
   document.getElementById('bolla-site').style.display          = cfg.bolla !== 'nessuna' ? 'block' : 'none';
