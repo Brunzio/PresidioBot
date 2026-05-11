@@ -3111,7 +3111,7 @@ async function bollaAggiungiDaRicerca() {
   data.forEach(r => {
     const sn = r.asset_sn || r.numero_di_serie || '';
     const desc = [r.produttore, r.asset_model].filter(Boolean).join(' ');
-    APPARATI['bolla'].push({ qty: 1, desc, asset: r.etichetta_asset || '', sn, colli: 1, peso: parseFloat(r.peso.replace(/\./g,'').replace(',', '.')) || 1 });
+    APPARATI['bolla'].push({ qty: 1, desc, asset: r.etichetta_asset || '', sn, colli: 1, peso: r.peso ? parseFloat(r.peso.replace(/\./g,'').replace(',', '.')) : 1 });
   });
   document.getElementById('cerca-apparato-bolla').value = '';
   bollaRenderApparati();
@@ -3150,7 +3150,7 @@ function bollaRenderApparati() {
   `).join('');
 }
 
-function bollaReset() {
+async function bollaReset() {
   APPARATI['bolla'] = [];
   bollaUnsavedData = null;
   archivioEditingId = null;
@@ -3160,7 +3160,7 @@ function bollaReset() {
   });
   // document.getElementById('bolla-unsaved-banner').style.display = 'none';
   document.getElementById('btab-nuova').textContent = 'Nuova Bolla';
-  initNuovaBolla();
+  await initNuovaBolla();
   bollaRenderApparati();
 }
 
@@ -3785,14 +3785,14 @@ function siteCompilaDDT() {
     : APPARATI['site'].map(a => a.serial_number);
   if (!sorgente.length) { showToast('Nessun apparato rimosso da trasferire al DDT', 'error'); return; }
 
-  const num  = cfg.bolla === 'doppia' ? document.getElementById('site-bolla-uscita-numero').value.trim()
-             : cfg.bolla === 'singola' ? document.getElementById('site-bolla-numero').value.trim() : '';
-  const data = cfg.bolla === 'doppia' ? document.getElementById('site-bolla-uscita-data').value
-             : cfg.bolla === 'singola' ? document.getElementById('site-bolla-data').value : '';
+  // const num  = cfg.bolla === 'doppia' ? document.getElementById('site-bolla-uscita-numero').value.trim()
+  //            : cfg.bolla === 'singola' ? document.getElementById('site-bolla-numero').value.trim() : '';
+  // const data = cfg.bolla === 'doppia' ? document.getElementById('site-bolla-uscita-data').value
+  //            : cfg.bolla === 'singola' ? document.getElementById('site-bolla-data').value : '';
 
   setTimeout(() => {
-    if (num)  document.getElementById('bolla-numero').value = num;
-    if (data) document.getElementById('bolla-data').value   = data;
+    // if (num)  document.getElementById('bolla-numero').value = num;
+    // if (data) document.getElementById('bolla-data').value   = data;
     document.getElementById('cerca-apparato-bolla').value = sorgente.join(' ');
     const idCli = document.getElementById('site-cliente').value;
     document.getElementById('bolla-cessionario').value = idCli;
@@ -4356,7 +4356,7 @@ function getFormData(prefix) {
       data[el.id] = el.value;
     });
   data["apparati"] = JSON.stringify(APPARATI[prefix]);
-
+  
   return data;
 }
 
@@ -4364,9 +4364,6 @@ function isDifferent(a, b) {
   const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
   for (let k of keys) {
     if ((a[k] || "") !== (b[k] || "")) {
-      // console.log('differenze in '+k);
-      // console.log('Prima: ' + b[k]);
-      // console.log('Dopo:  ' + a[k]);
       return true;
     }
   }
@@ -4713,10 +4710,8 @@ function ispControllaINC() {
 
 // ── Cerca Call HW già aperte ──────────────────────────────────────────────────────
 async function ispCallHW(asset) {
-  // console.log(asset);
   let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3Dactive%253Dtrue%255Estate!%253D6%255Ecmdb_ciSTARTSWITH';
   const { data } = await db.from('sn_main').select('hostname').eq('etichetta_asset', asset).single();
-  // console.log(data);
   if (!data || !data.hostname) {
     showToast('Nessun host trovato', 'error');
     return;
