@@ -414,6 +414,8 @@
         <textarea id="snText2" style="margin:0;border:0px;resize:none;border-radius:0;width:100%;min-height:180px;"></textarea>
       </div>
       <button class="btn btn-primary" onclick="snCopiaText()">📋 Copia testo</button>
+      <button id="sn-cerca-inc" class="btn btn-secondary disabled">🔍 Cerca Incident</button>
+      
 
       </div>
   </div>
@@ -2849,12 +2851,15 @@ async function loadSnCall() {
   let host = '';
   let sn = '';
   let modello = '';
+  let btn = document.getElementById('sn-cerca-inc');
   const { data } = await db.from('sn_main').select('*').eq('etichetta_asset', asset);
   if(data.length === 1) {
     host = data[0].hostname;
     sn = data[0].asset_sn || data[0].numero_di_serie || '';
     modello = data[0].produttore + ' ' + data[0].asset_model;
-  }
+    btn.onclick = () => cercaCallHW(asset);
+    btn.disabled = false;
+  } else { btn.disabled = true; }
   testo = `Si richiede apertura call Hw sul seguente apparato:\n\nHost: ${host}\nSerial number: ${sn}\nAsset: ${asset}\nModello: ${modello}`;
   document.getElementById('snText1').value = testo;
 }
@@ -3075,7 +3080,7 @@ async function bollaAggiungiDaRicerca() {
   const q = document.getElementById('cerca-apparato-bolla').value.trim();
   if (!q) return;
 
-  const tokens = q.split(/[\s,;\n]+/).map(t => t.trim()).filter(Boolean);
+  const tokens = q.split(/[\s,;\n]+/).map(t => t.trim()).filter(Boolean).filter(sn => sn !== 'NR' && sn !== 'nr');
   let data;
 
   // cerca per singolo o lista
@@ -4547,7 +4552,7 @@ function ispRenderTabella() {
       <td>
         <button class="btn btn-secondary btn-sm" style="margin: 0 6px" onclick="ispModifica(${index})">✎</button>
         <button class="btn btn-danger btn-sm" onclick="ispElimina(${r.id})">✕</button>
-        ${isNew && isAsset ? `<button class="btn btn-secondary btn-sm" style="margin: 0 6px" onclick="ispCallHW('${isAsset}')">🔍</button>` : ''}
+        ${isNew && isAsset ? `<button class="btn btn-secondary btn-sm" style="margin: 0 6px" onclick="cercaCallHW('${isAsset}')">🔍</button>` : ''}
       </td>
     </tr>`;
   }).join('');
@@ -4709,7 +4714,7 @@ function ispControllaINC() {
 }
 
 // ── Cerca Call HW già aperte ──────────────────────────────────────────────────────
-async function ispCallHW(asset) {
+async function cercaCallHW(asset) {
   let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3Dactive%253Dtrue%255Estate!%253D6%255Ecmdb_ciSTARTSWITH';
   const { data } = await db.from('sn_main').select('hostname').eq('etichetta_asset', asset).single();
   if (!data || !data.hostname) {
