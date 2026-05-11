@@ -1,17 +1,14 @@
 import
     test nuovo link all'export
 
-apparati da non segnalare
-    titolo modal nuovo/modifica
-    svuota campi se nuovo
-
 site
     da rack a rack in modal nuova riga
 
 CSS
+    temi dark light
+    bg and color per ogni tema
     color opacity: rgb(from var(--accent) r g b / 0.2)
     uniforma simboli ✓ ⚠ 📋 🔍 ⬇ ➕ ✎ ↺ ✚ ⌕ 🖨️ ➚ ↗
-    temi
     versione mobile
 
 import

@@ -4464,10 +4464,17 @@ function openNonSegnalareModal(index) {
   const record = index ? ispNonSegnalare[index] : null;
   nonSegnalareEditingKey = index ? record.etichetta : null;
   document.getElementById('non-segnalare-modal').classList.add('open');
-  if (!record) return;
+  if (!record) {
+    document.getElementById('non-segnalare-etichetta').value = '';
+    document.getElementById('non-segnalare-motivazione').value = '';
+    document.getElementById('non-segnalare-incident').value = '';
+    document.getElementById('non-segnalare-modal-title').textContent = 'Nuovo Apparato da non segnalare';
+    return;
+  }
   document.getElementById('non-segnalare-etichetta').value = record.etichetta || '';
   document.getElementById('non-segnalare-motivazione').value = record.motivazione || '';
   document.getElementById('non-segnalare-incident').value = record.incident || '';
+  document.getElementById('non-segnalare-modal-title').textContent = 'Modifica Apparato da non segnalare';
 }
 
 function closeNonSegnalareModal() {
