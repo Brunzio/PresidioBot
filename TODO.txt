@@ -1,3 +1,7 @@
+CERT
+    una x ogni rack?
+    link all'inc
+
 CSS
     temi dark light
     bg and color per ogni tema

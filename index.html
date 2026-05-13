@@ -2831,6 +2831,17 @@ async function apriFoglioChiavi() {
 let snSearchTimeout = null;
 let snListaRef = [];
 
+function normalizeINC(text) {
+  const m = (text || '').match(/(?:inc)?0*(\d{7,12})/i);
+  if (!m) return null;
+
+  const num = Number(m[1]);
+
+  if (num < 6_000_000) return null;
+
+  return `INC${String(num).padStart(12, '0')}`;
+}
+
 async function initSN() {
   snLoadRef();
   loadSnCall();
@@ -2897,56 +2908,91 @@ async function snCopiaText() {
 
 function snCercaIncident() {
   const input = document.getElementById('sn-input').value;
-  const listinc = [];
-  const regex = /.*?(INC)?(0*)((6|7|8)(\d{6}))/g;
-  let m;
-  while ((m = regex.exec(input)) !== null) listinc.push(m[3]);
-  if (!listinc.length) { showToast('Nessun incident trovato', 'error'); return; }
 
-  let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3D';
-  listinc.forEach((inc, i) => {
-    if (i > 0) url += '%255EOR';
-    url += 'number%253DINC00000' + inc;
-  });
+  // trova tutti i possibili INC nel testo
+  const matches = input.match(/(?:inc)?0*\d{7,12}/gi) || [];
+
+  // normalizza + deduplica
+  const listinc = [...new Set(
+    matches
+      .map(normalizeINC)
+      .filter(Boolean)
+  )];
+
+  if (!listinc.length) {
+    showToast('Nessun incident trovato', 'error');
+    return;
+  }
+
+  const query = listinc
+    .map(inc => `number%253D${inc}`)
+    .join('%255EOR');
+
+  const url =
+    'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3D' +
+    query;
+
   window.open(url, '_blank');
 }
 
 function snCercaAsset() {
   const input = document.getElementById('sn-input').value;
-  const listass = input.match(/\d{10}/g) || [];
-  const listmsc = (input.match(/\S{5,}/g) || []).filter(t => !listass.includes(t));
-  if (!listass.length && !listmsc.length) { showToast('Nessun asset trovato', 'error'); return; }
 
-  let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/alm_hardware_list.do%3Fsysparm_query%3D';
-  const foot = '%26sysparm_first_row%3D1%26sysparm_view%3Dasset_inventory';
+  // asset numerici da 10 cifre
+  const listass = [...new Set(
+    input.match(/\b\d{10}\b/g) || []
+  )];
 
-  listass.forEach(ass => { url += 'u_asset_label%253D' + ass + '%255EOR'; });
-  listmsc.forEach(m => {
-    url += 'u_asset_label%253D' + m +
-           '%255EORu_asset_sn%253D' + m +
-           '%255EORu_hostnameLIKE' + m +
-           '%255EORserial_number%253D' + m +
-           '%255EOR';
+  // token testuali "utili"
+  const listmsc = [...new Set(
+    (input.match(/\b\S{5,}\b/g) || [])
+      .filter(t => !/^\d{10}$/.test(t))
+  )];
+
+  if (!listass.length && !listmsc.length) {
+    showToast('Nessun asset trovato', 'error');
+    return;
+  }
+
+  const conditions = [];
+
+  // asset label numerici
+  listass.forEach(ass => {
+    conditions.push('u_asset_label%253D' + ass);
   });
-  url += foot;
+
+  // ricerca multipla per token generici
+  listmsc.forEach(m => {
+    const v = encodeURIComponent(m);
+
+    conditions.push(
+      `u_asset_sn%253D${v}`,
+      `u_hostnameLIKE${v}`,
+      `serial_number%253D${v}`
+    );
+  });
+
+  const query = conditions.join('%255EOR');
+
+  const url =
+    'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/alm_hardware_list.do%3Fsysparm_query%3D' +
+    query +
+    '%26sysparm_first_row%3D1%26sysparm_view%3Dasset_inventory';
+
   window.open(url, '_blank');
 }
 
 function snCercaMoncall() {
   const input = document.getElementById('sn-input').value;
-  const listmsc = input.match(/\S{5,}/g) || [];
+  const listmsc = input.match(/(?:inc)?0*\d{7,12}/gi) || [];
   if (!listmsc.length) { showToast('Nessun token trovato', 'error'); return; }
 
-  let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3D';
-  const query = 'short_descriptionLIKE%255BMON%2520CALL%2520HW%255D%255E';
-  const foot = '%26sysparm_first_row%3D1%26sysparm_view%3D';
+  const query = listmsc.map(m => `short_descriptionLIKE${normalizeINC(m)}`).join('%255EOR');
 
-  url += query;
-  listmsc.forEach((msc, i) => {
-    if (i > 0) url += '%255EOR';
-    url += 'short_descriptionLIKE' + msc;
-  });
-  url += foot;
+  const url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3Dshort_descriptionLIKE%255BMON%2520CALL%2520HW%255D%255E'
+    + query
+    + '%26sysparm_first_row%3D1%26sysparm_view%3D';
+
   window.open(url, '_blank');
 }
 
@@ -3850,6 +3896,10 @@ async function loadSiteArchivio() {
   document.getElementById('site-archivio-body').innerHTML = (data || []).map(r => {
     // mostra bolla: uscita per Rimozione, ingresso per gli altri, entrambe per Sostituzione
     let bollaLabel = '—';
+    let incident = normalizeINC(r.incident);
+    let apriINC = incident
+      ? `<button class="btn btn-secondary btn-sm" onclick="window.open('https://noovleprod.service-now.com/incident.do?sys_id=${incident}', '_blank')">🔍</button>`
+      : '';
     if (r.tipo === 'Sostituzione') {
       const parts = [r.numero_bolla_ingresso, r.numero_bolla_uscita].filter(Boolean);
       bollaLabel = parts.length ? parts.join(' / ') : '—';
@@ -3863,7 +3913,7 @@ async function loadSiteArchivio() {
       <td><span class="badge ${tipoBadge[r.tipo]||'badge-default'}">${r.tipo}</span></td>
       <td>${new Date(r.data_site+'T00:00:00').toLocaleDateString('it-IT')}</td>
       <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;">${escHtml(r.cliente||'—')}</td>
-      <td style="font-family:var(--mono);font-size:11px;">${escHtml(r.incident||'—')}</td>
+      <td style="font-family:var(--mono);font-size:11px;">${apriINC + ' ' + escHtml(r.incident||'—')}</td>
       <td style="text-align:center;">${(r.apparati||[]).length}</td>
       <td style="font-family:var(--mono);font-size:11px;">${bollaLabel}</td>
       <td><div class="td-actions">
