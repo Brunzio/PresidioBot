@@ -11,13 +11,6 @@
     --bg: #0f0f0f;
     --accent: #00e5a0;
     --text: #e8e8e8;
- /* --surface: #181818;
-    --surface2: #222222;
-    --border: #2a2a2a;
-    --accent: #00e5a0;
-    --accent2: #005c40;
-    --text: #e8e8e8;
-    --text-muted: #666; */
     --surface: oklch(from var(--bg) calc(l*1.25) c h);
     --surface2: oklch(from var(--bg) calc(l*1.5) c h);
     --border: oklch(from var(--bg) calc(l*1.7) c h);
@@ -29,6 +22,23 @@
     --sans: 'DM Sans', sans-serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html.light {
+    --bg: #ffffff;
+    --accent: #3c59e7;
+    --text: #000000;
+    --surface: oklch(from var(--bg) calc(l*0.95) c h);
+    --surface2: oklch(from var(--bg) calc(l*0.8) c h);
+    --border: oklch(from var(--bg) calc(l*0.75) c h);
+    --accent2: oklch(from var(--accent) calc(l*0.5) c h);
+    --text-muted: oklch(from var(--text) calc(l*0.25) c h);
+    --danger: #720000;
+    --warning: #a17400;
+    --mono: arial;
+    --sans: arial;
+    font-weight: bolder;
+  }
+
   body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
   a { text-decoration: none; }
 
@@ -112,8 +122,8 @@
 
   /* STATUS BADGES */
   .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-family: var(--mono); letter-spacing: 0.5px; }
-  .badge-active { background: rgba(0,229,160,0.15); color: var(--accent); }
-  .badge-inactive { background: rgba(255,77,77,0.15); color: var(--danger); }
+  .badge-active { background: oklch(from var(--accent) l c h / 0.1); color: var(--accent); }
+  .badge-inactive { background: oklch(from var(--danger) l c h / 0.1); color: var(--danger); }
   .badge-default { background: var(--surface2); color: var(--text-muted); }
 
   /* PAGINATION */
@@ -189,6 +199,10 @@
   #login-error { display: none; color: var(--danger); font-size: 12px; margin-bottom: 14px; font-family: var(--mono); }
   #btn-login { width: 100%; margin-top: 40px; }
 
+  /* THEME PANEL */
+  #themePanel { display: none; position: fixed; font-size: 12px; vertical-align: bottom; top: 52px; right: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; z-index: 300; width: 200px; }
+  #themePanel.open { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+
   @media print{
     body{background:#fff;padding:0;}
     header, .tabs, .toolbar{display:none!important;}
@@ -225,8 +239,21 @@
     <span id="record-count">— record</span>
     <span id="user-email" class="user-email"></span>
     <button class="btn btn-secondary btn-sm" id="btn-logout" onclick="doLogout()">Logout</button>
+    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('themePanel').classList.toggle('open');" title="Tema">👤</button>
   </div>
 </header>
+
+<div id="themePanel">
+  <div><label>Modo</label>
+    <select id="themeMode" onchange="applyTheme(this.value)">
+      <option value="dark">Dark</option>
+      <option value="light">Light</option>
+    </select>
+  </div>
+  <div><label>Default</label><button class="btn btn-secondary btn-sm" onclick="resetTheme()">↺ Reset</button></div>
+  <div><label>Sfondo</label><input type="color" id="themeBg" oninput="updateTheme()"></div>
+  <div><label>Colore</label><input type="color" id="themeColor" oninput="updateTheme()"></div>
+</div>
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('browse')">Sfoglia</div>
@@ -4854,17 +4881,59 @@ function ispCopiaMail() {
   });
 }
 
-// ── Genera PDF ispezione ──────────────────────────────────────────────────────
-// function ispGeneraPDF() {
-//   // const correnti = ispSegnalazioni.filter(r => r.batch_id === ispBatchId);
-//   const correnti = ispSegnalazioni;
-//   if (!correnti.length) { showToast('Nessuna segnalazione corrente da stampare', 'error'); return; }
-//   sessionStorage.setItem('ispezione_data', JSON.stringify(correnti));
-//   window.open('ispezione_template.html', '_blank');
-// }
-
 // Close modal on overlay click
 document.getElementById('isp-modal').addEventListener('click', function(e) { if (e.target === this) closeIspModal(); });
+
+// ── TEMI ──────────────────────────────────────────
+const DEF_COLORS = {
+  light: {bg: '#ffffff', color: '#3c59e7'},
+  dark: {bg: '#0f0f0f', color: '#00e5a0'},
+  mode: 'dark',
+};
+
+function loadTheme(){
+  const saved = localStorage.getItem('theme');
+
+  return saved
+    ? JSON.parse(saved)
+    : structuredClone(DEF_COLORS);
+}
+
+function applyTheme(mode) {
+  const bg =    currTheme[mode].bg;
+  const color = currTheme[mode].color;
+  document.documentElement.classList.toggle('light', mode === 'light');
+
+  document.getElementById('themeMode').value = mode;
+  document.getElementById('themeBg').value = bg;
+  document.getElementById('themeColor').value = color;
+  document.documentElement.style.setProperty('--bg', bg);
+  document.documentElement.style.setProperty('--accent', color);
+
+  currTheme.mode = mode;
+  localStorage.setItem('theme', JSON.stringify(currTheme));
+}
+
+function updateTheme(){
+  const mode =  document.getElementById('themeMode').value;
+  const bg =    document.getElementById('themeBg').value;
+  const color = document.getElementById('themeColor').value;
+
+  currTheme.mode        = mode;
+  currTheme[mode].bg    = bg;
+  currTheme[mode].color = color
+
+  applyTheme(mode);
+}
+
+function resetTheme() {
+  const mode = document.getElementById('themeMode').value;
+  currTheme[mode] = structuredClone(DEF_COLORS[mode]);
+  applyTheme(mode);
+}
+
+let currTheme = loadTheme();
+applyTheme(currTheme.mode);
 
 </script>
 </body>

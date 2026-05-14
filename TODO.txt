@@ -3,9 +3,6 @@ CERT
     link all'inc
 
 CSS
-    temi dark light
-    bg and color per ogni tema
-    color opacity: rgb(from var(--accent) r g b / 0.2)
     uniforma simboli ✓ ⚠ 📋 🔍 ⬇ ➕ ✎ ↺ ✚ ⌕ 🖨️ ➚ ↗
     versione mobile
 
