@@ -3652,7 +3652,7 @@ function siteAggiungiManuale() {
 }
 
 function siteCopiaRiga(id) {
-  APPARATI['site'].push(APPARATI['site'][id]);
+  APPARATI['site'].push({ ...APPARATI['site'][id] });
   siteRenderApparati();
 }
 
