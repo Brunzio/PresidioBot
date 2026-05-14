@@ -29,7 +29,8 @@ body{font-family: 'Times New Roman', Times, serif;font-size:10pt;padding:20px;}
 /* Tabella apparati */
 .cert-table{width:100%;border-collapse:collapse;table-layout:auto;margin-bottom:3mm;}
 .cert-table th{background:#ff9900;font-weight:700;padding:2px 5px;border:1px solid #000;text-align:center;}
-.cert-table td{border:1px solid #000;padding:3px 5px;vertical-align:middle;text-align:center;height:7mm;font-family:Calibri;font-size:11pt;}
+.cert-table td{border:1px solid #000;white-space:nowrap;overflow:hidden;padding:3px 5px;vertical-align:middle;text-align:center;height:7mm;font-family:Calibri;font-size:11pt;}
+.col {max-width:100px;}
 
 /* Nota disclaimer */
 .nota{font-size:9pt;color:#ff0000;margin-bottom:4mm;font-family: Arial, Helvetica, sans-serif;}
@@ -74,7 +75,7 @@ const LOGO_SRC = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPUAAAA8CAYAAAC+
 
 // N. righe minime per riempire la tabella (escluse quelle con dati)
 const MIN_ROWS = 10;
-
+        
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 // ── Testi disclaimer ──────────────────────────────────────────────────────────
@@ -112,9 +113,9 @@ function renderCert(d) {
     const dataRows = chunk.map(a => `
       <tr>
         <td>${esc(a.costruttore)}</td>
-        <td>${esc(a.modello)}</td>
+        <td style="max-width:210px">${esc(a.modello)}</td>
         <td>${esc(a.asset)}</td>
-        <td>${esc(a.serial_number)}</td>
+        <td style="max-width:150px">${esc(a.serial_number)}</td>
         <td>${esc(a.mono_alimentato)}</td>
         <td>${esc(a.rack)}</td>
         <td>${esc(a.fornitore)}</td>
