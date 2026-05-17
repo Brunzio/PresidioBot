@@ -421,9 +421,10 @@
         <textarea id="sn-input" placeholder="Incolla qui la lista" style="width:100%;min-height:100px;"></textarea>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="snCercaIncident()">Cerca Incident</button>
-        <button class="btn btn-primary" onclick="snCercaAsset()">Cerca Asset</button>
-        <button class="btn btn-primary" onclick="snCercaMoncall()">Cerca MONCALL</button>
+        <button class="btn btn-primary" onclick="snCercaIncident()">Incident</button>
+        <button class="btn btn-primary" onclick="snCercaAsset()">Asset</button>
+        <button class="btn btn-primary" onclick="snCercaMoncall()">MONCALL</button>
+        <button class="btn btn-primary" onclick="snCercaINCdaAsset()">INC da Asset</button>
       </div>
     </div>
 
@@ -2895,7 +2896,7 @@ async function loadSnCall() {
     host = data[0].hostname;
     sn = data[0].asset_sn || data[0].numero_di_serie || '';
     modello = data[0].produttore + ' ' + data[0].asset_model;
-    btn.onclick = () => cercaCallHW(asset);
+    btn.onclick = () => cercaINCdaAsset([asset]);
     btn.disabled = false;
   } else { btn.disabled = true; }
   testo = `Si richiede apertura call Hw sul seguente apparato:\n\nHost: ${host}\nSerial number: ${sn}\nAsset: ${asset}\nModello: ${modello}`;
@@ -2973,7 +2974,6 @@ function snCercaAsset() {
   // token testuali "utili"
   const listmsc = [...new Set(
     (input.match(/\b\S{5,}\b/g) || [])
-      .filter(t => !/^\d{10}$/.test(t))
   )];
 
   if (!listass.length && !listmsc.length) {
@@ -3021,6 +3021,16 @@ function snCercaMoncall() {
     + '%26sysparm_first_row%3D1%26sysparm_view%3D';
 
   window.open(url, '_blank');
+}
+
+function snCercaINCdaAsset() {
+  const input = document.getElementById('sn-input').value;
+  const listass = [...new Set( input.match(/\b\d{10}\b/g) || [] )];
+  if(!listass.length) {
+    showToast('Nessun Asset trovato', 'error');
+    return;
+  }
+  cercaINCdaAsset(listass);
 }
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
@@ -4629,7 +4639,7 @@ function ispRenderTabella() {
       <td>
         <button class="btn btn-secondary btn-sm" style="margin: 0 6px" onclick="ispModifica(${index})">✎</button>
         <button class="btn btn-danger btn-sm" onclick="ispElimina(${r.id})">✕</button>
-        ${isNew && isAsset ? `<button class="btn btn-secondary btn-sm" style="margin: 0 6px" onclick="cercaCallHW('${isAsset}')">🔍</button>` : ''}
+        ${isNew && isAsset ? `<button class="btn btn-secondary btn-sm" style="margin: 0 6px" onclick="cercaINCdaAsset(['${isAsset}'])"">🔍</button>` : ''}
       </td>
     </tr>`;
   }).join('');
@@ -4790,15 +4800,16 @@ function ispControllaINC() {
   window.open(url, '_blank');
 }
 
-// ── Cerca Call HW già aperte ──────────────────────────────────────────────────────
-async function cercaCallHW(asset) {
+// ── Cerca INCIDENT da Asset ──────────────────────────────────────────────────────
+async function cercaINCdaAsset(assets) {
   let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3Dactive%253Dtrue%255Estate!%253D6%255Ecmdb_ciSTARTSWITH';
-  const { data } = await db.from('sn_main').select('hostname').eq('etichetta_asset', asset).single();
-  if (!data || !data.hostname) {
+  const { data } = await db.from('sn_main').select('hostname').in('etichetta_asset', assets);
+  if (!data.length) {
     showToast('Nessun host trovato', 'error');
     return;
   }
-  url += data.hostname;
+  const query = data.map(h => h.hostname).filter(Boolean).join('%255EORcmdb_ciSTARTSWITH');
+  url += query;
   window.open(url, '_blank');
 }
 
