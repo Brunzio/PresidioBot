@@ -14,10 +14,10 @@
     --surface: oklch(from var(--bg) calc(l*1.25) c h);
     --surface2: oklch(from var(--bg) calc(l*1.5) c h);
     --border: oklch(from var(--bg) calc(l*1.7) c h);
-    --accent2: oklch(from var(--accent) calc(l*0.5) c h);
     --text-muted: oklch(from var(--text) calc(l*0.55) c h);
     --danger: #ff4d4d;
     --warning: #ffb800;
+    --ok: #3ac382;
     --mono: 'Space Mono', monospace;
     --sans: 'DM Sans', sans-serif;
   }
@@ -30,10 +30,10 @@
     --surface: oklch(from var(--bg) calc(l*0.95) c h);
     --surface2: oklch(from var(--bg) calc(l*0.8) c h);
     --border: oklch(from var(--bg) calc(l*0.75) c h);
-    --accent2: oklch(from var(--accent) calc(l*0.5) c h);
     --text-muted: oklch(from var(--text) calc(l*0.25) c h);
-    --danger: #720000;
-    --warning: #a17400;
+    --danger: #a03333;
+    --warning: #e16a00;
+    --ok: #2e8822;
     --mono: arial;
     --sans: arial;
     font-weight: bolder;
@@ -94,10 +94,12 @@
   .btn-primary:hover { background: oklch(from var(--accent) calc(l * 1.1) c h); }
   .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
   .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-ok { background: var(--ok); color: var(--bg); border: 1px solid var(--ok); }
+  .btn-ok:hover { background: oklch(from var(--ok) calc(l * 1.2) c h);}
   .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
-  .btn-danger:hover { background: var(--danger); color: var(--text); }
+  .btn-danger:hover { background: var(--danger); color: #fff; }
   .btn-warning { background: oklch(from var(--warning) l c h / 0.1); color: var(--warning); border: 1px solid var(--warning); }
-  .btn-warning:hover { background: var(--warning); color: var(--text); }
+  .btn-warning:hover { background: var(--warning); color: var(--bg); }
   .btn-sm { padding: 4px 10px; font-size: 10px; }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -122,8 +124,8 @@
 
   /* STATUS BADGES */
   .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-family: var(--mono); letter-spacing: 0.5px; }
-  .badge-active { background: oklch(from var(--accent) l c h / 0.1); color: var(--accent); }
-  .badge-inactive { background: oklch(from var(--danger) l c h / 0.1); color: var(--danger); }
+  .badge-active { background: oklch(from var(--accent) l c h / 0.15); color: var(--accent); }
+  .badge-inactive { background: oklch(from var(--accent) l c calc(h + 128) / 0.15); color: oklch(from var(--accent) l c calc(h + 128)); }
   .badge-default { background: var(--surface2); color: var(--text-muted); }
 
   /* PAGINATION */
@@ -661,7 +663,7 @@
           <button class="btn btn-secondary" onclick="bollaReset()">↺ Nuova</button>
           <button class="btn btn-secondary" onclick="bollaCompilasite()">📋 Crea Site</button>
           <button class="btn btn-secondary" onclick="bollaAnteprima()">🖨️ Anteprima</button>
-          <button id="bolla-save-button" class="btn btn-primary" onclick="bollaSalva()">✓ Salva</button>
+          <button id="bolla-save-button" class="btn btn-ok" onclick="bollaSalva()">✓ Salva</button>
         </div>
 
         <!-- Banner bolla non salvata — appare dopo Genera 
@@ -843,7 +845,7 @@
             <option value="righe">Layout righe (16xPagina)</option>
           </select>
           <button class="btn btn-secondary" onclick="siteAnteprima()">🖨️ Anteprima</button>
-          <button id="site-save-button" class="btn btn-primary" onclick="siteSalva()">✓ Salva</button>
+          <button id="site-save-button" class="btn btn-ok" onclick="siteSalva()">✓ Salva</button>
         </div>
 
         <!-- Banner site non salvata 
@@ -1155,7 +1157,7 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeCertModal()">Annulla</button>
       <button class="btn btn-secondary" onclick="certGenera()">🖨️ Anteprima</button>
-      <button class="btn btn-primary" onclick="certSalva()" id="cert-save-button">✓ Salva</button>
+      <button class="btn btn-ok" onclick="certSalva()" id="cert-save-button">✓ Salva</button>
     </div>
   </div>
 </div>
@@ -1545,7 +1547,7 @@ async function cercaChiave() {
       chiaveValore.textContent = result.chiave;
       chiaveValore.style.color = 'var(--accent)';
       chiaveFonte.textContent = result.fonte;
-      chiaveBox.style.borderColor = 'var(--accent2)';
+      chiaveBox.style.borderColor = 'var(--accent)';
     } else {
       chiaveValore.textContent = result.cliente ? '🔑 Cliente: ' + result.cliente : 'Non disponibile';
       chiaveValore.style.color = result.cliente ? 'var(--warning)' : 'var(--text-muted)';
@@ -4122,7 +4124,7 @@ async function loadCertArchivio() {
   document.getElementById('cert-archivio-next').disabled = to >= total;
 
   tbody.innerHTML = (data || []).map(r => {
-    const tipoBadge = r.tipo_cert === 'cse' ? 'badge-inactive' : 'badge-default';
+    const tipoBadge = r.tipo_cert === 'cse' ? 'badge-active' : 'badge-inactive';
     const tipoLabel = r.tipo_cert === 'cse' ? 'CSE' : 'Standard';
     const dataStr = r.data_cert ? new Date(r.data_cert + 'T00:00:00').toLocaleDateString('it-IT') : '—';
     return `
