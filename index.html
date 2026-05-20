@@ -1505,6 +1505,7 @@ let parsedRows = [];
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function switchTab(name) {
+  console.log('Switch Tab iniziale');
   const tabs = ['browse','chiave','strumentisn','clienti','site','bolle','ispezione','admin'];
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -1513,6 +1514,7 @@ function switchTab(name) {
   if (name === 'clienti') loadClienti();
   if (name === 'bolle') { switchBolleTab('nuova'); if(!document.getElementById('bolla-numero').value) initNuovaBolla(); }
   if (name === 'site') { switchSiteTab('nuova');   if(!document.getElementById('site-data').value) initNuovaSite(); }
+  console.log('chiamo init ispezione');
   if (name === 'ispezione') initIspezione();
   if (name === 'strumentisn') initSN();
 }
@@ -3045,6 +3047,7 @@ function showApp(user) {
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('user-email').textContent = user.email;
   document.getElementById('btn-logout').style.display = 'block';
+  if (window.innerWidth <= 768) switchTab('ispezione');
 }
 
 function showLogin() {
@@ -4512,8 +4515,11 @@ function onNonSegnalareSearch() {
 async function initIspezione() {
   // Ripristina batch da sessionStorage
   // ispBatchId = sessionStorage.getItem('isp_batch_id') || null;
+  console.log('load owners');
   await ispLoadOwners();
+  console.log('load segnalazioni');
   await ispLoadSegnalazioni();
+  console.log('load non segnalare');
   await ispLoadNonSegnalare();
 }
 
@@ -4524,7 +4530,9 @@ async function ispLoadSegnalazioni() {
     .order('created_at', { ascending: true });
   if (error) { showToast('Errore caricamento ispezione: ' + error.message, 'error'); return; }
   ispSegnalazioni = data || [];
+  console.log('caricate segnalazioni');
   document.getElementById('ispezione-info').textContent = `${ispSegnalazioni.length} segnalazioni`;
+  console.log('render tabella');
   ispRenderTabella();
 }
 
@@ -4952,8 +4960,6 @@ function resetTheme() {
 
 let currTheme = loadTheme();
 applyTheme(currTheme.mode);
-
-if (window.innerWidth <= 768) switchTab('ispezione');
 
 </script>
 </body>

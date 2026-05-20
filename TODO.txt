@@ -1,3 +1,6 @@
+ISPEZIONE
+    aggiungi fotocamera per barcode
+
 CERT
     una x ogni rack?
     link all'inc
