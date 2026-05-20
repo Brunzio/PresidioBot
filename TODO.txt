@@ -4,7 +4,6 @@ CERT
 
 CSS
     uniforma simboli ✓ ⚠ 📋 🔍 ⬇ ➕ ✎ ↺ ✚ ⌕ 🖨️ ➚ ↗
-    versione mobile
 
 import
     nuovo db solo asset e campi utili

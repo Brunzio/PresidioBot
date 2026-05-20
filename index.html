@@ -211,6 +211,11 @@
     @page{size:A4 landscape;margin:0;}
   }
 
+  @media screen and (max-width: 768px) {
+    .tab:not([onclick*="chiave"]):not([onclick*="ispezione"]) { display: none; }
+    #record-count, #user-email, #logo { display: none; }
+  }
+
 </style>
 </head>
 <body>
@@ -259,12 +264,12 @@
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('browse')">Sfoglia</div>
-  <div class="tab" onclick="switchTab('chiave')">Cerca Chiave</div>
+  <div class="tab" onclick="switchTab('chiave')" id="tab-chiave">Cerca Chiave</div>
   <div class="tab" onclick="switchTab('strumentisn')">Strumenti SN</div>
   <div class="tab" onclick="switchTab('clienti')">Chiavi Clienti</div>
   <div class="tab" onclick="switchTab('site')">Site</div>
   <div class="tab" onclick="switchTab('bolle')">Bolle</div>
-  <div class="tab" onclick="switchTab('ispezione')">Ispezione</div>
+  <div class="tab" onclick="switchTab('ispezione')" id="tab-isp">Ispezione</div>
   <div class="tab" onclick="switchTab('admin')">Admin</div>
 </div>
 
@@ -4947,6 +4952,8 @@ function resetTheme() {
 
 let currTheme = loadTheme();
 applyTheme(currTheme.mode);
+
+if (window.innerWidth <= 768) switchTab('ispezione');
 
 </script>
 </body>
