@@ -1,6 +1,12 @@
 ISPEZIONE
     aggiungi fotocamera per barcode
 
+CERCA CHIAVE
+    aggiungi fotocamera per barcode
+
+SFOGLIA
+    passare ricerca multipla al mobile
+
 CERT
     una x ogni rack?
     link all'inc

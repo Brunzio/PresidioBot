@@ -26,11 +26,11 @@
   html.light {
     --bg: #ffffff;
     --accent: #3c59e7;
-    --text: #000000;
+    --text: #303030;
     --surface: oklch(from var(--bg) calc(l*0.95) c h);
     --surface2: oklch(from var(--bg) calc(l*0.8) c h);
     --border: oklch(from var(--bg) calc(l*0.75) c h);
-    --text-muted: oklch(from var(--text) calc(l*0.25) c h);
+    --text-muted: oklch(from var(--text) calc(l*2) c h);
     --danger: #a03333;
     --warning: #e16a00;
     --ok: #2e8822;
@@ -1566,22 +1566,22 @@ async function cercaChiave() {
     // Mostra dettagli record
     const campi = [
       ['Etichetta Asset', result.record.etichetta_asset],
-      ['Categoria', result.record.asset_subcategory],
+      ['Hostname', result.record.hostname],
       ['Modello', result.record.asset_model],
       ['Produttore', result.record.produttore],
-      ['Hostname', result.record.hostname],
-      ['Stato', result.record.stato],
       ['Rack', result.record.rack],
-      ['Componente Di', result.record.componente_di],
+      ['Locazione', result.record.nome_completo],
       ['Tipo Piattaforma', result.record.tipo_piattaforma],
       ['Piattaforma', result.record.piattaforma_supportata],
+      ['Stato', result.record.stato],
+      ['Categoria', result.record.asset_subcategory],
+      ['Componente Di', result.record.componente_di],
     ];
     document.getElementById('chiave-dettagli').innerHTML = campi
-      .filter(([,v]) => v)
       .map(([k,v]) => `
         <div>
           <div style="font-size:10px;font-family:var(--mono);color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">${k}</div>
-          <div style="font-size:13px;">${v}</div>
+          <div style="font-size:13px;">${v||'-'}</div>
         </div>
       `).join('');
 
