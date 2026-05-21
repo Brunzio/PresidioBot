@@ -202,8 +202,16 @@
   #btn-login { width: 100%; margin-top: 40px; }
 
   /* THEME PANEL */
-  #themePanel { display: none; position: fixed; font-size: 12px; vertical-align: bottom; top: 52px; right: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; z-index: 300; width: 200px; }
-  #themePanel.open { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  #theme-panel { display: none; position: fixed; font-size: 12px; vertical-align: bottom; top: 52px; right: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; z-index: 300; width: 200px; }
+  #theme-panel.open { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+
+  /* CAMERA */
+  .btn-photo { display: none; padding: 2px 6px; font-size: 18px; }
+  .camera-overlay { position: fixed; inset: 0; z-Index: 200; pointer-Events: none; }
+  .camera-scan { width: 100%; top: 50%;}
+  .camera-guide { position: absolute; left: 0; top: 50%; width: 100%; border-top: 1px solid red; }
+  .camera-frame { position: absolute; left:50%; top:50%; width:85%; height:250px; transform: translate(-50%,-50%); border:2px solid #303030; box-shadow: 0 0 0 9999px rgba(0,0,0,.5); }
+  #scanner-video { position: fixed; inset: 0; width: 100%; height: 100%; background: #000; z-index: 100; object-fit: cover;}
 
   @media print{
     body{background:#fff;padding:0;}
@@ -212,6 +220,7 @@
   }
 
   @media screen and (max-width: 768px) {
+    .btn-photo { display: block; }
     .tab:not([onclick*="chiave"]):not([onclick*="ispezione"]) { display: none; }
     #record-count, #user-email, #logo { display: none; }
   }
@@ -240,17 +249,26 @@
   </div>
 </div>
 
+<!-- SCANNER -->
+<div id="scanner" hidden>
+  <video id="scanner-video" autoplay playsinline></video>
+  <div class="camera-overlay">
+    <div class="camera-guide"></div>
+    <div class="camera-frame"></div>
+  </div>
+</div>
+
 <header>
   <div class="logo">Presidio<span>//</span>Bot</div>
   <div class="header-actions">
     <span id="record-count">— record</span>
     <span id="user-email" class="user-email"></span>
     <button class="btn btn-secondary btn-sm" id="btn-logout" onclick="doLogout()">Logout</button>
-    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('themePanel').classList.toggle('open');" title="Tema">👤</button>
+    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('theme-panel').classList.toggle('open');" title="Tema">👤</button>
   </div>
 </header>
 
-<div id="themePanel">
+<div id="theme-panel">
   <div><label>Modo</label>
     <select id="themeMode" onchange="applyTheme(this.value)">
       <option value="dark">Dark</option>
@@ -321,7 +339,8 @@
         <div style="display:flex;gap:10px;">
           <input type="text" id="chiave-input" placeholder="es. 2020008269" style="flex:1;font-size:15px;padding:10px 14px;"
             onkeydown="if(event.key==='Enter') cercaChiave()">
-          <button class="btn btn-primary" onclick="cercaChiave()" style="padding:10px 24px;font-size:12px;">Cerca</button>
+          <button class="btn btn-primary" onclick="cercaChiave()">Cerca</button>
+          <button class="btn btn-secondary btn-photo" onclick="chiaveCamera()">📷</button>
         </div>
       </div>
 
@@ -439,10 +458,10 @@
     <div style="max-width:690px;">
       <div style="font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;border-bottom:var(--border) solid 1px;">Compila Call HW</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-        <input type="text" size="20" id="snAsset" oninput="onSnAssetSearch()" placeholder="Etichetta, host o seriale...">
-        <input type="text" size="42" id="snReferente" oninput="onSnSearch()" placeholder="Referente per la call" list="snRefList" autocomplete="off">
+        <input type="text" size="25" id="snAsset" oninput="onSnAssetSearch()" placeholder="Etichetta, host o seriale...">
+        <input type="text" size="20" id="snIncident" oninput="onSnSearch()" placeholder="Incident">
+        <input type="text" size="50" id="snReferente" oninput="onSnSearch()" placeholder="Referente per la call" list="snRefList" autocomplete="off">
         <datalist id="snRefList"></datalist>
-        <input type="text" size="15" id="snIncident" oninput="onSnSearch()" placeholder="Incident">
       </div>
       <div style="max-width:690px;margin-bottom:10px;">
         <textarea id="snText1" style="margin:0;border:0px;resize:none;border-radius:0;width:100%;min-height:125px;"></textarea>
@@ -1279,7 +1298,6 @@
   </div>
 </div>
 
-
 <!-- MODAL LOOKUP (eccezioni/modelli) -->
 <div class="modal-overlay" id="lookup-modal">
   <div class="modal" style="width:480px">
@@ -1378,6 +1396,7 @@
           <div style="display:flex;gap:6px;">
             <input type="text" id="isp-etichetta" placeholder="es. 2020008269" style="flex:1;" onkeydown="if(event.key==='Enter')ispCercaAsset()">
             <button class="btn btn-primary btn-sm" onclick="ispCercaAsset()">Cerca</button>
+            <button class="btn btn-secondary btn-photo" onclick="ispCamera()">📷</button>
           </div>
           <div id="isp-asset-warn" style="display:none;margin-top:6px;font-size:11px;color:var(--warning);">⚠ Questa macchina è già presente nell'ispezione.</div>
           <div id="isp-nons-warn" style="display:none;margin-top:6px;font-size:11px;color:var(--warning);">⚠ Questa macchina è tra gli apparati da NON SEGNALARE.</div>
@@ -1443,6 +1462,11 @@
 </div>
 
 <div id="toast"></div>
+
+<script type="module">
+  import { BrowserMultiFormatReader } from 'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/+esm';
+  window.BrowserMultiFormatReader = BrowserMultiFormatReader;
+</script>
 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
@@ -1518,6 +1542,12 @@ function switchTab(name) {
 }
 
 // ─── CERCA CHIAVE ─────────────────────────────────────────────────────────────
+async function chiaveCamera() {
+  const asset = await readBarcode() || '';
+  document.getElementById('chiave-input').value = asset;
+  cercaChiave();  
+}
+
 async function cercaChiave() {
   const etichetta = document.getElementById('chiave-input').value.trim();
   if (!etichetta) return;
@@ -2310,7 +2340,6 @@ async function loadEccezioni() {
   `).join('') || '<tr><td colspan="3"><div class="empty">Nessun record</div></td></tr>';
 }
 
-
 // MODELLI
 function onModelliSearch() {
   modSearch = document.getElementById('modelli-search').value.trim();
@@ -2339,7 +2368,6 @@ async function loadModelli() {
     </tr>
   `).join('') || '<tr><td colspan="4"><div class="empty">Nessun record</div></td></tr>';
 }
-
 
 // LOOKUP MODAL
 function openLookupModal(table, key, chiave, tipo) {
@@ -2882,6 +2910,7 @@ async function initSN() {
   loadSnCall();
   snCompila();
 }
+
 function onSnSearch() {
   clearTimeout(snSearchTimeout);
   snSearchTimeout = setTimeout(snCompila, 300);
@@ -4710,6 +4739,12 @@ function closeIspModal() {
 }
 
 // ── Cerca asset e pre-compila ─────────────────────────────────────────────────
+async function ispCamera() {
+  const asset = await readBarcode() || '';
+  document.getElementById('isp-etichetta').value = asset;
+  ispCercaAsset();  
+}
+
 async function ispCercaAsset() {
   const et = document.getElementById('isp-etichetta').value.trim();
   if (!et) return;
@@ -4905,6 +4940,42 @@ function ispCopiaMail() {
 
 // Close modal on overlay click
 document.getElementById('isp-modal').addEventListener('click', function(e) { if (e.target === this) closeIspModal(); });
+
+// ── CAMERA ──────────────────────────────────────────
+async function readBarcode() {
+
+  if (!window.BrowserMultiFormatReader) {
+    showToast('ZXing non caricato', 'error');
+    return;
+  }
+
+  const codeReader = new BrowserMultiFormatReader();
+  const scanner = document.getElementById('scanner');
+  const video = document.getElementById('scanner-video');
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' }
+      }
+    });
+
+    scanner.hidden = false;
+
+    video.srcObject = stream;
+    await video.play();
+    
+    const result = await codeReader.decodeOnceFromVideoElement(video);
+    stream.getTracks().forEach(t => t.stop());
+    
+    scanner.hidden = true;
+    
+    return result.text;
+  } catch (err) {
+    showToast('Errore Barcode: '+ err, 'error');
+    scanner.hidden = true;
+  }
+}
 
 // ── TEMI ──────────────────────────────────────────
 const DEF_COLORS = {

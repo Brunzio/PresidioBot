@@ -1,18 +1,16 @@
-ISPEZIONE
-    aggiungi fotocamera per barcode
-
-CERCA CHIAVE
-    aggiungi fotocamera per barcode
-
 SFOGLIA
     passare ricerca multipla al mobile
+    formato verticale
+
+CAMERA
+    singola funzione per ricerca
 
 CERT
     una x ogni rack?
     link all'inc
 
 CSS
-    uniforma simboli ✓ ⚠ 📋 🔍 ⬇ ➕ ✎ ↺ ✚ ⌕ 🖨️ ➚ ↗
+    uniforma simboli ✓ ⚠ 📋 🔍 ⬇ ➕ ✎ ↺ ✚ ⌕ 🖨️ ➚ ↗ 📷
 
 import
     nuovo db solo asset e campi utili
