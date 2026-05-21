@@ -439,8 +439,8 @@
     <div style="max-width:690px;">
       <div style="font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;border-bottom:var(--border) solid 1px;">Compila Call HW</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-        <input type="text" size="10" id="snAsset" oninput="onSnAssetSearch()" placeholder="Etichetta">
-        <input type="text" size="35" id="snReferente" oninput="onSnSearch()" placeholder="Referente per la call" list="snRefList" autocomplete="off">
+        <input type="text" size="20" id="snAsset" oninput="onSnAssetSearch()" placeholder="Etichetta, host o seriale...">
+        <input type="text" size="42" id="snReferente" oninput="onSnSearch()" placeholder="Referente per la call" list="snRefList" autocomplete="off">
         <datalist id="snRefList"></datalist>
         <input type="text" size="15" id="snIncident" oninput="onSnSearch()" placeholder="Incident">
       </div>
@@ -1505,7 +1505,6 @@ let parsedRows = [];
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function switchTab(name) {
-  console.log('Switch Tab iniziale');
   const tabs = ['browse','chiave','strumentisn','clienti','site','bolle','ispezione','admin'];
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -1514,7 +1513,6 @@ function switchTab(name) {
   if (name === 'clienti') loadClienti();
   if (name === 'bolle') { switchBolleTab('nuova'); if(!document.getElementById('bolla-numero').value) initNuovaBolla(); }
   if (name === 'site') { switchSiteTab('nuova');   if(!document.getElementById('site-data').value) initNuovaSite(); }
-  console.log('chiamo init ispezione');
   if (name === 'ispezione') initIspezione();
   if (name === 'strumentisn') initSN();
 }
@@ -2895,13 +2893,16 @@ function onSnAssetSearch() {
 }
 
 async function loadSnCall() {
-  const asset = document.getElementById('snAsset').value.trim();
+  const search = document.getElementById('snAsset').value.trim();
+  let asset = '';
   let host = '';
   let sn = '';
   let modello = '';
   let btn = document.getElementById('sn-cerca-inc');
-  const { data } = await db.from('sn_main').select('*').eq('etichetta_asset', asset);
+  const { data } = await db.from('sn_main').select('*')
+    .or(`etichetta_asset.eq.${search},hostname.ilike.${search},asset_sn.ilike.${search},numero_di_serie.ilike.${search}`);
   if(data.length === 1) {
+    asset = data[0].etichetta_asset;
     host = data[0].hostname;
     sn = data[0].asset_sn || data[0].numero_di_serie || '';
     modello = data[0].produttore + ' ' + data[0].asset_model;
@@ -4515,11 +4516,8 @@ function onNonSegnalareSearch() {
 async function initIspezione() {
   // Ripristina batch da sessionStorage
   // ispBatchId = sessionStorage.getItem('isp_batch_id') || null;
-  console.log('load owners');
   await ispLoadOwners();
-  console.log('load segnalazioni');
   await ispLoadSegnalazioni();
-  console.log('load non segnalare');
   await ispLoadNonSegnalare();
 }
 
@@ -4530,9 +4528,7 @@ async function ispLoadSegnalazioni() {
     .order('created_at', { ascending: true });
   if (error) { showToast('Errore caricamento ispezione: ' + error.message, 'error'); return; }
   ispSegnalazioni = data || [];
-  console.log('caricate segnalazioni');
   document.getElementById('ispezione-info').textContent = `${ispSegnalazioni.length} segnalazioni`;
-  console.log('render tabella');
   ispRenderTabella();
 }
 
