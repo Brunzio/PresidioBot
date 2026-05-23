@@ -221,8 +221,7 @@
 
   @media screen and (max-width: 768px) {
     .btn-photo { display: block; }
-    .tab:not([onclick*="chiave"]):not([onclick*="ispezione"]) { display: none; }
-    #record-count, #user-email, #logo { display: none; }
+    .tab:not([onclick*="chiave"]):not([onclick*="ispezione"]), .admin-section, .no-mobile { display: none; }
   }
 
 </style>
@@ -261,8 +260,8 @@
 <header>
   <div class="logo">Presidio<span>//</span>Bot</div>
   <div class="header-actions">
-    <span id="record-count">— record</span>
-    <span id="user-email" class="user-email"></span>
+    <span id="record-count" class="no-mobile">— record</span>
+    <span id="user-email" class="user-email no-mobile"></span>
     <button class="btn btn-secondary btn-sm" id="btn-logout" onclick="doLogout()">Logout</button>
     <button class="btn btn-secondary btn-sm" onclick="document.getElementById('theme-panel').classList.toggle('open');" title="Tema">👤</button>
   </div>
@@ -966,12 +965,11 @@
   <div class="panel" id="panel-ispezione">
     <div style="max-width:1000px;">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
-        <!-- <button class="btn btn-primary" onclick="ispNuovaIspezione()">↺ Nuova Ispezione</button> -->
         <select id="ispEttore"><option value="">— ispettore —</option></select>
         <button class="btn btn-primary" onclick="ispAggiungi()">+ Aggiungi</button>
-        <button class="btn btn-secondary" onclick="ispControllaINC()">🔍 Controlla INC</button>
-        <button class="btn btn-secondary" onclick="ispAnteprima()">🖨️ Anteprima</button>
-        <button class="btn btn-secondary" onclick="ispCopiaMail()">📋 Copia testo mail</button>
+        <button class="btn btn-secondary no-mobile" onclick="ispControllaINC()">🔍 Controlla INC</button>
+        <button class="btn btn-secondary no-mobile" onclick="ispAnteprima()">🖨️ Anteprima</button>
+        <button class="btn btn-secondary no-mobile" onclick="ispCopiaMail()">📋 Copia testo mail</button>
         <span id="isp-batch-info" style="font-family:var(--mono);font-size:11px;color:var(--text-muted);margin-left:8px;"></span>
       </div>
       <div class="table-wrapper scrollable">
@@ -1559,7 +1557,7 @@ async function cercaChiave() {
   try {
     // Prima leggi da chiavi_calcolate, fallback a calcolo in tempo reale
     let result;
-    const { data: kData } = await db.from('chiavi_calcolate').select('*').eq('etichetta_asset', etichetta).single();
+    const { data: kData } = await db.from('chiavi_calcolate').select('*').eq('etichetta_asset', etichetta).maybeSingle();
     if (kData) {
       const { data: record } = await db.from('sn_main').select('*').eq('etichetta_asset', etichetta).single();
       result = { record, chiave: kData.chiave, fonte: kData.fonte, cliente: kData.cliente, percorso: null };
@@ -1644,7 +1642,7 @@ async function risolviChiave(etichetta) {
   const percorso = [];
 
   // 1. Carica record principale
-  const { data: record } = await db.from('sn_main').select('*').eq('etichetta_asset', etichetta).single();
+  const { data: record } = await db.from('sn_main').select('*').eq('etichetta_asset', etichetta).maybeSingle();
   if (!record) return { record: null };
   percorso.push(`Record trovato: ${etichetta} (${record.asset_subcategory || record.asset_macro_category || '—'})`);
 
@@ -4751,7 +4749,7 @@ async function ispCercaAsset() {
   const { data, error } = await db.from('sn_main')
     .select('etichetta_asset,nome_completo')
     .eq('etichetta_asset', et)
-    .single();
+    .maybeSingle();
   if (error || !data) { showToast('Etichetta non trovata', 'error'); return; }
 
   // Estrai sala e areola da nome_completo: /BO1/SalaH-0/D5/ → sala=H-0, areola=D5
@@ -4781,7 +4779,7 @@ async function ispCercaAsset() {
 
   // Controlla se asset è nella lista "non segnalare"
   const nons = document.getElementById('isp-nons-warn');
-  const { data:isNonS } = await db.from('non_segnalare').select('etichetta').eq('etichetta', et).single();
+  const { data:isNonS } = await db.from('non_segnalare').select('etichetta').eq('etichetta', et).maybeSingle();
   const non = Boolean(isNonS);
   nons.style.display = non ? 'block' : 'none';
 }
@@ -4960,20 +4958,25 @@ async function readBarcode() {
       }
     });
 
-    scanner.hidden = false;
+    const chiudi = () => {
+      stream.getTracks().forEach(t => t.stop());
+      scanner.removeEventListener("click", chiudi);
+      scanner.hidden = true;
+    };
 
+    scanner.hidden = false;
     video.srcObject = stream;
+    scanner.addEventListener("click", chiudi);
     await video.play();
     
     const result = await codeReader.decodeOnceFromVideoElement(video);
-    stream.getTracks().forEach(t => t.stop());
-    
-    scanner.hidden = true;
+    chiudi();
     
     return result.text;
   } catch (err) {
     showToast('Errore Barcode: '+ err, 'error');
     scanner.hidden = true;
+    if (stream) { stream.getTracks().forEach(t => t.stop()); }
   }
 }
 
