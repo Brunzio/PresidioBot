@@ -59,6 +59,7 @@
   #record-count { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
   .user-email { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
   #btn-logout { display: none; }
+  .app { display: none;}
 
   /* TABS */
   .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 28px; background: var(--surface); }
@@ -126,7 +127,7 @@
   .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-family: var(--mono); letter-spacing: 0.5px; }
   .badge-active { background: oklch(from var(--accent) l c h / 0.15); color: var(--accent); }
   .badge-inactive { background: oklch(from var(--accent) l c calc(h + 128) / 0.15); color: oklch(from var(--accent) l c calc(h + 128)); }
-  .badge-default { background: var(--surface2); color: var(--text-muted); }
+  .badge-default { background: var(--surface2); color: var(--text); }
 
   /* PAGINATION */
   .pagination { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
@@ -220,8 +221,8 @@
   }
 
   @media screen and (max-width: 768px) {
-    .btn-photo { display: block; }
-    .tab:not([onclick*="chiave"]):not([onclick*="ispezione"]), .admin-section, .no-mobile { display: none; }
+    .btn-photo, .app { display: block; }
+    .tab:not([onclick*="appcerca"]):not([onclick*="chiave"]):not([onclick*="ispezione"]), .admin-section, .no-mobile { display: none; }
   }
 
 </style>
@@ -267,6 +268,7 @@
   </div>
 </header>
 
+<!-- TEMI -->
 <div id="theme-panel">
   <div><label>Modo</label>
     <select id="themeMode" onchange="applyTheme(this.value)">
@@ -281,12 +283,13 @@
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('browse')">Sfoglia</div>
-  <div class="tab" onclick="switchTab('chiave')" id="tab-chiave">Cerca Chiave</div>
+  <div class="tab app" onclick="switchTab('appcerca')">Sfoglia</div>
+  <div class="tab" onclick="switchTab('chiave')">Cerca Chiave</div>
   <div class="tab" onclick="switchTab('strumentisn')">Strumenti SN</div>
   <div class="tab" onclick="switchTab('clienti')">Chiavi Clienti</div>
   <div class="tab" onclick="switchTab('site')">Site</div>
   <div class="tab" onclick="switchTab('bolle')">Bolle</div>
-  <div class="tab" onclick="switchTab('ispezione')" id="tab-isp">Ispezione</div>
+  <div class="tab" onclick="switchTab('ispezione')">Ispezione</div>
   <div class="tab" onclick="switchTab('admin')">Admin</div>
 </div>
 
@@ -326,6 +329,25 @@
       <div class="pagination-controls">
         <button class="btn btn-secondary btn-sm" id="btn-prev" onclick="prevPage()" disabled>← Prec</button>
         <button class="btn btn-secondary btn-sm" id="btn-next" onclick="nextPage()" disabled>Succ →</button>
+      </div>
+    </div>
+  </div>
+
+<!-- CERCA MOBILE  -->
+  <div class="panel active" id="panel-appcerca">
+    <div class="toolbar">
+      <select id="app-label"><option value="">Campo ricerca</option></select>
+    </div>
+    <div class="toolbar">
+      <div class="search-box" style="width: 100%;">
+        <input type="text" id="app-input">
+      </div>
+      <button class="btn btn-primary" onclick="appCerca()">Cerca</button>
+      <button class="btn btn-secondary btn-photo" onclick="appCamera()">📷</button>
+    </div>
+
+    <div class="table-wrapper">
+      <div id="app-table">        
       </div>
     </div>
   </div>
@@ -1480,8 +1502,8 @@ const COLUMNS = [
   { key: 'etichetta_asset',       label: 'Etichetta Asset',       primary: true },
   { key: 'asset_macro_category',  label: 'Macro Category' },
   { key: 'asset_subcategory',     label: 'Subcategory' },
-  { key: 'numero_di_serie',       label: 'N. Serie' },
   { key: 'asset_sn',              label: 'Asset SN' },
+  { key: 'numero_di_serie',       label: 'N. Serie' },
   { key: 'codice_piattaforma',    label: 'Cod. Piattaforma' },
   { key: 'piattaforma_supportata',label: 'Piattaforma' },
   { key: 'stato_piattaforma',     label: 'Stato Piattaforma' },
@@ -1505,6 +1527,9 @@ const COLUMNS = [
 // Columns shown in table (subset for readability)
 const TABLE_COLS = ['etichetta_asset','asset_sn','numero_di_serie','hostname','rack','nome_completo','piattaforma_supportata'];
 
+// Campi mostrati nella ricerca da mobile
+const APP_COLS = ['etichetta_asset','asset_model','asset_sn','numero_di_serie','hostname','rack','nome_completo','piattaforma_supportata'];
+
 // CSV column index → DB key mapping
 const CSV_MAP = [
   'etichetta_asset','asset_macro_category','asset_subcategory','numero_di_serie',
@@ -1526,7 +1551,7 @@ let parsedRows = [];
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 function switchTab(name) {
-  const tabs = ['browse','chiave','strumentisn','clienti','site','bolle','ispezione','admin'];
+  const tabs = ['browse','appcerca','chiave','strumentisn','clienti','site','bolle','ispezione','admin'];
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === name));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
@@ -1536,6 +1561,55 @@ function switchTab(name) {
   if (name === 'site') { switchSiteTab('nuova');   if(!document.getElementById('site-data').value) initNuovaSite(); }
   if (name === 'ispezione') initIspezione();
   if (name === 'strumentisn') initSN();
+}
+
+// ─── CERCA APP ─────────────────────────────────────────────────────────────
+const appOpts = COLUMNS
+  .filter(c => APP_COLS.includes(c.key))
+  .map(a => `<option value="${a.key}">${a.label}</option>`)
+  .join('');
+const appSel = document.getElementById('app-label');
+if (appSel) appSel.innerHTML = appOpts;
+
+async function appCamera() {}
+
+async function appCerca() {
+  const ricerca = document.getElementById('app-input').value.trim();
+  if (!ricerca) return;
+  const campo   = appSel.value;
+
+  // Tokenizza: separa per spazio e/o virgola, rimuove token vuoti
+  const tokens = ricerca ? ricerca.split(/[\s,]+/).filter(t => t.length > 0) : [];
+  const isMulti = tokens.length > 1;
+
+  let query = db.from(TABLE).select('*');
+
+  if (isMulti) {
+    // Ricerca multipla: IN su etichetta_asset
+    query = query.in(campo, tokens);
+  } else if (tokens.length === 1) {
+    const search = tokens[0];
+    query = query.eq(campo, search);
+  }
+
+  query = query.order(campo, { ascending: true });
+  
+  const { data, error } = await query;
+
+  if (error) { showToast('Errore ricerca: ' + error.message, 'error'); return; }
+
+  appRender(data || []);
+}
+
+function appRender(dati) {
+  const html = dati.map(ass => `
+    <div class="app-card">
+      ${APP_COLS.map(campo => `
+        <div>${COLUMNS}:</div>
+        <div>${ass[campo]}</div>
+      `).join('')}
+    </div>
+  `).join('');
 }
 
 // ─── CERCA CHIAVE ─────────────────────────────────────────────────────────────
@@ -4973,7 +5047,7 @@ async function readBarcode() {
     
     return result.text;
   } catch (err) {
-    showToast('Errore Barcode: '+ err, 'error');
+    showToast('Errore Barcode: '+ err.message, 'error');
     scanner.hidden = true;
     if (stream) { stream.getTracks().forEach(t => t.stop()); }
   }

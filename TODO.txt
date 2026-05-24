@@ -1,6 +1,7 @@
 SFOGLIA
     passare ricerca multipla al mobile
     formato verticale
+    qr code generator in sfoglia e cerca chiave
 
 CAMERA
     singola funzione per ricerca
