@@ -59,8 +59,7 @@
   #record-count { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
   .user-email { font-family: var(--mono); font-size: 11px; color: var(--text-muted); }
   #btn-logout { display: none; }
-  .app { display: none;}
-
+  
   /* TABS */
   .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 28px; background: var(--surface); }
   .tab { padding: 12px 20px; font-size: 12px; font-family: var(--mono); letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-muted); transition: all .2s; }
@@ -76,7 +75,7 @@
 
   /* TOOLBAR */
   .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-  .search-box { position: relative; flex: 1; min-width: 200px; }
+  .search-box { position: relative; flex: 1; }
   .search-box input { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 12px 8px 36px; border-radius: 6px; font-family: var(--sans); font-size: 13px; outline: none; transition: border .2s; }
   .search-box input[type="text"] { padding-left: 30px; }
   .search-box input:focus { border-color: var(--accent); }
@@ -107,9 +106,9 @@
   /* TABLE */
   .table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
   .table-wrapper input { border: 1px solid var(--border); font-size: 12px; padding: 3px; width: 100%; border-radius: 3px; text-align: center; }
-  .table-wrapper.scrollable { max-height: 457px; overflow-y: auto; }
+  .table-wrapper.scrollable { max-height: 457px; overflow-y: auto; scrollbar-width: none; }
   .table-wrapper.scrollable thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
-  .table-wrapper.scrollable-sm { max-height: 248px; overflow-y: auto; }
+  .table-wrapper.scrollable-sm { max-height: 248px; overflow-y: auto; scrollbar-width: none; }
   .table-wrapper.scrollable-sm thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
   thead { background: var(--surface); position: sticky; top: 0; }
@@ -118,7 +117,7 @@
   th .sort-icon { margin-left: 4px; opacity: 0.4; }
   th.sorted { color: var(--accent); }
   th.sorted .sort-icon { opacity: 1; }
-  td { padding: 8px 12px; border-bottom: 1px solid var(--border); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: var(--surface2); }
   .td-actions { display: flex; gap: 6px; white-space: nowrap; }
@@ -138,15 +137,15 @@
   .filters-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
 
   /* MODAL */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-  .modal-overlay.open { display: flex; }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; width: 700px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
-  .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--surface); z-index: 1; }
+  .modal-overlay { opacity: 0; pointer-events: none; display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+  .modal-overlay.open { opacity: 1; pointer-events: auto; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; width: 700px; max-width: 95vw; max-height: 90vh; overflow-y: hidden; }
+  .modal-header { padding: 10px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--surface); z-index: 1; }
   .modal-header h2 { font-family: var(--mono); font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); }
   .modal-close { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; line-height: 1; }
   .modal-close:hover { color: var(--text); }
-  .modal-body { padding: 24px; }
-  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+  .modal-body { padding: 10px 20px; overflow-y: auto; scrollbar-width: none; max-height: calc(90vh - 100px); }
+  .modal-footer { padding: 10px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
 
   /* FORM GRID */
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -213,6 +212,16 @@
   .camera-guide { position: absolute; left: 0; top: 50%; width: 100%; border-top: 1px solid red; }
   .camera-frame { position: absolute; left:50%; top:50%; width:85%; height:250px; transform: translate(-50%,-50%); border:2px solid #303030; box-shadow: 0 0 0 9999px rgba(0,0,0,.5); }
   #scanner-video { position: fixed; inset: 0; width: 100%; height: 100%; background: #000; z-index: 1000; object-fit: cover;}
+  .qr-code { position: absolute; top: 50%; left: 50%; padding: 10px; background: #fff; border-radius: 10px; transform: translate(-50%,-50%) scale(0) rotate(0); z-index: 999; opacity: 0; transition: all .5s; }
+  .qr-code.show { transform: translate(-50%,-50%) scale(1) rotate(1turn); opacity: 1 }
+
+  /* MOBILE */
+  .app { display: none;}
+  .app-card { font-family: var(--sans); color: var(--text); font-size: 12px; padding: 4px 8px; }
+  .app-card-label { color: var(--text-muted); }
+  .app-card.scrollable { max-height: calc(100dvh - 260px); overflow-y: auto; }
+  .app-card:nth-child(odd) { background: var(--surface); }
+  .app-card:nth-child(even) { background: var(--surface2); }
 
   @media print{
     body{background:#fff;padding:0;}
@@ -220,8 +229,10 @@
     @page{size:A4 landscape;margin:0;}
   }
 
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 600px) {
+    main, header, .tabs { padding-left: 20px; padding-right: 20px; }
     .btn-photo, .app { display: block; }
+    .tab { padding: 12px 15px;}
     .tab:not([onclick*="appcerca"]):not([onclick*="chiave"]):not([onclick*="ispezione"]), .admin-section, .no-mobile { display: none; }
   }
 
@@ -256,6 +267,11 @@
     <div class="camera-guide"></div>
     <div class="camera-frame"></div>
   </div>
+</div>
+
+<!-- QR CODE -->
+<div class="modal-overlay" id="qr-modal" onclick="qrCode()">
+  <div class="qr-code" id="qr-container"></div>
 </div>
 
 <header>
@@ -295,22 +311,30 @@
 
 <main>
   <!-- BROWSE PANEL -->
-  <div class="panel active" id="panel-browse">
-    <div class="toolbar">
-      <div class="search-box" style="min-width:260px;">
-        <input type="text" id="search-input" placeholder="Etichetta (più etichette separate da spazio), seriale, hostname, rack, cliente..." oninput="onSearchInput()">
+  <div class="panel active" id="panel-browse" style="max-width: 970px;">
+    <div class="toolbar" id="testa">
+      <div id="ricerca" style="flex:1">
+        <div class="search-box" style="margin-bottom:10px">
+          <input type="text" id="search-input" placeholder="Etichetta (più etichette separate da spazio), seriale, hostname, rack, cliente..." oninput="onSearchInput()">
+        </div>
+        <div class="toolbar">
+          <select id="filter-tipo-piattaforma" onchange="loadData()">
+            <option value="">Tutti i tipi</option>
+          </select>
+          <select id="filter-macrocategory" onchange="loadData()">
+            <option value="">Tutte le categorie</option>
+          </select>
+          <select id="filter-localizzazione" onchange="loadData()">
+            <option value="">Tutte le sedi</option>
+            <option value="sala">In Sala</option>
+          </select>
+        </div>
       </div>
-      <select id="filter-tipo-piattaforma" onchange="loadData()">
-        <option value="">Tutti i tipi</option>
-      </select>
-      <select id="filter-macrocategory" onchange="loadData()">
-        <option value="">Tutte le categorie</option>
-      </select>
-      <select id="filter-localizzazione" onchange="loadData()">
-        <option value="">Tutte le sedi</option>
-        <option value="sala">In Sala</option>
-      </select>
-      <button class="btn btn-secondary" onclick="clearFilters()">Reset</button>
+      <div class="form-group" id="pulsanti">
+        <button class="btn btn-secondary btn-sm" id="btn-share" disabled>📋 Copia</button>
+        <button class="btn btn-secondary btn-sm" id="btn-qrcode" disabled>➚ Invia</button>
+        <button class="btn btn-secondary btn-sm" onclick="clearFilters()">↺ Reset</button>
+      </div>
     </div>
 
     <div class="table-wrapper">
@@ -334,12 +358,12 @@
   </div>
 
 <!-- CERCA MOBILE  -->
-  <div class="panel active" id="panel-appcerca">
+  <div class="panel" id="panel-appcerca">
     <div class="toolbar">
       <select id="app-label"><option value="">Campo ricerca</option></select>
     </div>
     <div class="toolbar">
-      <div class="search-box" style="width: 100%;">
+      <div class="search-box">
         <input type="text" id="app-input">
       </div>
       <button class="btn btn-primary" onclick="appCerca()">Cerca</button>
@@ -347,8 +371,7 @@
     </div>
 
     <div class="table-wrapper">
-      <div id="app-table">        
-      </div>
+      <div id="app-table" class="app-card scrollable"></div>
     </div>
   </div>
 
@@ -1482,6 +1505,8 @@
 
 <div id="toast"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 <script type="module">
   import { BrowserMultiFormatReader } from 'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/+esm';
   window.BrowserMultiFormatReader = BrowserMultiFormatReader;
@@ -1499,7 +1524,7 @@ const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ─── COLUMNS ──────────────────────────────────────────────────────────────────
 const COLUMNS = [
-  { key: 'etichetta_asset',       label: 'Etichetta Asset',       primary: true },
+  { key: 'etichetta_asset',       label: 'Etichetta',       primary: true },
   { key: 'asset_macro_category',  label: 'Macro Category' },
   { key: 'asset_subcategory',     label: 'Subcategory' },
   { key: 'asset_sn',              label: 'Asset SN' },
@@ -1529,6 +1554,7 @@ const TABLE_COLS = ['etichetta_asset','asset_sn','numero_di_serie','hostname','r
 
 // Campi mostrati nella ricerca da mobile
 const APP_COLS = ['etichetta_asset','asset_model','asset_sn','numero_di_serie','hostname','rack','nome_completo','piattaforma_supportata'];
+const APP_MAP = COLUMNS.filter(a => APP_COLS.includes(a.key));
 
 // CSV column index → DB key mapping
 const CSV_MAP = [
@@ -1564,17 +1590,19 @@ function switchTab(name) {
 }
 
 // ─── CERCA APP ─────────────────────────────────────────────────────────────
-const appOpts = COLUMNS
-  .filter(c => APP_COLS.includes(c.key))
-  .map(a => `<option value="${a.key}">${a.label}</option>`)
-  .join('');
+const appOpts = APP_MAP.map(a => `<option value="${a.key}">${a.label}</option>`).join('');
 const appSel = document.getElementById('app-label');
 if (appSel) appSel.innerHTML = appOpts;
 
-async function appCamera() {}
+async function appCamera() {
+  const search = await readBarcode() || '';
+  // document.getElementById('app-input').value = search;
+  appSel.value = 'etichetta_asset';
+  appCerca(search);
+}
 
-async function appCerca() {
-  const ricerca = document.getElementById('app-input').value.trim();
+async function appCerca(rawsearch = '') {
+  const ricerca = document.getElementById('app-input').value.trim() || rawsearch;
   if (!ricerca) return;
   const campo   = appSel.value;
 
@@ -1582,7 +1610,7 @@ async function appCerca() {
   const tokens = ricerca ? ricerca.split(/[\s,]+/).filter(t => t.length > 0) : [];
   const isMulti = tokens.length > 1;
 
-  let query = db.from(TABLE).select('*');
+  let query = db.from(TABLE).select('*, chiavi_calcolate( chiave )');
 
   if (isMulti) {
     // Ricerca multipla: IN su etichetta_asset
@@ -1595,21 +1623,24 @@ async function appCerca() {
   query = query.order(campo, { ascending: true });
   
   const { data, error } = await query;
-
+  if (!data || !data.length) { showToast('Nessun apparato trovato', 'error'); return; }
   if (error) { showToast('Errore ricerca: ' + error.message, 'error'); return; }
 
   appRender(data || []);
 }
 
 function appRender(dati) {
-  const html = dati.map(ass => `
+  const html = dati.map(asset => `
     <div class="app-card">
-      ${APP_COLS.map(campo => `
-        <div>${COLUMNS}:</div>
-        <div>${ass[campo]}</div>
-      `).join('')}
+      ${APP_MAP.map(campo => `
+        <div class="app-card-label">${campo.label}:</div>
+        <div>${asset[campo.key] || '-'}</div>
+      `).join('') + `
+        <div class="app-card-label">Chiave:</div>
+        <div>${asset.chiavi_calcolate ? asset.chiavi_calcolate.chiave : '-'}</div>`}
     </div>
   `).join('');
+  document.getElementById('app-table').innerHTML = html;
 }
 
 // ─── CERCA CHIAVE ─────────────────────────────────────────────────────────────
@@ -1921,7 +1952,6 @@ function clearFilters() {
   document.getElementById('filter-tipo-piattaforma').value = '';
   document.getElementById('filter-macrocategory').value = '';
   document.getElementById('filter-localizzazione').value = '';
-  currentPage = 0;
   loadData();
 }
 
@@ -1939,6 +1969,11 @@ async function loadData() {
   const localizzazione = document.getElementById('filter-localizzazione').value;
   if (!rawSearch && !tipoPiattaforma && !macrocategory && !localizzazione) {
     document.getElementById('table-body').innerHTML = `<tr><td colspan="${TABLE_COLS.length + 1}"><div class="empty">Nessun apparato</div></td></tr>`;
+    currentPage = 0;
+    totalCount = 0;
+    document.getElementById('record-count').textContent = totalCount.toLocaleString('it') + ' record';
+    updatePagination();
+    updateButtons([]);
     return;
   }
 
@@ -1946,7 +1981,7 @@ async function loadData() {
   const tokens = rawSearch ? rawSearch.split(/[\s,]+/).filter(t => t.length > 0) : [];
   const isMulti = tokens.length > 1;
 
-  let query = db.from(TABLE).select('*', { count: 'exact' });
+  let query = db.from(TABLE).select('*, chiavi_calcolate(chiave)', { count: 'exact' });
 
   if (isMulti) {
     // Ricerca multipla: IN su etichetta_asset
@@ -1984,6 +2019,7 @@ async function loadData() {
   totalCount = isMulti ? (data || []).length : (count || 0);
   document.getElementById('record-count').textContent = totalCount.toLocaleString('it') + ' record';
   renderTable(data || []);
+  updateButtons(data || []);
   if (!isMulti) updatePagination();
   else {
     document.getElementById('pagination-info').textContent = `${totalCount} risultati (ricerca multipla)`;
@@ -2012,14 +2048,36 @@ function renderTable(rows) {
         let val = row[key] || '';
         return `<td title="${(row[key] || '').toString().replace(/"/g, '&quot;')}">${val}</td>`;
       }).join('')}
-      <td data-chiave-et="${escHtml(row.etichetta_asset)}"><span style="color:var(--text-muted);font-size:10px;">...</span></td>
+      <td><span class="badge badge-active">${row.chiavi_calcolate ? row.chiavi_calcolate.chiave : '-'}</span></td>
     </tr>
   `).join('');
   // Carica chiavi in batch (1 sola query)
-  loadChiaviInlineBatch(rows.map(r => r.etichetta_asset).filter(Boolean));
+  // loadChiaviInlineBatch(rows.map(r => r.etichetta_asset).filter(Boolean));
 }
 
 function escHtml(s) { return (s||'').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+function updateButtons(data) {
+  const btnShare = document.getElementById('btn-share');
+  const btnQrCode = document.getElementById('btn-qrcode');
+  if (!data.length) {
+    btnShare.disabled = true;
+    btnQrCode.disabled = true;
+    return;
+  }
+  
+  // ─── PULSANTE QRCODE ────────────────────────────────────────────────────────
+  btnQrCode.disabled = false;
+  const assetList = data.map(d => d.etichetta_asset);
+  btnQrCode.onclick = () => qrCode(assetList.join(' '));
+
+  // ─── PULSANTE COPIA TESTO ───────────────────────────────────────────────────
+  btnShare.disabled = false;
+  const textCopy = data.map(a => `${APP_MAP.map(c => `${c.label}: ${a[c.key] || '-'}`).join('\n')
+      + `\nChiave: ${a.chiavi_calcolate ? a.chiavi_calcolate.chiave : '-'}`
+    }`).join('\n\n');
+  btnShare.onclick = () => { navigator.clipboard.writeText(textCopy); showToast('Testo Copiato'); };
+}
 
 // ─── PAGINATION ───────────────────────────────────────────────────────────────
 function updatePagination() {
@@ -2035,33 +2093,33 @@ function nextPage() { currentPage++; loadData(); }
 
 
 // ─── CHIAVE INLINE ────────────────────────────────────────────────────────────
-async function loadChiaviInlineBatch(etichette) {
-  if (!etichette.length) return;
-  try {
-    const { data } = await db.from('chiavi_calcolate')
-      .select('etichetta_asset,chiave,cliente')
-      .in('etichetta_asset', etichette);
-    const map = {};
-    (data || []).forEach(r => { map[r.etichetta_asset] = r; });
-    etichette.forEach(et => {
-      const cell = document.querySelector(`[data-chiave-et="${et.replace(/"/g,'&quot;')}"]`);
-      if (!cell) return;
-      const r = map[et];
-      if (r && r.chiave) {
-        cell.innerHTML = `<span class="badge badge-active">${r.chiave}</span>`;
-      } else if (r && r.cliente) {
-        cell.innerHTML = `<span class="badge badge-default" title="${r.cliente}">Cliente</span>`;
-      } else {
-        cell.innerHTML = `<span style="color:var(--text-muted);font-size:10px;">—</span>`;
-      }
-    });
-  } catch(e) {
-    etichette.forEach(et => {
-      const cell = document.querySelector(`[data-chiave-et="${et.replace(/"/g,'&quot;')}"]`);
-      if (cell) cell.innerHTML = `<span style="color:var(--text-muted);font-size:10px;">—</span>`;
-    });
-  }
-}
+// async function loadChiaviInlineBatch(etichette) {
+//   if (!etichette.length) return;
+//   try {
+//     const { data } = await db.from('chiavi_calcolate')
+//       .select('etichetta_asset,chiave,cliente')
+//       .in('etichetta_asset', etichette);
+//     const map = {};
+//     (data || []).forEach(r => { map[r.etichetta_asset] = r; });
+//     etichette.forEach(et => {
+//       const cell = document.querySelector(`[data-chiave-et="${et.replace(/"/g,'&quot;')}"]`);
+//       if (!cell) return;
+//       const r = map[et];
+//       if (r && r.chiave) {
+//         cell.innerHTML = `<span class="badge badge-active">${r.chiave}</span>`;
+//       } else if (r && r.cliente) {
+//         cell.innerHTML = `<span class="badge badge-default" title="${r.cliente}">Cliente</span>`;
+//       } else {
+//         cell.innerHTML = `<span style="color:var(--text-muted);font-size:10px;">—</span>`;
+//       }
+//     });
+//   } catch(e) {
+//     etichette.forEach(et => {
+//       const cell = document.querySelector(`[data-chiave-et="${et.replace(/"/g,'&quot;')}"]`);
+//       if (cell) cell.innerHTML = `<span style="color:var(--text-muted);font-size:10px;">—</span>`;
+//     });
+//   }
+// }
 
 // ─── DETAIL MODAL ─────────────────────────────────────────────────────────────
 async function openDetailModal(etichetta) {
@@ -3148,7 +3206,7 @@ function showApp(user) {
   document.getElementById('login-screen').classList.remove('active');
   document.getElementById('user-email').textContent = user.email;
   document.getElementById('btn-logout').style.display = 'block';
-  if (window.innerWidth <= 768) switchTab('ispezione');
+  if (window.innerWidth <= 600) switchTab('appcerca');
 }
 
 function showLogin() {
@@ -5051,6 +5109,24 @@ async function readBarcode() {
     scanner.hidden = true;
     if (stream) { stream.getTracks().forEach(t => t.stop()); }
   }
+}
+
+function qrCode(text = 'close') {
+  const modal = document.getElementById('qr-modal');
+  const qr = document.getElementById('qr-container');
+  if (text === 'close') {
+    qr.innerHTML = '';
+    qr.classList.remove('show');
+    modal.classList.remove('open');
+    return;
+  }
+  new QRCode(qr, {
+      text: text,
+      width: 200,
+      height: 200
+  });
+  modal.classList.add('open');
+  qr.classList.add('show');
 }
 
 // ── TEMI ──────────────────────────────────────────
