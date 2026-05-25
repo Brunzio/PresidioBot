@@ -324,6 +324,9 @@
           <select id="filter-macrocategory" onchange="loadData()">
             <option value="">Tutte le categorie</option>
           </select>
+          <select id="filter-subcategory" onchange="loadData()">
+            <option value="">Tutte le sottocategorie</option>
+          </select>
           <select id="filter-localizzazione" onchange="loadData()">
             <option value="">Tutte le sedi</option>
             <option value="sala">In Sala</option>
@@ -1933,6 +1936,7 @@ async function loadFilters() {
   const selectors = [
     { id: 'filter-tipo-piattaforma', col: 'tipo_piattaforma' },
     { id: 'filter-macrocategory',    col: 'asset_macro_category' },
+    { id: 'filter-subcategory',      col: 'asset_subcategory' },
   ];
   for (const s of selectors) {
     const { data } = await db.from(TABLE).select(s.col).neq(s.col, '').neq(s.col, null);
@@ -1966,8 +1970,9 @@ async function loadData() {
   const rawSearch      = document.getElementById('search-input').value.trim();
   const tipoPiattaforma = document.getElementById('filter-tipo-piattaforma').value;
   const macrocategory  = document.getElementById('filter-macrocategory').value;
+  const subcategory  = document.getElementById('filter-subcategory').value;
   const localizzazione = document.getElementById('filter-localizzazione').value;
-  if (!rawSearch && !tipoPiattaforma && !macrocategory && !localizzazione) {
+  if (!rawSearch && !tipoPiattaforma && !macrocategory && !subcategory && !localizzazione) {
     document.getElementById('table-body').innerHTML = `<tr><td colspan="${TABLE_COLS.length + 1}"><div class="empty">Nessun apparato</div></td></tr>`;
     currentPage = 0;
     totalCount = 0;
@@ -1986,15 +1991,6 @@ async function loadData() {
   if (isMulti) {
     // Ricerca multipla: IN su etichetta_asset
     query = query.in('etichetta_asset', tokens);
-
-/*     const conditions = tokens.flatMap(t => [
-      `etichetta_asset.eq.${t}`,
-      `asset_sn.eq.${t}`,
-      `numero_di_serie.eq.${t}`
-    ]).join(',');
-
-    query = query.or(conditions); */
-
   } else if (tokens.length === 1) {
     const search = tokens[0];
     query = query.or(
@@ -2004,6 +2000,7 @@ async function loadData() {
 
   if (tipoPiattaforma) query = query.eq('tipo_piattaforma', tipoPiattaforma);
   if (macrocategory)  query = query.eq('asset_macro_category', macrocategory);
+  if (subcategory)  query = query.eq('asset_subcategory', subcategory);
   if (localizzazione === 'sala') query = query.ilike('nome_completo', '%/sala%');
 
   query = query.order(sortCol, { ascending: sortAsc });
