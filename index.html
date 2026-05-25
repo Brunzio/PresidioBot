@@ -14,7 +14,7 @@
     --surface: oklch(from var(--bg) calc(l*1.25) c h);
     --surface2: oklch(from var(--bg) calc(l*1.5) c h);
     --border: oklch(from var(--bg) calc(l*1.7) c h);
-    --text-muted: oklch(from var(--text) calc(l*0.55) c h);
+    --text-muted: oklch(from var(--text) calc(l*0.70) c h);
     --danger: #ff4d4d;
     --warning: #ffb800;
     --ok: #3ac382;
@@ -74,7 +74,7 @@
   .panel.active { display: block; }
 
   /* TOOLBAR */
-  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;}
   .search-box { position: relative; flex: 1; }
   .search-box input { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 12px 8px 36px; border-radius: 6px; font-family: var(--sans); font-size: 13px; outline: none; transition: border .2s; }
   .search-box input[type="text"] { padding-left: 30px; }
@@ -1049,7 +1049,7 @@
         <button class="btn btn-primary btn-sm" onclick="openNonSegnalareModal()">+ Aggiungi</button>
       </div>
       <div style="margin-bottom:10px;">
-        <div class="search-box" style="max-width:120px;">
+        <div class="search-box" style="max-width:200px;">
           <input type="text" id="non-segnalare-search" placeholder="Cerca etichetta..." oninput="onNonSegnalareSearch()">
         </div>
       </div>
