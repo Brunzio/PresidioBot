@@ -1932,17 +1932,18 @@ function setSort(key) {
 }
 
 // ─── FILTERS ──────────────────────────────────────────────────────────────────
+const FILTERS = [
+  { id: 'filter-tipo-piattaforma', col: 'tipo_piattaforma' },
+  { id: 'filter-macrocategory', col: 'asset_macro_category' },
+  { id: 'filter-subcategory', col: 'asset_subcategory' }
+];
+
 async function loadFilters() {
-  const selectors = [
-    { id: 'filter-tipo-piattaforma', col: 'tipo_piattaforma' },
-    { id: 'filter-macrocategory',    col: 'asset_macro_category' },
-    { id: 'filter-subcategory',      col: 'asset_subcategory' },
-  ];
-  for (const s of selectors) {
-    const { data } = await db.from(TABLE).select(s.col).neq(s.col, '').neq(s.col, null);
+  for (const f of FILTERS) {
+    const { data } = await db.from(TABLE).select(f.col).neq(f.col, '').neq(f.col, null);
     if (!data) continue;
-    const unique = [...new Set(data.map(r => r[s.col]).filter(Boolean))].sort();
-    const sel = document.getElementById(s.id);
+    const unique = [...new Set(data.map(r => r[f.col]).filter(Boolean))].sort();
+    const sel = document.getElementById(f.id);
     unique.forEach(v => {
       const opt = document.createElement('option');
       opt.value = v; opt.textContent = v;
@@ -1952,9 +1953,8 @@ async function loadFilters() {
 }
 
 function clearFilters() {
+  FILTERS.forEach(f => { document.getElementById(f.id).value = ''; });
   document.getElementById('search-input').value = '';
-  document.getElementById('filter-tipo-piattaforma').value = '';
-  document.getElementById('filter-macrocategory').value = '';
   document.getElementById('filter-localizzazione').value = '';
   loadData();
 }
@@ -1967,12 +1967,11 @@ function onSearchInput() {
 
 async function loadData() {
   showLoading();
+  let filters = {};
   const rawSearch      = document.getElementById('search-input').value.trim();
-  const tipoPiattaforma = document.getElementById('filter-tipo-piattaforma').value;
-  const macrocategory  = document.getElementById('filter-macrocategory').value;
-  const subcategory  = document.getElementById('filter-subcategory').value;
   const localizzazione = document.getElementById('filter-localizzazione').value;
-  if (!rawSearch && !tipoPiattaforma && !macrocategory && !subcategory && !localizzazione) {
+  FILTERS.forEach(f => { filters[f.col] = document.getElementById(f.id).value });
+  if (!rawSearch && !localizzazione && Object.values(filters).every(v => !v)) {
     document.getElementById('table-body').innerHTML = `<tr><td colspan="${TABLE_COLS.length + 1}"><div class="empty">Nessun apparato</div></td></tr>`;
     currentPage = 0;
     totalCount = 0;
@@ -1998,9 +1997,9 @@ async function loadData() {
     );
   }
 
-  if (tipoPiattaforma) query = query.eq('tipo_piattaforma', tipoPiattaforma);
-  if (macrocategory)  query = query.eq('asset_macro_category', macrocategory);
-  if (subcategory)  query = query.eq('asset_subcategory', subcategory);
+  for (const [col, value] of Object.entries(filters)) {
+    if (value) query = query.eq(col, value);
+  }
   if (localizzazione === 'sala') query = query.ilike('nome_completo', '%/sala%');
 
   query = query.order(sortCol, { ascending: sortAsc });
@@ -2048,8 +2047,6 @@ function renderTable(rows) {
       <td><span class="badge badge-active">${row.chiavi_calcolate ? row.chiavi_calcolate.chiave : '-'}</span></td>
     </tr>
   `).join('');
-  // Carica chiavi in batch (1 sola query)
-  // loadChiaviInlineBatch(rows.map(r => r.etichetta_asset).filter(Boolean));
 }
 
 function escHtml(s) { return (s||'').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
@@ -2064,16 +2061,16 @@ function updateButtons(data) {
   }
   
   // ─── PULSANTE QRCODE ────────────────────────────────────────────────────────
-  btnQrCode.disabled = false;
   const assetList = data.map(d => d.etichetta_asset);
   btnQrCode.onclick = () => qrCode(assetList.join(' '));
+  btnQrCode.disabled = false;
 
   // ─── PULSANTE COPIA TESTO ───────────────────────────────────────────────────
-  btnShare.disabled = false;
   const textCopy = data.map(a => `${APP_MAP.map(c => `${c.label}: ${a[c.key] || '-'}`).join('\n')
       + `\nChiave: ${a.chiavi_calcolate ? a.chiavi_calcolate.chiave : '-'}`
     }`).join('\n\n');
   btnShare.onclick = () => { navigator.clipboard.writeText(textCopy); showToast('Testo Copiato'); };
+  btnShare.disabled = false;
 }
 
 // ─── PAGINATION ───────────────────────────────────────────────────────────────
@@ -2087,36 +2084,6 @@ function updatePagination() {
 
 function prevPage() { if (currentPage > 0) { currentPage--; loadData(); } }
 function nextPage() { currentPage++; loadData(); }
-
-
-// ─── CHIAVE INLINE ────────────────────────────────────────────────────────────
-// async function loadChiaviInlineBatch(etichette) {
-//   if (!etichette.length) return;
-//   try {
-//     const { data } = await db.from('chiavi_calcolate')
-//       .select('etichetta_asset,chiave,cliente')
-//       .in('etichetta_asset', etichette);
-//     const map = {};
-//     (data || []).forEach(r => { map[r.etichetta_asset] = r; });
-//     etichette.forEach(et => {
-//       const cell = document.querySelector(`[data-chiave-et="${et.replace(/"/g,'&quot;')}"]`);
-//       if (!cell) return;
-//       const r = map[et];
-//       if (r && r.chiave) {
-//         cell.innerHTML = `<span class="badge badge-active">${r.chiave}</span>`;
-//       } else if (r && r.cliente) {
-//         cell.innerHTML = `<span class="badge badge-default" title="${r.cliente}">Cliente</span>`;
-//       } else {
-//         cell.innerHTML = `<span style="color:var(--text-muted);font-size:10px;">—</span>`;
-//       }
-//     });
-//   } catch(e) {
-//     etichette.forEach(et => {
-//       const cell = document.querySelector(`[data-chiave-et="${et.replace(/"/g,'&quot;')}"]`);
-//       if (cell) cell.innerHTML = `<span style="color:var(--text-muted);font-size:10px;">—</span>`;
-//     });
-//   }
-// }
 
 // ─── DETAIL MODAL ─────────────────────────────────────────────────────────────
 async function openDetailModal(etichetta) {
