@@ -312,7 +312,7 @@
 
 <main>
   <!-- BROWSE PANEL -->
-  <div class="panel active" id="panel-browse" style="max-width: 970px;">
+  <div class="panel active" id="panel-browse" style="max-width: 1000px;">
     <div class="toolbar" id="testa">
       <div id="ricerca" style="flex:1">
         <div class="search-box" style="margin-bottom:10px">
@@ -328,8 +328,11 @@
           <select id="filter-subcategory" onchange="loadData()">
             <option value="">Tutte le sottocategorie</option>
           </select>
-          <select id="filter-localizzazione" onchange="loadData()">
+          <select id="filter-locazione" onchange="loadData()">
             <option value="">Tutte le locazioni</option>
+          </select>
+          <select id="filter-sala" onchange="loadData()">
+            <option value="">Sale</option>
           </select>
         </div>
       </div>
@@ -1953,18 +1956,27 @@ async function loadFilters() {
   // CREA FILTRO PER LOCAZIONE
   const { data } = await db.rpc('get_distinct_locations');
   if(!data) return;
-  const sel = document.getElementById('filter-localizzazione');
+  const sel = document.getElementById('filter-locazione');
   data.map(r => r.val).forEach(v => {
     const opt = document.createElement('option');
     opt.value = v; opt.textContent = v;
     sel.appendChild(opt);
+  });
+
+  // CREA FILTRO PER SALA
+  const salaSel = document.getElementById('filter-sala');
+  ISP_SALE.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    salaSel.appendChild(opt);
   });
 }
 
 function clearFilters() {
   FILTERS.forEach(f => { document.getElementById(f.id).value = ''; });
   document.getElementById('search-input').value = '';
-  document.getElementById('filter-localizzazione').value = '';
+  document.getElementById('filter-locazione').value = '';
+  document.getElementById('filter-sala').value = '';
   loadData();
 }
 
@@ -1977,10 +1989,11 @@ function onSearchInput() {
 async function loadData() {
   showLoading();
   let filters = {};
-  const rawSearch      = document.getElementById('search-input').value.trim();
-  const localizzazione = document.getElementById('filter-localizzazione').value;
+  const rawSearch = document.getElementById('search-input').value.trim();
+  const locazione = document.getElementById('filter-locazione').value;
+  const sala      = document.getElementById('filter-sala').value;
   FILTERS.forEach(f => { filters[f.col] = document.getElementById(f.id).value });
-  if (!rawSearch && !localizzazione && Object.values(filters).every(v => !v)) {
+  if (!rawSearch && !sala && !locazione && Object.values(filters).every(v => !v)) {
     document.getElementById('table-body').innerHTML = `<tr><td colspan="${TABLE_COLS.length + 1}"><div class="empty">Nessun apparato</div></td></tr>`;
     currentPage = 0;
     totalCount = 0;
@@ -2009,7 +2022,8 @@ async function loadData() {
   for (const [col, value] of Object.entries(filters)) {
     if (value) query = query.eq(col, value);
   }
-  if (localizzazione) query = query.ilike('nome_completo', `%${localizzazione}%`);
+  if (locazione) query = query.ilike('nome_completo', `%${locazione}%`);
+  if (sala) query = query.ilike('nome_completo', `%${sala}%`);
 
   query = query.order(sortCol, { ascending: sortAsc });
   // In ricerca multipla non paginiamo (al massimo sono tanti quanti i token)
