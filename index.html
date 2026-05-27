@@ -329,8 +329,7 @@
             <option value="">Tutte le sottocategorie</option>
           </select>
           <select id="filter-localizzazione" onchange="loadData()">
-            <option value="">Tutte le sedi</option>
-            <option value="sala">In Sala</option>
+            <option value="">Tutte le locazioni</option>
           </select>
         </div>
       </div>
@@ -1941,16 +1940,25 @@ const FILTERS = [
 
 async function loadFilters() {
   for (const f of FILTERS) {
-    const { data } = await db.from(TABLE).select(f.col).neq(f.col, '').neq(f.col, null);
+    const { data } = await db.rpc('get_distinct_values', { col_name: f.col });
     if (!data) continue;
-    const unique = [...new Set(data.map(r => r[f.col]).filter(Boolean))].sort();
     const sel = document.getElementById(f.id);
-    unique.forEach(v => {
+    data.map(r => r.val).forEach(v => {
       const opt = document.createElement('option');
       opt.value = v; opt.textContent = v;
       sel.appendChild(opt);
     });
   }
+
+  // CREA FILTRO PER LOCAZIONE
+  const { data } = await db.rpc('get_distinct_locations');
+  if(!data) return;
+  const sel = document.getElementById('filter-localizzazione');
+  data.map(r => r.val).forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    sel.appendChild(opt);
+  });
 }
 
 function clearFilters() {
@@ -2001,7 +2009,7 @@ async function loadData() {
   for (const [col, value] of Object.entries(filters)) {
     if (value) query = query.eq(col, value);
   }
-  if (localizzazione === 'sala') query = query.ilike('nome_completo', '%/sala%');
+  if (localizzazione) query = query.ilike('nome_completo', `%${localizzazione}%`);
 
   query = query.order(sortCol, { ascending: sortAsc });
   // In ricerca multipla non paginiamo (al massimo sono tanti quanti i token)
