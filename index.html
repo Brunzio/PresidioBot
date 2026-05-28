@@ -18,8 +18,8 @@
     --danger: #ff4d4d;
     --warning: #ffb800;
     --ok: #3ac382;
-    --mono: 'Space Mono', monospace;
-    --sans: 'DM Sans', sans-serif;
+    --mono: lato;
+    --sans: lato;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -34,8 +34,8 @@
     --danger: #a03333;
     --warning: #e16a00;
     --ok: #2e8822;
-    --mono: arial;
-    --sans: arial;
+    --mono: lato;
+    --sans: lato;
     font-weight: bolder;
   }
 
@@ -74,7 +74,7 @@
   .panel.active { display: block; }
 
   /* TOOLBAR */
-  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;}
+  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; }
   .search-box { position: relative; flex: 1; }
   .search-box input { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 12px 8px 36px; border-radius: 6px; font-family: var(--sans); font-size: 13px; outline: none; transition: border .2s; }
   .search-box input[type="text"] { padding-left: 30px; }
@@ -106,9 +106,9 @@
   /* TABLE */
   .table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
   .table-wrapper input { border: 1px solid var(--border); font-size: 12px; padding: 3px; width: 100%; border-radius: 3px; text-align: center; }
-  .table-wrapper.scrollable { max-height: 457px; overflow-y: auto; scrollbar-width: none; }
+  .table-wrapper.scrollable { max-height: 444px; overflow-y: auto; scrollbar-width: none; }
   .table-wrapper.scrollable thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
-  .table-wrapper.scrollable-sm { max-height: 248px; overflow-y: auto; scrollbar-width: none; }
+  .table-wrapper.scrollable-sm { max-height: 239px; overflow-y: auto; scrollbar-width: none; }
   .table-wrapper.scrollable-sm thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
   thead { background: var(--surface); position: sticky; top: 0; }
@@ -331,7 +331,7 @@
           <select id="filter-locazione" onchange="loadData()">
             <option value="">Tutte le locazioni</option>
           </select>
-          <select id="filter-sala" onchange="loadData()">
+          <select id="filter-sala" onchange="loadData()" style="flex:1">
             <option value="">Sale</option>
           </select>
         </div>
@@ -512,9 +512,9 @@
         <input type="text" size="50" id="snReferente" oninput="onSnSearch()" placeholder="Referente per la call" list="snRefList" autocomplete="off">
         <datalist id="snRefList"></datalist>
       </div>
-      <div style="max-width:690px;margin-bottom:10px;">
-        <textarea id="snText1" style="margin:0;border:0px;resize:none;border-radius:0;width:100%;min-height:125px;"></textarea>
-        <textarea id="snText2" style="margin:0;border:0px;resize:none;border-radius:0;width:100%;min-height:180px;"></textarea>
+      <div style="max-width:690px;margin-bottom:10px;display:flex;flex-direction:column;">
+        <textarea id="snText1" style="display:block;margin:0;border:0px;resize:none;border-radius:0;width:100%;min-height:125px;"></textarea>
+        <textarea id="snText2" style="display:block;margin:0;border:0px;resize:none;border-radius:0;width:100%;min-height:180px;"></textarea>
       </div>
       <button class="btn btn-primary" onclick="snCopiaText()">📋 Copia testo</button>
       <button id="sn-cerca-inc" class="btn btn-secondary disabled">🔍 Cerca Incident</button>
@@ -1013,7 +1013,7 @@
 
   <!-- ISPEZIONE PANEL -->
   <div class="panel" id="panel-ispezione">
-    <div style="max-width:1000px;">
+    <div style="max-width:900px;">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
         <select id="ispEttore"><option value="">— ispettore —</option></select>
         <button class="btn btn-primary" onclick="ispAggiungi()">+ Aggiungi</button>
@@ -1629,7 +1629,11 @@ async function appCerca(rawsearch = '') {
   query = query.order(campo, { ascending: true });
   
   const { data, error } = await query;
-  if (!data || !data.length) { showToast('Nessun apparato trovato', 'error'); return; }
+  if (!data || !data.length) {
+    showToast('Nessun apparato trovato', 'error');
+    appRender([]);
+    return;
+  }
   if (error) { showToast('Errore ricerca: ' + error.message, 'error'); return; }
 
   appRender(data || []);
