@@ -74,7 +74,8 @@
   .panel.active { display: block; }
 
   /* TOOLBAR */
-  .toolbar { display: flex; gap: 10px; margin-bottom: 16px; }
+  .toolbar { display: flex; gap: 10px; margin-bottom: 7px; }
+  .toolbar select { flex: 1 1 content;  }
   .search-box { position: relative; flex: 1; }
   .search-box input { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 12px 8px 36px; border-radius: 6px; font-family: var(--sans); font-size: 13px; outline: none; transition: border .2s; }
   .search-box input[type="text"] { padding-left: 30px; }
@@ -101,6 +102,7 @@
   .btn-warning { background: oklch(from var(--warning) l c h / 0.1); color: var(--warning); border: 1px solid var(--warning); }
   .btn-warning:hover { background: var(--warning); color: var(--bg); }
   .btn-sm { padding: 4px 10px; font-size: 10px; }
+  .btn-icon { padding: 4px 6px; font-size: 18px; }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
   /* TABLE */
@@ -117,7 +119,7 @@
   th .sort-icon { margin-left: 4px; opacity: 0.4; }
   th.sorted { color: var(--accent); }
   th.sorted .sort-icon { opacity: 1; }
-  td { padding: 8px 12px; border-bottom: 1px solid var(--border); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: var(--surface2); }
   .td-actions { display: flex; gap: 6px; white-space: nowrap; }
@@ -207,7 +209,6 @@
   #theme-panel.open { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 
   /* CAMERA */
-  .btn-photo { display: none; padding: 2px 6px; font-size: 18px; }
   .camera-overlay { position: fixed; inset: 0; z-Index: 2000; pointer-Events: none; }
   .camera-scan { width: 100%; top: 50%;}
   .camera-guide { position: absolute; left: 0; top: 50%; width: 100%; border-top: 1px solid red; }
@@ -232,7 +233,7 @@
 
   @media screen and (max-width: 600px) {
     main, header, .tabs { padding-left: 20px; padding-right: 20px; }
-    .btn-photo, .app { display: block; }
+    .app { display: block; }
     .tab { padding: 12px 15px;}
     .tab:not([onclick*="appcerca"]):not([onclick*="chiave"]):not([onclick*="ispezione"]), .admin-section, .no-mobile, #panel-browse { display: none; }
   }
@@ -313,33 +314,40 @@
 <main>
   <!-- BROWSE PANEL -->
   <div class="panel active" id="panel-browse" style="max-width: 1000px;">
-    <div class="toolbar" id="testa">
-      <div id="ricerca" style="flex:1">
-        <div class="search-box" style="margin-bottom:10px">
+    <div id="testa" class="form-group">
+      <div id="ricerca" class="toolbar">
+        <div class="search-box">
           <input type="text" id="search-input" placeholder="Etichetta (più etichette separate da spazio), seriale, hostname, rack, cliente..." oninput="onSearchInput()">
         </div>
-        <div class="toolbar">
-          <select id="filter-tipo-piattaforma" onchange="loadData()">
-            <option value="">Tutti i tipi</option>
-          </select>
-          <select id="filter-macrocategory" onchange="loadData()">
-            <option value="">Tutte le categorie</option>
-          </select>
-          <select id="filter-subcategory" onchange="loadData()">
-            <option value="">Tutte le sottocategorie</option>
-          </select>
-          <select id="filter-locazione" onchange="loadData()">
-            <option value="">Tutte le locazioni</option>
-          </select>
-          <select id="filter-sala" onchange="loadData()" style="flex:1">
-            <option value="">Sale</option>
-          </select>
-        </div>
       </div>
-      <div class="form-group" id="pulsanti">
-        <button class="btn btn-secondary btn-sm" id="btn-share" disabled title="Copia la lista negli appunti">📋 Copia</button>
-        <button class="btn btn-secondary btn-sm" id="btn-qrcode" disabled title="Invia al telefono tramite QRCode">➚ Invia</button>
-        <button class="btn btn-secondary btn-sm" onclick="clearFilters()">↺ Reset</button>
+      <div id="filtri" class="toolbar">
+        <select id="filter-tipo-piattaforma" onchange="loadData()">
+          <option value="">Tutti i tipi</option>
+        </select>
+        <select id="filter-macrocategory" onchange="loadData()">
+          <option value="">Tutte le categorie</option>
+        </select>
+        <select id="filter-subcategory" onchange="loadData()">
+          <option value="">Tutte le sottocategorie</option>
+        </select>
+        <select id="filter-locazione" onchange="loadData()">
+          <option value="">Tutte le locazioni</option>
+        </select>
+        <select id="filter-sala" onchange="loadData()">
+          <option value="">Sale</option>
+        </select>
+      </div>
+      <div id="pulsanti" class="toolbar" style="justify-content: space-between;">
+        <div class="toolbar">
+          <button class="btn btn-secondary" id="btn-share" disabled title="Copia la lista negli appunti">📋 Copia</button>
+          <button class="btn btn-secondary" id="btn-qrcode" disabled title="Invia al telefono tramite QRCode">⛶ QRCode</button>
+          <button class="btn btn-secondary" id="btn-to-site" disabled title="Copia la lista in una Site">➚ Invia a Site</button>
+          <button class="btn btn-secondary" id="btn-to-bolla" disabled title="Copia la lista in una Bolla">➚ Invia a Bolle</button>
+          <button class="btn btn-secondary" onclick="clearFilters()">🗑️ Reset</button>
+        </div>
+        <div>
+          <button class="btn btn-secondary btn-icon" title="Carica ultime ricerche dal telefono" onclick="openRicercheModal()">🡄💾</button>
+        </div>
       </div>
     </div>
 
@@ -366,15 +374,18 @@
 <!-- CERCA MOBILE  -->
   <div class="panel" id="panel-appcerca">
     <div class="toolbar" style="justify-content: space-between;">
-      <select id="app-label"><option value="">Campo ricerca</option></select>
-      <!-- <button id="app-add" class="btn btn-secondary btn-sm" onclick="appAggiungi()">+ Aggiungi</button> -->
+      <select id="app-label" style="flex:0;"><option value="">Campo ricerca</option></select>
+      <div class="toolbar" style="margin:0">
+        <button id="app-save-btn" class="btn btn-secondary btn-icon" onclick="appSalva()" disabled>🡆💾</button>
+        <button class="btn btn-secondary btn-icon" onclick="appReset()">🗑️</button>
+      </div>
     </div>
     <div class="toolbar">
       <div class="search-box">
         <input type="text" id="app-input">
       </div>
       <button class="btn btn-primary" onclick="appCerca()">Cerca</button>
-      <button class="btn btn-secondary btn-photo" onclick="appCamera()">📷</button>
+      <button class="btn btn-secondary btn-icon" onclick="appCamera()">📷</button>
     </div>
 
     <div class="table-wrapper">
@@ -390,7 +401,7 @@
         <div style="display:flex;gap:10px;">
           <input type="text" id="chiave-input" placeholder="es. 2020008269" style="width:100%" onkeydown="if(event.key==='Enter') cercaChiave()">
           <button class="btn btn-primary" onclick="cercaChiave()">Cerca</button>
-          <button class="btn btn-secondary btn-photo" onclick="chiaveCamera()">📷</button>
+          <button class="btn btn-secondary btn-icon app" onclick="chiaveCamera()">📷</button>
         </div>
       </div>
 
@@ -1447,7 +1458,7 @@
           <div style="display:flex;gap:6px;">
             <input type="text" id="isp-etichetta" placeholder="es. 2020008269" style="flex:1;" onkeydown="if(event.key==='Enter')ispCercaAsset()">
             <button class="btn btn-primary btn-sm" onclick="ispCercaAsset()">Cerca</button>
-            <button class="btn btn-secondary btn-photo" onclick="ispCamera()">📷</button>
+            <button class="btn btn-secondary btn-icon app" onclick="ispCamera()">📷</button>
           </div>
           <div id="isp-asset-warn" style="display:none;margin-top:6px;font-size:11px;color:var(--warning);">⚠ Questa macchina è già presente nell'ispezione.</div>
           <div id="isp-nons-warn" style="display:none;margin-top:6px;font-size:11px;color:var(--warning);">⚠ Questa macchina è tra gli apparati da NON SEGNALARE.</div>
@@ -1508,6 +1519,38 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeNonSegnalareModal()">Annulla</button>
       <button class="btn btn-primary" id="btn-save-non-segnalare" onclick="saveNonSegnalare()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RICERCHE -->
+<div class="modal-overlay" id="ricerche-modal">
+  <div class="modal" style="width:650px">
+    <div class="modal-header">
+      <h2>Storico Ricerche</h2>
+      <button class="modal-close" onclick="closeRicercheModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="table-wrapper scrollable">
+        <table id="ricerche-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Ricerca</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="ricerche-body">
+            <tr><td colspan="3"><div class="empty">Nessuna ricerca salvata</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin: 0 0 40px;">
+        <span class="pagination-info" id="ricerche-info"></span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeRicercheModal()">Annulla</button>
     </div>
   </div>
 </div>
@@ -1602,12 +1645,13 @@ function switchTab(name) {
 const appOpts = APP_MAP.map(a => `<option value="${a.key}">${a.label}</option>`).join('');
 const appSel = document.getElementById('app-label');
 if (appSel) appSel.innerHTML = appOpts;
-let appAdd = false;
+let currSearch = [];
 
-function appAggiungi () {
-  appAdd = !appAdd;
-  document.getElementById('app-add').classList.toggle('btn-primary', appAdd);
-  document.getElementById('app-add').classList.toggle('btn-secondary', !appAdd);
+function appReset () {
+  document.getElementById('app-input').value = '';
+  currSearch = [];
+  document.getElementById('app-save-btn').disabled = true;
+  appRender();
 }
 
 async function appCamera() {
@@ -1619,7 +1663,7 @@ async function appCamera() {
 
 async function appCerca(rawsearch = '') {
   const ricerca = document.getElementById('app-input').value.trim() || rawsearch;
-  if (!ricerca) { appRender([]); return; }
+  if (!ricerca) return;
   const campo   = appSel.value;
 
   // Tokenizza: separa per spazio e/o virgola, rimuove token vuoti
@@ -1629,7 +1673,7 @@ async function appCerca(rawsearch = '') {
   let query = db.from(TABLE).select('*, chiavi_calcolate( chiave )');
 
   if (isMulti) {
-    // Ricerca multipla: IN su etichetta_asset
+    // Ricerca multipla: IN sul campo specificato
     query = query.in(campo, tokens);
   } else if (tokens.length === 1) {
     const search = tokens[0];
@@ -1641,16 +1685,18 @@ async function appCerca(rawsearch = '') {
   const { data, error } = await query;
   if (!data || !data.length) {
     showToast('Nessun apparato trovato', 'error');
-    appRender([]);
     return;
   }
   if (error) { showToast('Errore ricerca: ' + error.message, 'error'); return; }
+  currSearch = [...currSearch, ...data];
+  document.getElementById('app-save-btn').disabled = false;
 
-  appRender(data || []);
+
+  appRender();
 }
 
-function appRender(dati) {
-  const html = dati.map(asset => `
+function appRender() {
+  const html = currSearch.map(asset => `
     <div class="app-card">
       ${APP_MAP.map(campo => `
         <div class="app-card-label">${campo.label}:</div>
@@ -1661,6 +1707,16 @@ function appRender(dati) {
     </div>
   `).join('');
   document.getElementById('app-table').innerHTML = html;
+}
+
+async function appSalva() {
+  if (!currSearch.length) { showToast('Nessun risultato da salvare', 'error'); return; }
+  const etichette = currSearch.map(s => s.etichetta_asset);
+  const { error } = await db.from('ricerche').insert({etichette});
+
+  if (error) { showToast('Errore: ' + error.message, 'error'); return }
+  showToast('Ricerca salvata');
+  document.getElementById('app-save-btn').disabled = true;
 }
 
 // ─── CERCA CHIAVE ─────────────────────────────────────────────────────────────
@@ -2067,6 +2123,35 @@ function showLoading() {
 
 function showError(msg) {
   document.getElementById('table-body').innerHTML = `<tr><td colspan="${TABLE_COLS.length + 1}"><div class="empty" style="color:var(--danger)">Errore: ${msg}</div></td></tr>`;
+}
+
+// ─── CARICA RICERCHE ──────────────────────────────────────────────────────────
+async function openRicercheModal() {
+  const { data, error } = await db.from('ricerche').select('*').order('created_at', { ascending: false });
+  if (!data || !data.length) { showToast('Nessuna ricerca salvata', 'error'); return; } 
+  if (error) { showToast('Errore: '+ error.messsage, 'error'); return; }
+
+  const tbody = document.getElementById('ricerche-body');
+  tbody.innerHTML = data.map(r => `
+    <tr onclick="loadRicerche('${r.etichette.join(' ')}')" title="${r.etichette.length} elementi">
+      <td style="max-width:150px">${new Date(r.created_at).toLocaleString('it-IT')}</td>
+      <td style="max-width:450px">${r.etichette.join(' ')}</td>
+    </tr>
+  `).join('');
+  
+  document.getElementById('ricerche-info').textContent = `${data.length} ricerche`;
+  document.getElementById('ricerche-modal').classList.add('open');
+}
+
+function closeRicercheModal() {
+  document.getElementById('ricerche-modal').classList.remove('open');
+}
+
+function loadRicerche(search) {
+  clearFilters();
+  closeRicercheModal();
+  document.getElementById('search-input').value = search;
+  loadData();
 }
 
 // ─── RENDER TABLE ─────────────────────────────────────────────────────────────
