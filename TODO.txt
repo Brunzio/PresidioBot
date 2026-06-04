@@ -1,6 +1,11 @@
 BUTTONS
     aggiungi title
 
+APP
+    aggiungi apparati a ricerca attuale
+    trasferisci ricerca da app a pc
+    site rimozione o passaggio da ricerca a site
+
 CAMERA
     singola funzione per ricerca
 

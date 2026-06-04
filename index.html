@@ -365,8 +365,9 @@
 
 <!-- CERCA MOBILE  -->
   <div class="panel" id="panel-appcerca">
-    <div class="toolbar">
+    <div class="toolbar" style="justify-content: space-between;">
       <select id="app-label"><option value="">Campo ricerca</option></select>
+      <!-- <button id="app-add" class="btn btn-secondary btn-sm" onclick="appAggiungi()">+ Aggiungi</button> -->
     </div>
     <div class="toolbar">
       <div class="search-box">
@@ -514,11 +515,13 @@
       </div>
       <div style="max-width:690px;margin-bottom:10px;display:flex;flex-direction:column;">
         <textarea id="snText1" style="display:block;margin:0;border:0px;resize:none;border-radius:0;width:100%;min-height:125px;"></textarea>
-        <textarea id="snText2" style="display:block;margin:0;border:0px;resize:none;border-radius:0;width:100%;min-height:180px;"></textarea>
+        <textarea id="snText2" style="display:block;margin:0;border:0px;resize:none;border-radius:0;width:100%;min-height:200px;"></textarea>
       </div>
-      <button class="btn btn-primary" onclick="snCopiaText()">📋 Copia testo</button>
-      <button id="sn-cerca-inc" class="btn btn-secondary disabled">🔍 Cerca Incident</button>
-      
+      <div class="toolbar">
+        <button class="btn btn-primary" title="Copia il testo da incollare nelle note" onclick="snCopiaText()">📋 Copia</button>
+        <button id="sn-cerca-inc" class="btn btn-secondary disabled" title="Cerca incident o call HW già aperte sull'asset">🔍 Controllo</button>
+        <button class="btn btn-secondary btn-sm" onclick="snReset()">↺ Reset</button>
+      </div>
 
       </div>
   </div>
@@ -1017,9 +1020,9 @@
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
         <select id="ispEttore"><option value="">— ispettore —</option></select>
         <button class="btn btn-primary" onclick="ispAggiungi()">+ Aggiungi</button>
-        <button class="btn btn-secondary no-mobile" onclick="ispControllaINC()">🔍 Controlla INC</button>
+        <button class="btn btn-secondary no-mobile" onclick="ispControllaINC()" title="Verifica che non ci siano altri incident già aperti sull'asset">🔍 Controllo</button>
         <button class="btn btn-secondary no-mobile" onclick="ispAnteprima()">🖨️ Anteprima</button>
-        <button class="btn btn-secondary no-mobile" onclick="ispCopiaMail()">📋 Copia testo mail</button>
+        <button class="btn btn-secondary no-mobile" onclick="ispCopiaMail()" title="Copia la tabella da incollare nella mail">📋 Copia</button>
         <span id="isp-batch-info" style="font-family:var(--mono);font-size:11px;color:var(--text-muted);margin-left:8px;"></span>
       </div>
       <div class="table-wrapper scrollable">
@@ -1599,6 +1602,13 @@ function switchTab(name) {
 const appOpts = APP_MAP.map(a => `<option value="${a.key}">${a.label}</option>`).join('');
 const appSel = document.getElementById('app-label');
 if (appSel) appSel.innerHTML = appOpts;
+let appAdd = false;
+
+function appAggiungi () {
+  appAdd = !appAdd;
+  document.getElementById('app-add').classList.toggle('btn-primary', appAdd);
+  document.getElementById('app-add').classList.toggle('btn-secondary', !appAdd);
+}
 
 async function appCamera() {
   const search = await readBarcode() || '';
@@ -3190,6 +3200,14 @@ function snCercaINCdaAsset() {
     return;
   }
   cercaINCdaAsset(listass);
+}
+
+function snReset() {
+  document.getElementById('snIncident').value = '';
+  document.getElementById('snAsset').value = '';
+  document.getElementById('snReferente').value = '';
+  loadSnCall();
+  snCompila();
 }
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
@@ -4798,7 +4816,7 @@ function ispRenderTabella() {
       <td>
         <button class="btn btn-secondary btn-sm" style="margin: 0 6px" onclick="ispModifica(${index})">✎</button>
         <button class="btn btn-danger btn-sm" onclick="ispElimina(${r.id})">✕</button>
-        ${isNew && isAsset ? `<button class="btn btn-secondary btn-sm" style="margin: 0 6px" onclick="cercaINCdaAsset(['${isAsset}'])"">🔍</button>` : ''}
+        ${isNew && isAsset ? `<button title="Cerca INC già aperti sull'asset" class="btn btn-secondary btn-sm" style="margin: 0 6px" onclick="cercaINCdaAsset(['${isAsset}'])">🔍</button>` : ''}
       </td>
     </tr>`;
   }).join('');
