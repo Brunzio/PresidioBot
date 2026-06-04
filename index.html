@@ -1020,7 +1020,7 @@
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
         <select id="ispEttore"><option value="">— ispettore —</option></select>
         <button class="btn btn-primary" onclick="ispAggiungi()">+ Aggiungi</button>
-        <button class="btn btn-secondary no-mobile" onclick="ispControllaINC()" title="Verifica che non ci siano altri incident già aperti sull'asset">🔍 Controllo</button>
+        <button class="btn btn-secondary no-mobile" onclick="ispControllaINC()" title="Verifica che gli incident siano ancora aperti">🔍 Controllo</button>
         <button class="btn btn-secondary no-mobile" onclick="ispAnteprima()">🖨️ Anteprima</button>
         <button class="btn btn-secondary no-mobile" onclick="ispCopiaMail()" title="Copia la tabella da incollare nella mail">📋 Copia</button>
         <span id="isp-batch-info" style="font-family:var(--mono);font-size:11px;color:var(--text-muted);margin-left:8px;"></span>
@@ -1612,14 +1612,14 @@ function appAggiungi () {
 
 async function appCamera() {
   const search = await readBarcode() || '';
-  // document.getElementById('app-input').value = search;
+  if(search) document.getElementById('app-input').value = '';
   appSel.value = 'etichetta_asset';
   appCerca(search);
 }
 
 async function appCerca(rawsearch = '') {
   const ricerca = document.getElementById('app-input').value.trim() || rawsearch;
-  if (!ricerca) return;
+  if (!ricerca) { appRender([]); return; }
   const campo   = appSel.value;
 
   // Tokenizza: separa per spazio e/o virgola, rimuove token vuoti
@@ -1633,7 +1633,7 @@ async function appCerca(rawsearch = '') {
     query = query.in(campo, tokens);
   } else if (tokens.length === 1) {
     const search = tokens[0];
-    query = query.eq(campo, search);
+    query = query.ilike(campo, `%${search}%`);
   }
 
   query = query.order(campo, { ascending: true });
