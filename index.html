@@ -142,7 +142,7 @@
   .modal-overlay { opacity: 0; pointer-events: none; display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
   .modal-overlay.open { opacity: 1; pointer-events: auto; }
   .modal-overlay.white { background: rgba(255,255,255,0.7); }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; max-width: 95vw; max-height: 90vh; overflow-y: hidden; }
+  .modal { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; max-width: 95vw; max-height: 90vh; overflow-y: hidden; }
   .modal-header { padding: 10px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--surface); z-index: 1; }
   .modal-header h2 { font-family: var(--mono); font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); }
   .modal-close { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; line-height: 1; }
@@ -1537,11 +1537,10 @@
             <tr>
               <th>Data</th>
               <th>Ricerca</th>
-              <th></th>
             </tr>
           </thead>
           <tbody id="ricerche-body">
-            <tr><td colspan="3"><div class="empty">Nessuna ricerca salvata</div></td></tr>
+            <tr><td colspan="2"><div class="empty">Nessuna ricerca salvata</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -1710,7 +1709,6 @@ function appRender() {
 }
 
 async function appSalva() {
-  if (!currSearch.length) { showToast('Nessun risultato da salvare', 'error'); return; }
   const etichette = currSearch.map(s => s.etichetta_asset);
   const { error } = await db.from('ricerche').insert({etichette});
 
