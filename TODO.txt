@@ -15,7 +15,7 @@ CERT
     link all'inc
 
 CSS
-    uniforma simboli ✓ ⚠ 📋 🔍 ⬇ ➕ ✎ ↺ ✚ ⌕ 🖨️ ➚ ↗ 📷 ⛶ ⟲ ⮌ 🗑️ 🧹 💾 🡆 🡄
+    uniforma simboli ✓ ⚠ 📋 🔍 ⬇ ➕ ✎ ↺ ✚ ⌕ 🖨️ ➚ ↗ 📷 ⛶ ⟲ ⮌ 🗑️ 🧹 💾 ◁ ▷ « » → ← 
 
 import
     nuovo db solo asset e campi utili
