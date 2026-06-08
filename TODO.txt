@@ -1,6 +1,3 @@
-APP
-    -- updateButtons btn-to-site e btn-to-bolla --
-
 SITE BOLLE
     crea se vuota, invia se aperta    
 

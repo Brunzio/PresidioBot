@@ -747,7 +747,7 @@
         </div>
 
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:12px;">
-          <button class="btn btn-secondary" onclick="bollaReset()">↺ Nuova</button>
+          <button class="btn btn-secondary" onclick="bollaReset()">🗑️ Reset</button>
           <button class="btn btn-secondary" onclick="bollaCompilasite()">📋 Crea Site</button>
           <button class="btn btn-secondary" onclick="bollaAnteprima()">🖨️ Anteprima</button>
           <button id="bolla-save-button" class="btn btn-ok" onclick="bollaSalva()">✓ Salva</button>
@@ -924,7 +924,7 @@
         </div>
 
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-bottom:12px;align-items:center;">
-          <button class="btn btn-secondary" onclick="siteReset()">↺ Nuova</button>
+          <button class="btn btn-secondary" onclick="siteReset()">🗑️ Reset</button>
           <button class="btn btn-secondary" id="btn-compila-ddt" onclick="siteCompilaDDT()">📋 Crea Bolla</button>
           <button class="btn btn-secondary" id="btn-vai-cert" style="display:none;" onclick="siteSalvaEVaiCert()">📄 Crea Certificazione</button>
           <select id="site-layout" style="font-size:11px;padding:6px 10px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:6px;">
@@ -2172,11 +2172,15 @@ function renderTable(rows) {
 function escHtml(s) { return (s||'').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
 
 function updateButtons(data) {
-  const btnShare = document.getElementById('btn-share');
-  const btnQrCode = document.getElementById('btn-qrcode');
+  const btnShare   = document.getElementById('btn-share');
+  const btnQrCode  = document.getElementById('btn-qrcode');
+  const btnToSite  = document.getElementById('btn-to-site');
+  const btnToBolla = document.getElementById('btn-to-bolla');
   if (!data.length) {
     btnShare.disabled = true;
     btnQrCode.disabled = true;
+    btnToSite.disabled = true;
+    btnToBolla.disabled = true;
     return;
   }
   
@@ -2191,6 +2195,21 @@ function updateButtons(data) {
     }`).join('\n\n');
   btnShare.onclick = () => { navigator.clipboard.writeText(textCopy); showToast('Testo Copiato'); };
   btnShare.disabled = false;
+
+  // ─── PULSANTE INVIA A SITE ──────────────────────────────────────────────────
+  btnToSite.onclick = () => {
+    document.getElementById('cerca-apparato-site').value = assetList.join(' ');
+    switchTab('site');
+    siteAggiungiDaRicerca();
+  };
+  btnToSite.disabled = false;
+
+  // ─── PULSANTE INVIA A BOLLA ─────────────────────────────────────────────────
+  btnToBolla.onclick = () => {
+    switchTab('bolle');
+    bollaAggiungiDaAsset(assetList);
+  };
+  btnToBolla.disabled = false;
 }
 
 // ─── PAGINATION ───────────────────────────────────────────────────────────────
@@ -3466,6 +3485,25 @@ async function bollaAggiungiDaRicerca() {
   if (data.length > 1) showToast(`${data.length} apparati aggiunti`, 'success');
 }
 
+async function bollaAggiungiDaAsset(etichette) {
+  const { data, error } = await db.from('sn_main')
+  .select('etichetta_asset,asset_model,produttore,numero_di_serie,asset_sn,peso')
+  .in('etichetta_asset',etichette);
+
+  if(error) { showToast('Errore: ' + error.messsage, 'error'); return; }
+  if(!data || !data.length) { showToast('Nessun elemento trovato', 'error'); return; }
+
+  // popola bolla apparati coi dati trovati
+  data.forEach(r => {
+    const sn = r.asset_sn || r.numero_di_serie || '';
+    const desc = [r.produttore, r.asset_model].filter(Boolean).join(' ');
+    const peso = (r.peso && r.peso !== '0') ? parseFloat(r.peso.replace(/\./g,'').replace(',', '.')) : 1;
+    APPARATI['bolla'].push({ qty: 1, desc, asset: r.etichetta_asset || '', sn, colli: 1, peso });
+  });
+  bollaRenderApparati();
+  if (data.length > 1) showToast(`${data.length} apparati aggiunti`, 'success');
+}
+
 function bollaAggiungiManuale() {
   APPARATI['bolla'].push({ qty: 1, desc: '', asset: '', sn: '', colli: 1, peso: null });
   bollaRenderApparati();
@@ -4120,17 +4158,17 @@ async function siteSalva() {
 }
 
 // ── SITE → BOLLA ──────────────────────────────────────────────────────────────
-function siteCompilaDDT() {
+async function siteCompilaDDT() {
   if (!APPARATI['site'].length) { showToast('Aggiungi almeno un apparato', 'error'); return; }
   switchTab('bolle');
-  bollaReset();
+  await bollaReset();
   const tipo = document.getElementById('site-tipo').value;
   const cfg  = SITE_TYPE_CONFIG[tipo] || SITE_TYPE_CONFIG.Rimozione;
 
   // Per Sostituzione: solo gli apparati con azione 'R' (rimossi)
   const sorgente = tipo === 'Sostituzione'
-    ? APPARATI['site'].filter(b => b.azione === 'R').map(a => a.serial_number)
-    : APPARATI['site'].map(a => a.serial_number);
+    ? APPARATI['site'].filter(b => b.azione === 'R').map(a => a.asset)
+    : APPARATI['site'].map(a => a.asset);
   if (!sorgente.length) { showToast('Nessun apparato rimosso da trasferire al DDT', 'error'); return; }
 
   // const num  = cfg.bolla === 'doppia' ? document.getElementById('site-bolla-uscita-numero').value.trim()
@@ -4138,14 +4176,9 @@ function siteCompilaDDT() {
   // const data = cfg.bolla === 'doppia' ? document.getElementById('site-bolla-uscita-data').value
   //            : cfg.bolla === 'singola' ? document.getElementById('site-bolla-data').value : '';
 
-  setTimeout(() => {
-    // if (num)  document.getElementById('bolla-numero').value = num;
-    // if (data) document.getElementById('bolla-data').value   = data;
-    document.getElementById('cerca-apparato-bolla').value = sorgente.join(' ');
-    const idCli = document.getElementById('site-cliente').value;
-    document.getElementById('bolla-cessionario').value = idCli;
-    bollaAggiungiDaRicerca();
-  }, 500);
+  await bollaAggiungiDaAsset(sorgente);
+  const idCli = document.getElementById('site-cliente').value;
+  document.getElementById('bolla-cessionario').value = idCli;
 }
 
 // ── ARCHIVIO SITE ─────────────────────────────────────────────────────────────
