@@ -1606,6 +1606,7 @@ const TABLE_COLS = ['etichetta_asset','asset_sn','numero_di_serie','hostname','r
 // Campi mostrati nella ricerca da mobile
 const APP_COLS = ['etichetta_asset','asset_model','asset_sn','numero_di_serie','hostname','rack','nome_completo','piattaforma_supportata'];
 const APP_MAP = COLUMNS.filter(a => APP_COLS.includes(a.key));
+APP_MAP.push({ key: 'rack_cliente', label: 'Rack Cliente' });
 
 // CSV column index → DB key mapping
 const CSV_MAP = [
@@ -1643,7 +1644,7 @@ function switchTab(name) {
 // ─── CERCA APP ─────────────────────────────────────────────────────────────
 const appOpts = APP_MAP.map(a => `<option value="${a.key}">${a.label}</option>`).join('');
 const appSel = document.getElementById('app-label');
-if (appSel) appSel.innerHTML = appOpts + `<option value="rackcli">Rack Cliente</option>`;
+if (appSel) appSel.innerHTML = appOpts;
 let currSearch = [];
 
 function appReset () {
@@ -1663,15 +1664,18 @@ async function appCamera() {
 async function appCerca(rawsearch = '') {
   const ricerca = document.getElementById('app-input').value.trim() || rawsearch;
   if (!ricerca) return;
-  let  campo   = appSel.value;
-  const isRackCli = campo === 'rackcli';
-  if (isRackCli) campo = 'piattaforma_supportata';
+  let campo = appSel.value;
 
   // Tokenizza: separa per spazio e/o virgola, rimuove token vuoti
   const tokens = ricerca ? ricerca.split(/[\s,]+/).filter(t => t.length > 0) : [];
   const isMulti = tokens.length > 1;
 
   let query = db.from(TABLE).select('*, chiavi_calcolate( chiave )');
+
+  if (campo === 'rack_cliente') {
+    campo = 'piattaforma_supportata';
+    query = query.eq('asset_subcategory', 'Rack');
+  }
 
   if (isMulti) {
     // Ricerca multipla: IN sul campo specificato
@@ -1680,8 +1684,6 @@ async function appCerca(rawsearch = '') {
     const search = tokens[0];
     query = query.ilike(campo, `%${search}%`);
   }
-
-  if(isRackCli) query = query.eq('asset_subcategory', 'Rack');
 
   query = query.order(campo, { ascending: true });
   
