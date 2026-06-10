@@ -3301,7 +3301,7 @@ function snCercaINCdaAsset() {
     showToast('Nessun Asset trovato', 'error');
     return;
   }
-  cercaINCdaAsset(listass);
+  cercaINCdaAsset(listass, 'all');
 }
 
 function snReset() {
@@ -5100,8 +5100,8 @@ function ispControllaINC() {
 }
 
 // ── Cerca INCIDENT da Asset ──────────────────────────────────────────────────────
-async function cercaINCdaAsset(assets) {
-  let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3Dactive%253Dtrue%255Estate!%253D6%255Ecmdb_ciSTARTSWITH';
+async function cercaINCdaAsset(assets, param = '') {
+  let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3Dcmdb_ciSTARTSWITH';
   const { data } = await db.from('sn_main').select('hostname').in('etichetta_asset', assets);
   if (!data.length) {
     showToast('Nessun host trovato', 'error');
@@ -5109,6 +5109,10 @@ async function cercaINCdaAsset(assets) {
   }
   const query = data.map(h => h.hostname).filter(Boolean).join('%255EORcmdb_ciSTARTSWITH');
   url += query;
+
+  // Se non specificato ALL cerca solo inc attivi e non risolti
+  if(param !== 'all') url += '%255Eactive%253Dtrue%255Estate!%253D6';
+  
   window.open(url, '_blank');
 }
 
