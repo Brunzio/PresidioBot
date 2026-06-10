@@ -374,7 +374,7 @@
 <!-- CERCA MOBILE  -->
   <div class="panel" id="panel-appcerca">
     <div class="toolbar" style="justify-content: space-between;">
-      <select id="app-label" style="flex:0;"><option value="">Campo ricerca</option></select>
+      <select id="app-label" style="flex:0;"><option value="">Campo Ricerca</option></select>
       <div class="toolbar" style="margin:0">
         <button id="app-save-btn" class="btn btn-secondary btn-icon" onclick="appSalva()" disabled>→💾</button>
         <button class="btn btn-secondary btn-icon" onclick="appReset()">🗑️</button>
@@ -750,7 +750,7 @@
           <button class="btn btn-secondary" onclick="bollaReset()">🗑️ Reset</button>
           <button class="btn btn-secondary" onclick="bollaCompilasite()">📋 Crea Site</button>
           <button class="btn btn-secondary" onclick="bollaAnteprima()">🖨️ Anteprima</button>
-          <button id="bolla-save-button" class="btn btn-ok" onclick="bollaSalva()">✓ Salva</button>
+          <button id="bolla-save-button" class="btn btn-ok" disabled onclick="bollaSalva()">✓ Salva</button>
         </div>
 
         <!-- Banner bolla non salvata — appare dopo Genera 
@@ -932,7 +932,7 @@
             <option value="righe">Layout righe (16xPagina)</option>
           </select>
           <button class="btn btn-secondary" onclick="siteAnteprima()">🖨️ Anteprima</button>
-          <button id="site-save-button" class="btn btn-ok" onclick="siteSalva()">✓ Salva</button>
+          <button id="site-save-button" class="btn btn-ok" disabled onclick="siteSalva()">✓ Salva</button>
         </div>
 
         <!-- Banner site non salvata 
@@ -1643,7 +1643,7 @@ function switchTab(name) {
 // ─── CERCA APP ─────────────────────────────────────────────────────────────
 const appOpts = APP_MAP.map(a => `<option value="${a.key}">${a.label}</option>`).join('');
 const appSel = document.getElementById('app-label');
-if (appSel) appSel.innerHTML = appOpts;
+if (appSel) appSel.innerHTML = appOpts + `<option value="rackcli">Rack Cliente</option>`;
 let currSearch = [];
 
 function appReset () {
@@ -1663,7 +1663,9 @@ async function appCamera() {
 async function appCerca(rawsearch = '') {
   const ricerca = document.getElementById('app-input').value.trim() || rawsearch;
   if (!ricerca) return;
-  const campo   = appSel.value;
+  let  campo   = appSel.value;
+  const isRackCli = campo === 'rackcli';
+  if (isRackCli) campo = 'piattaforma_supportata';
 
   // Tokenizza: separa per spazio e/o virgola, rimuove token vuoti
   const tokens = ricerca ? ricerca.split(/[\s,]+/).filter(t => t.length > 0) : [];
@@ -1679,6 +1681,8 @@ async function appCerca(rawsearch = '') {
     query = query.ilike(campo, `%${search}%`);
   }
 
+  if(isRackCli) query = query.eq('asset_subcategory', 'Rack');
+
   query = query.order(campo, { ascending: true });
   
   const { data, error } = await query;
@@ -1689,7 +1693,6 @@ async function appCerca(rawsearch = '') {
   if (error) { showToast('Errore ricerca: ' + error.message, 'error'); return; }
   currSearch = [...currSearch, ...data];
   document.getElementById('app-save-btn').disabled = false;
-
 
   appRender();
 }
@@ -4761,6 +4764,7 @@ function isUnsaved(prefix) {
 
   const btn=document.getElementById(prefix+'-save-button');
   btn.classList.toggle("btn-warning", dirty);
+  btn.disabled = !dirty;
   btn.textContent = dirty ? '⚠ Salva' : '✓ Salva';
 }
 
