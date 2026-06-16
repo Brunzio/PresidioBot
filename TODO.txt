@@ -1,8 +1,5 @@
-ADMIN
-    last update chiavi calcolate
-
 SFOGLIA
-    cambio filtri o ricerca resetta paginazione
+    cambio filtri resetta paginazione
 
 SITE BOLLE
     crea se vuota, invia se aperta    

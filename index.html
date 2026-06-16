@@ -637,7 +637,7 @@
           <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
             <a href="https://noovleprod.service-now.com/now/sow/list/params/list-id/7c5818e53bd6d210f1009924c3e45ac6/tiny-id/hJnB5ljJIYpHHkBDNWYCGW7uFYd2m60A" target="_blank" class="btn btn-secondary">↗ Esporta da SN</a>
             <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">📂 Importa CSV</button>
-            <button class="btn btn-primary" id="btn-aggiorna-db" onclick="aggiornaDB()">⟳ Aggiorna DB</button>
+            <button class="btn btn-primary" id="btn-aggiorna-db" onclick="aggiornaDB()">⟳ Calcola Chiavi</button>
           </div>
           <div class="form-grid">
             <div class="form-group"><label>DB Aggiornato: </label><label>Chiavi calcolate: </label></div>
@@ -2251,7 +2251,7 @@ async function openDetailModal(etichetta) {
 
   // Leggi chiave da chiavi_calcolate
   const { data: kData } = await db.from('chiavi_calcolate').select('chiave,fonte,cliente').eq('etichetta_asset', etichetta).single();
-  const keyResult = kData || { chiave: null, fonte: 'Non calcolata — esegui Aggiorna DB', cliente: null };
+  const keyResult = kData || { chiave: null, fonte: 'Non calcolata — esegui Calcola Chiavi', cliente: null };
 
   document.getElementById('detail-body').innerHTML = `
     <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:20px;">
@@ -2429,7 +2429,10 @@ function closeDeleteModal() {
 }
 
 // ─── ADMIN  ───────────────────────────────────────────────────────────────
-async function updateStatus() {
+async function updateStatus(table = '') {
+  if (table) {    
+    await db.from('update_status').update({ [table + '_updated_at']: new Date().toISOString() }).eq('id', 1);
+  }
   const { data } = await db.from('update_status').select('*').eq('id', 1).single();
   document.getElementById('update-db').innerHTML = new Date(data.sn_main_updated_at).toLocaleString('it-IT');
   document.getElementById('update-key').innerHTML = new Date(data.chiavi_calcolate_updated_at).toLocaleString('it-IT');
@@ -2529,8 +2532,8 @@ async function startImport() {
   }
 
   btn.disabled = false; btn.textContent = 'Avvia importazione';
-  await db.from('update_status').update({ sn_main_updated_at: new Date().toISOString() }).eq('id', 1);
-  updateStatus();
+  
+  updateStatus('sn_main');
 }
 
 function addLog(el, text, cls) {
@@ -2831,6 +2834,8 @@ async function aggiornaDB() {
     showToast('Completato con errori', 'error');
   }
   btn.disabled = false;
+
+  updateStatus('chiavi_calcolate');
 
   // Genera report post-aggiornamento
   generaReport(tuttiRisultati, snMap, modMap, cliMap, eccMap);
