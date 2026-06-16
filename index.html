@@ -3161,7 +3161,8 @@ function onSnAssetSearch() {
 async function risaliMacchinaFisica(record) {
   if (/^\d{10}$/.test(record.etichetta_asset)) return record;
   
-  const campi = ['componente_di', 'container', 'rack']
+  // const campi = ['componente_di', 'container', 'rack']
+  const campi = ['componente_di']
     .map(campo => record[campo])
     .filter(et => et && /^\d{10}$/.test(et));
   
