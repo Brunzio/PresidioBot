@@ -3158,6 +3158,22 @@ function onSnAssetSearch() {
   snSearchTimeout = setTimeout(loadSnCall, 350);
 }
 
+async function risaliMacchinaFisica(record) {
+  if (/^\d{10}$/.test(record.etichetta_asset)) return record;
+  
+  const campi = ['componente_di', 'container', 'rack']
+    .map(campo => record[campo])
+    .filter(et => et && /^\d{10}$/.test(et));
+  
+  if (!campi.length) return null; // non risalibile
+
+  for (const etichetta of campi) {
+    const { data } = await db.from('sn_main').select('*').eq('etichetta_asset', etichetta).maybeSingle();
+    if (data) return data;
+  }
+  return null; // trovati campi ma nessuna query ha restituito risultati
+}
+
 async function loadSnCall() {
   const search = document.getElementById('snAsset').value.trim();
   let asset = '';
@@ -3168,10 +3184,12 @@ async function loadSnCall() {
   const { data } = await db.from('sn_main').select('*')
     .or(`etichetta_asset.eq.${search},hostname.ilike.${search},asset_sn.ilike.${search},numero_di_serie.ilike.${search}`);
   if(data.length === 1) {
-    asset = data[0].etichetta_asset;
-    host = data[0].hostname;
-    sn = data[0].asset_sn || data[0].numero_di_serie || '';
-    modello = data[0].produttore + ' ' + data[0].asset_model;
+    const record = await risaliMacchinaFisica(data[0]);
+    if (!record) { showToast('Nessuna macchina fisica associata', 'error'); return; }
+    asset = record.etichetta_asset;
+    host = record.hostname;
+    sn = record.asset_sn || record.numero_di_serie || '';
+    modello = record.produttore + ' ' + record.asset_model;
     btn.onclick = () => cercaINCdaAsset([asset]);
     btn.disabled = false;
   } else { btn.disabled = true; }
