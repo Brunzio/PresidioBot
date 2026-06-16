@@ -633,10 +633,17 @@
       <!-- SEZIONE 1: SN MAIN -->
       <div class="admin-section">
         <div class="admin-section-title">SN Main</div>
-        <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
-          <a href="https://noovleprod.service-now.com/now/sow/list/params/list-id/7c5818e53bd6d210f1009924c3e45ac6/tiny-id/hJnB5ljJIYpHHkBDNWYCGW7uFYd2m60A" target="_blank" class="btn btn-secondary">↗ Esporta da SN</a>
-          <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">📂 Importa CSV</button>
-          <button class="btn btn-primary" id="btn-aggiorna-db" onclick="aggiornaDB()">⟳ Aggiorna DB</button>
+        <div style="display:flex;justify-content:space-between;">
+          <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+            <a href="https://noovleprod.service-now.com/now/sow/list/params/list-id/7c5818e53bd6d210f1009924c3e45ac6/tiny-id/hJnB5ljJIYpHHkBDNWYCGW7uFYd2m60A" target="_blank" class="btn btn-secondary">↗ Esporta da SN</a>
+            <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">📂 Importa CSV</button>
+            <button class="btn btn-primary" id="btn-aggiorna-db" onclick="aggiornaDB()">⟳ Aggiorna DB</button>
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label>DB Aggiornato: </label><label>Chiavi calcolate: </label></div>
+            <div class="form-group"><label id="update-db"></label><label id="update-key"></label></div>
+          </div>
+          
         </div>
         <input type="file" id="import-file" accept=".csv" onchange="handleFileSelect(event)" style="display:none">
         <div id="import-preview" style="display:none;margin-top:14px;">
@@ -1639,6 +1646,7 @@ function switchTab(name) {
   if (name === 'site') { switchSiteTab('nuova');   if(!document.getElementById('site-data').value) initNuovaSite(); }
   if (name === 'ispezione') initIspezione();
   if (name === 'strumentisn') initSN();
+  if (name === 'admin') updateStatus();
 }
 
 // ─── CERCA APP ─────────────────────────────────────────────────────────────
@@ -2420,6 +2428,13 @@ function closeDeleteModal() {
   currentDelete = null;
 }
 
+// ─── ADMIN  ───────────────────────────────────────────────────────────────
+async function updateStatus() {
+  const { data } = await db.from('update_status').select('*').eq('id', 1).single();
+  document.getElementById('update-db').innerHTML = new Date(data.sn_main_updated_at).toLocaleString('it-IT');
+  document.getElementById('update-key').innerHTML = new Date(data.chiavi_calcolate_updated_at).toLocaleString('it-IT');
+}
+
 // ─── CSV IMPORT ───────────────────────────────────────────────────────────────
 function onDragOver(e) { e.preventDefault(); document.getElementById('import-zone').classList.add('drag-over'); }
 function onDragLeave() { document.getElementById('import-zone').classList.remove('drag-over'); }
@@ -2514,7 +2529,8 @@ async function startImport() {
   }
 
   btn.disabled = false; btn.textContent = 'Avvia importazione';
-  loadData();
+  await db.from('update_status').update({ sn_main_updated_at: new Date().toISOString() }).eq('id', 1);
+  updateStatus();
 }
 
 function addLog(el, text, cls) {

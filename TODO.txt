@@ -1,3 +1,6 @@
+ADMIN
+    last update chiavi calcolate
+
 SFOGLIA
     cambio filtri o ricerca resetta paginazione
 
