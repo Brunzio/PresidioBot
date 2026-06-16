@@ -1,3 +1,9 @@
+SFOGLIA
+    cambio filtri o ricerca resetta paginazione
+
+COMPILA CALL HW
+    risolvi partizioni e server virtuali
+
 SITE BOLLE
     crea se vuota, invia se aperta    
 
