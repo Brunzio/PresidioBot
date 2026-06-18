@@ -2175,7 +2175,7 @@ function renderTable(rows) {
     <tr style="cursor:pointer;" onclick="openDetailModal('${escHtml(row.etichetta_asset)}')">
       ${TABLE_COLS.map(key => {
         let val = row[key] || '';
-        return `<td title="${(row[key] || '').toString().replace(/"/g, '&quot;')}">${val}</td>`;
+        return `<td title="${val}" style="max-width:155px;">${val}</td>`;
       }).join('')}
       <td><span class="badge badge-active">${row.chiavi_calcolate ? row.chiavi_calcolate.chiave : '-'}</span></td>
     </tr>
@@ -4467,8 +4467,8 @@ async function loadCertArchivio() {
     <tr>
       <td><span class="badge ${tipoBadge}">${tipoLabel}</span></td>
       <td>${dataStr}</td>
-      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">${escHtml(r.cliente||'—')}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;font-size:11px;">${escHtml(r.progetto_riferimento||'—')}</td>
+      <td style="max-width:280px;">${escHtml(r.cliente||'—')}</td>
+      <td style="max-width:280px;font-size:11px;">${escHtml(r.progetto_riferimento||'—')}</td>
       <td style="text-align:center;">${(r.apparati||[]).length}</td>
       <td><div class="td-actions">
         <button class="btn btn-secondary btn-sm" onclick="certArchivioRiapri(${r.id})">⬇ PDF</button>
