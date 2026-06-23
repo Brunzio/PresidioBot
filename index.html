@@ -3662,11 +3662,11 @@ async function bollaSalva() {
   const btn = document.querySelector('[onclick="bollaSalva()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Salvo...'; }
 
-  let error;
+  let data = null, error;
   if (archivioEditingId) {
     ({ error } = await db.from('bolle_ddt').update(bollaUnsavedData).eq('id', archivioEditingId));
   } else {
-    ({ error } = await db.from('bolle_ddt').insert(bollaUnsavedData));
+    ({ data, error } = await db.from('bolle_ddt').insert(bollaUnsavedData).select('id').single());
   }
 
   if (btn) { btn.disabled = false; btn.textContent = '✓ Salva'; }
@@ -3674,11 +3674,10 @@ async function bollaSalva() {
 
   showToast(archivioEditingId ? 'Bolla aggiornata' : 'Bolla salvata', 'success');
   bollaUnsavedData = null;
-  archivioEditingId = null;
-  // document.getElementById('bolla-unsaved-banner').style.display = 'none';
+  if (data) archivioEditingId = data.id;
   _resetArchivioMesiCache();
-  bollaReset();
-  switchBolleTab('archivio');
+  SAVE_STATE['bolla'].initState = getFormData('bolla');
+  isUnsaved('bolla');
 }
 
 // ── ARCHIVIO ──────────────────────────────────────────────────────────────────
@@ -4183,11 +4182,11 @@ async function siteSalva() {
   const btn = document.querySelector('[onclick="siteSalva()"]');
   if (btn) { btn.disabled = true; btn.textContent = 'Salvo...'; }
 
-  let error;
+  let data = null, error;
   if (siteEditingId) {
     ({ error } = await db.from('site_report').update(d).eq('id', siteEditingId));
   } else {
-    ({ error } = await db.from('site_report').insert(d));
+    ({ data, error } = await db.from('site_report').insert(d).select('id').single());
   }
 
   if (btn) { btn.disabled = false; btn.textContent = "✓ Salva"; }
@@ -4195,11 +4194,10 @@ async function siteSalva() {
 
   showToast(siteEditingId ? 'Site aggiornata' : 'Site salvata', 'success');
   siteUnsavedData = null;
-  siteEditingId = null;
-  // document.getElementById('site-unsaved-banner').style.display = 'none';
+  if (data) siteEditingId = data.id;
   _resetSiteArchivioMesiCache();
-  switchSiteTab('archivio');
-  siteReset();
+  SAVE_STATE['site'].initState = getFormData('site');
+  isUnsaved('site');
 }
 
 // ── SITE → BOLLA ──────────────────────────────────────────────────────────────
