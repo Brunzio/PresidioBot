@@ -1,3 +1,7 @@
+STRUMENTI SN
+    codici a barre per degauss
+    trova task da request
+
 SFOGLIA
     cambio filtri resetta paginazione
 

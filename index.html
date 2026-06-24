@@ -650,7 +650,7 @@
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
             <div style="font-family:var(--mono);font-size:12px;">
               File: <span id="file-name" style="color:var(--accent)"></span> —
-              <span id="file-rows"></span> righe valide
+              <span id="file-rows"></span>
             </div>
             <button class="btn btn-primary" id="btn-start-import" onclick="startImport()">Avvia importazione</button>
           </div>
@@ -2469,7 +2469,7 @@ function processCSV(file) {
     document.getElementById('file-name').textContent = file.name;
     document.getElementById('file-rows').textContent = `${parsedRows.length} valide, ${skipped} ignorate (senza etichetta)`;
     document.getElementById('import-preview').style.display = 'block';
-    document.getElementById('import-log').innerHTML = `<div class="log-line info">Pronto: ${parsedRows.length} righe da importare via upsert.</div>`;
+    document.getElementById('import-log').innerHTML = `<div class="log-line info">Pronto: ${parsedRows.length} righe da importare.</div>`;
     document.getElementById('progress-fill').style.width = '0%';
   };
   reader.readAsText(file, 'UTF-8');
@@ -2507,7 +2507,7 @@ async function startImport() {
 
   for (let i = 0; i < parsedRows.length; i += BATCH) {
     const batch = parsedRows.slice(i, i + BATCH);
-    const { error } = await db.from(TABLE).upsert(batch, { onConflict: 'etichetta_asset' });
+    const { error } = await db.from('sn_main_tmp').insert(batch);
 
     if (error) {
       errors++;
@@ -2524,16 +2524,23 @@ async function startImport() {
 
   addLog(log, `─────────────────────`, '');
   if (errors === 0) {
-    addLog(log, `✓ Completato: ${done} righe importate`, 'success');
-    showToast('Importazione completata', 'success');
+    const { error } = await db.rpc('publish_sn_main');
+    if (error) {
+      await db.from('sn_main_tmp').delete().neq('etichetta_asset','');
+      showToast('Errore: ' + error.message, 'error');
+
+    } else {
+      updateStatus('sn_main');
+      addLog(log, `✓ Completato: ${done} righe importate`, 'success');
+      showToast('Importazione completata', 'success');
+    }
   } else {
-    addLog(log, `Completato con ${errors} errori. ${done} righe ok.`, 'error');
-    showToast('Importazione completata con errori', 'error');
+    await db.from('sn_main_tmp').delete().neq('etichetta_asset','');
+    addLog(log, `Trovati ${errors} errori. ${done} righe ok.`, 'error');
+    showToast('Importazione interrotta', 'error');
   }
 
   btn.disabled = false; btn.textContent = 'Avvia importazione';
-  
-  updateStatus('sn_main');
 }
 
 function addLog(el, text, cls) {
@@ -2704,7 +2711,7 @@ async function aggiornaDB() {
   while (true) {
     const { data, error } = await db.from('sn_main')
       .select('etichetta_asset,asset_subcategory,asset_model,rack,componente_di,tipo_piattaforma,piattaforma_supportata,container,nome_completo')
-      .neq('etichetta_asset', '')
+      .like('nome_completo', '%Sala%')
       .range(snFrom, snFrom + SN_BATCH - 1);
     if (error) {
       addLog(log, 'Errore caricamento sn_main: ' + error.message, 'error');
@@ -2739,18 +2746,25 @@ async function aggiornaDB() {
       return { chiave, fonte: chiave ? `Cliente: ${cliente}` : `Cliente non mappato: ${cliente}`, cliente };
     }
 
+    // 2b. Cliente mappato senza mercato esterno
+    if (rec.piattaforma_supportata && cliMap[rec.piattaforma_supportata]) {
+      const cliente = (rec.piattaforma_supportata || '').trim();
+      const chiave = cliMap[cliente] || null;
+      return { chiave, fonte: `Cliente ${cliente} mappato`, cliente };
+    } 
+
     // 3. Ha rack
     if (rec.rack) {
       const rackRec = snMap[rec.rack];
       if (rackRec) {
-        if (eccMap[rec.rack]) return { chiave: eccMap[rec.rack], fonte: null, cliente: null };
+        if (eccMap[rec.rack]) return { chiave: eccMap[rec.rack], fonte: `Rack ${rec.rack} in eccezioni`, cliente: null };
         if (rackRec.tipo_piattaforma && rackRec.tipo_piattaforma.toLowerCase().includes('esterno')) {
           const cliente = (rackRec.piattaforma_supportata || '').trim();
           const chiave = cliMap[cliente] || null;
           return { chiave, fonte: null, cliente };
         }
         const chiave = modMap[rackRec.asset_model] || null;
-        return { chiave, fonte: chiave ? null : rackRec.asset_model, cliente: null };
+        return { chiave, fonte: rackRec.asset_model, cliente: null };
       }
       return { chiave: null, fonte: null, cliente: null };
     }
@@ -2758,24 +2772,24 @@ async function aggiornaDB() {
     // 4. Cerca modello standalone in modelli_chiave
     if (rec.asset_model) {
       const chiave = modMap[rec.asset_model] || null;
-      if (chiave) return { chiave, fonte: null, cliente: null };
+      if (chiave) return { chiave, fonte: `Modello ${rec.asset_model} Standalone`, cliente: null };
     }
 
     // 5. Ha container
     if (rec.container) {
       const compRec = snMap[rec.container];
       if (compRec) {
-        if (eccMap[rec.container]) return { chiave: eccMap[rec.container], fonte: null, cliente: null };
+        if (eccMap[rec.container]) return { chiave: eccMap[rec.container], fonte: `Container ${rec.container} in eccezioni`, cliente: null };
         if (compRec.rack) {
           const rackRec = snMap[compRec.rack];
           if (rackRec) {
-            if (eccMap[compRec.rack]) return { chiave: eccMap[compRec.rack], fonte: null, cliente: null };
+            if (eccMap[compRec.rack]) return { chiave: eccMap[compRec.rack], fonte: `Rack del container ${rec.container} in eccezioni`, cliente: null };
             const chiave = modMap[rackRec.asset_model] || null;
-            return { chiave, fonte: chiave ? null : rackRec.asset_model, cliente: null };
+            return { chiave, fonte: rackRec.asset_model, cliente: null };
           }
         } else {
           const chiave = modMap[compRec.asset_model] || null;
-          return { chiave, fonte: chiave ? null : compRec.asset_model, cliente: null };
+          return { chiave, fonte: chiave ? compRec.asset_model : null, cliente: null };
         }
       }
     }
@@ -2784,17 +2798,17 @@ async function aggiornaDB() {
     if (rec.componente_di) {
       const compRec = snMap[rec.componente_di];
       if (compRec) {
-        if (eccMap[rec.componente_di]) return { chiave: eccMap[rec.componente_di], fonte: null, cliente: null };
+        if (eccMap[rec.componente_di]) return { chiave: eccMap[rec.componente_di], fonte: `Componente di ${rec.componente_di} in eccezioni`, cliente: null };
         if (compRec.rack) {
           const rackRec = snMap[compRec.rack];
           if (rackRec) {
-            if (eccMap[compRec.rack]) return { chiave: eccMap[compRec.rack], fonte: null, cliente: null };
+            if (eccMap[compRec.rack]) return { chiave: eccMap[compRec.rack], fonte: `Rack ${compRec.rack} in eccezioni`, cliente: null };
             const chiave = modMap[rackRec.asset_model] || null;
-            return { chiave, fonte: chiave ? null : rackRec.asset_model, cliente: null };
+            return { chiave, fonte: rackRec.asset_model, cliente: null };
           }
         } else {
           const chiave = modMap[compRec.asset_model] || null;
-          return { chiave, fonte: chiave ? null : compRec.asset_model, cliente: null };
+          return { chiave, fonte: chiave ? compRec.asset_model : null, cliente: null };
         }
       }
     }
@@ -2818,7 +2832,7 @@ async function aggiornaDB() {
   let errors = 0;
   for (let i = 0; i < risultati.length; i += BATCH) {
     const batch = risultati.slice(i, i + BATCH);
-    const { error } = await db.from('chiavi_calcolate').upsert(batch, { onConflict: 'etichetta_asset' });
+    const { error } = await db.from('chiavi_calcolate_tmp').insert(batch);
     if (error) { errors++; addLog(log, `✕ Batch ${Math.floor(i/BATCH)+1}: ${error.message}`, 'error'); }
     else { done += batch.length; }
     progress.style.width = Math.min(Math.round(((i + BATCH) / risultati.length) * 100), 100) + '%';
@@ -2826,18 +2840,24 @@ async function aggiornaDB() {
   }
 
   addLog(log, `─────────────────────`, '');
-  if (errors === 0) {
-    addLog(log, `✓ Completato: ${done} record aggiornati in chiavi_calcolate`, 'success');
-    showToast('DB aggiornato', 'success');
-  } else {
-    addLog(log, `Completato con ${errors} errori`, 'error');
+  if (errors > 0) {
+    await db.from('chiavi_calcolate_tmp').delete().neq('etichetta_asset','');
+    addLog(log, `Trovati ${errors} errori, aggiornamento interrotto`, 'error');
     showToast('Completato con errori', 'error');
+  } else {
+    const { error } = await db.rpc('publish_chiavi_calcolate');
+    if (error) {
+      await db.from('chiavi_calcolate_tmp').delete().neq('etichetta_asset','');
+      showToast('Errore: ' + error.message, 'error');
+    } else {
+      updateStatus('chiavi_calcolate');
+      addLog(log, `✓ Completato: ${done} record aggiornati in chiavi_calcolate`, 'success');
+      showToast('DB aggiornato', 'success');
+    }
   }
   btn.disabled = false;
 
-  updateStatus('chiavi_calcolate');
-
-  // Genera report post-aggiornamento
+    // Genera report post-aggiornamento
   generaReport(tuttiRisultati, snMap, modMap, cliMap, eccMap);
 }
 
@@ -2848,23 +2868,23 @@ function generaReport(risultati, snMap, modMap, cliMap, eccMap) {
   section.style.display = 'block';
 
   // --- Modelli non mappati: conteggiano separatamente in sala e rimossi ---
-  const SUBCATEGORY_MAPPABILI = new Set(['Rack','Server Unix','Tape Drive','Espansioni Backup','Stack (ISS)','Tape Library','Switch in fibra','Espansioni Storage Enterprise']);
-  const modelliNonMappati = {}; // { modello: { sala: N, rimossi: N } }
+  const SUBCATEGORY_MAPPABILI = new Set(['Rack','Server Unix','Tape Drive','Appliance Backup','Espansioni Backup','Espansioni Server','Stack (ISS)','Tape Library','Switch in fibra','Espansioni Storage Enterprise']);
+  const modelliNonMappati = {}; // { modello: { sala: [], rimossi: [] } }
   risultati.forEach(r => {
     if (!r.chiave && !r.cliente && r.fonte) {
       const modello = r.fonte.trim();
       if (modello) {
         const rec = snMap[r.etichetta_asset];
         if (!rec || !SUBCATEGORY_MAPPABILI.has(rec.asset_subcategory)) return;
-        if (!modelliNonMappati[modello]) modelliNonMappati[modello] = { sala: 0, rimossi: 0 };
+        if (!modelliNonMappati[modello]) modelliNonMappati[modello] = { sala: [], rimossi: [] };
         const inSala = rec.nome_completo && rec.nome_completo.toLowerCase().includes('/sala');
-        if (inSala) modelliNonMappati[modello].sala++;
-        else modelliNonMappati[modello].rimossi++;
+        if (inSala) modelliNonMappati[modello].sala.push(r.etichetta_asset);
+        else modelliNonMappati[modello].rimossi.push(r.etichetta_asset);
       }
     }
   });
   // Ordina per apparati in sala desc, esclude modelli con 0 apparati in sala
-  const modelliSortati = Object.entries(modelliNonMappati).filter(([,v]) => v.sala > 0).sort((a,b) => b[1].sala - a[1].sala);
+  const modelliSortati = Object.entries(modelliNonMappati).filter(([,v]) => v.sala.length > 0).sort((a,b) => b[1].sala.length - a[1].sala.length);
 
   // --- Clienti non mappati: solo in sala ---
   const clientiNonMappati = {};
@@ -2935,13 +2955,27 @@ function generaReport(risultati, snMap, modMap, cliMap, eccMap) {
           <thead><tr><th>Modello</th><th>Apparati coinvolti</th><th style="width:120px;"></th></tr></thead>
           <tbody>
             ${modelliSortati.map(([modello, {sala, rimossi}]) => `
-              <tr>
+              <tr onclick="this.nextElementSibling.classList.toggle('panel')" style="cursor: pointer;">
                 <td style="font-family:var(--mono);font-size:11px;">${modello}</td>
                 <td>
-                  <span class="badge badge-inactive">${sala}</span>
-                  ${rimossi > 0 ? `<span style="color:var(--text-muted);font-family:var(--mono);font-size:10px;margin-left:6px;">(+ ${rimossi} Rimossi)</span>` : ''}
+                  <span class="badge badge-inactive">${sala.length}</span>
+                  ${rimossi.length > 0 ? `<span style="color:var(--text-muted);font-family:var(--mono);font-size:10px;margin-left:6px;">(+ ${rimossi.length} Rimossi)</span>` : ''}
                 </td>
                 <td><button class="btn btn-primary btn-sm" onclick="openLookupModal('modelli','${escHtml(modello)}','','')">+ Mappa</button></td>
+              </tr>
+              <tr class="panel">
+                <td colspan="3">
+                  <div class="form-grid">
+                    <div class="form-group">
+                      <label>in sala:</label>
+                      ${sala.map(e => `<label>${e}</label>`).join('')}
+                    </div>
+                    <div class="form-group">
+                      <label>rimossi:</label>
+                      ${rimossi.map(e => `<label>${e}</label>`).join('')}
+                    </div>
+                  </div>
+                </td>
               </tr>
             `).join('')}
           </tbody>
