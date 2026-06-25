@@ -1574,7 +1574,7 @@
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://mupsanczaxnwsttddyxm.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_MSuZ3I_iEDAbK2v3qbj2DQ_ZLmwCrAO';
-const TABLE = 'sn_main';
+const TABLE = 'sn_main_con_chiave';
 const PAGE_SIZE = 25;
 
 const { createClient } = supabase;
@@ -2088,7 +2088,7 @@ async function loadData() {
   const tokens = rawSearch ? rawSearch.split(/[\s,]+/).filter(t => t.length > 0) : [];
   const isMulti = tokens.length > 1;
 
-  let query = db.from(TABLE).select('*, chiavi_calcolate(chiave)', { count: 'exact' });
+  let query = db.from(TABLE).select('*', { count: 'exact' });
 
   if (isMulti) {
     // Ricerca multipla: IN su etichetta_asset
@@ -2177,7 +2177,7 @@ function renderTable(rows) {
         let val = row[key] || '';
         return `<td title="${val}" style="max-width:155px;">${val}</td>`;
       }).join('')}
-      <td><span class="badge badge-active">${row.chiavi_calcolate ? row.chiavi_calcolate.chiave : '-'}</span></td>
+      <td><span class="badge badge-active">${row.chiave ? row.chiave : '-'}</span></td>
     </tr>
   `).join('');
 }
