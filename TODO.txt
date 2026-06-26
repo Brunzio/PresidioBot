@@ -1,3 +1,6 @@
+GENERA REPORT
+    testare object.groupby
+
 STRUMENTI SN
     codici a barre per degauss
     trova task da request

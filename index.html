@@ -129,6 +129,8 @@
   .badge-active { background: oklch(from var(--accent) l c h / 0.15); color: var(--accent); }
   .badge-inactive { background: oklch(from var(--accent) l c calc(h + 128) / 0.15); color: oklch(from var(--accent) l c calc(h + 128)); }
   .badge-default { background: var(--surface2); color: var(--text); }
+  .badge-arrow { transition: transform 0.2s ease;}
+  .badge-open .badge-arrow { transform: rotate(90deg);}
 
   /* PAGINATION */
   .pagination { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
@@ -2869,34 +2871,31 @@ function generaReport(risultati, snMap, modMap, cliMap, eccMap) {
 
   // --- Modelli non mappati: conteggiano separatamente in sala e rimossi ---
   const SUBCATEGORY_MAPPABILI = new Set(['Rack','Server Unix','Tape Drive','Appliance Backup','Espansioni Backup','Espansioni Server','Stack (ISS)','Tape Library','Switch in fibra','Espansioni Storage Enterprise']);
-  const modelliNonMappati = {}; // { modello: { sala: [], rimossi: [] } }
+  const modelliNonMappati = {}; // { modello: sala[] }
   risultati.forEach(r => {
     if (!r.chiave && !r.cliente && r.fonte) {
       const modello = r.fonte.trim();
       if (modello) {
         const rec = snMap[r.etichetta_asset];
         if (!rec || !SUBCATEGORY_MAPPABILI.has(rec.asset_subcategory)) return;
-        if (!modelliNonMappati[modello]) modelliNonMappati[modello] = { sala: [], rimossi: [] };
-        const inSala = rec.nome_completo && rec.nome_completo.toLowerCase().includes('/sala');
-        if (inSala) modelliNonMappati[modello].sala.push(r.etichetta_asset);
-        else modelliNonMappati[modello].rimossi.push(r.etichetta_asset);
+        if (!modelliNonMappati[modello]) modelliNonMappati[modello] = [];
+        modelliNonMappati[modello].push(r.etichetta_asset);
       }
     }
   });
   // Ordina per apparati in sala desc, esclude modelli con 0 apparati in sala
-  const modelliSortati = Object.entries(modelliNonMappati).filter(([,v]) => v.sala.length > 0).sort((a,b) => b[1].sala.length - a[1].sala.length);
+  const modelliSortati = Object.entries(modelliNonMappati).filter(([,v]) => v.length > 0).sort((a,b) => b[1].length - a[1].length);
 
   // --- Clienti non mappati: solo in sala ---
   const clientiNonMappati = {};
   risultati.forEach(r => {
     if (!r.chiave && r.cliente) {
-      const rec = snMap[r.etichetta_asset];
-      if (rec && rec.nome_completo && rec.nome_completo.toLowerCase().includes('/sala')) {
-        clientiNonMappati[r.cliente] = (clientiNonMappati[r.cliente] || 0) + 1;
-      }
+      const cliente = r.cliente.trim();
+      if (!clientiNonMappati[cliente]) clientiNonMappati[cliente] = [];
+      clientiNonMappati[cliente].push(r.etichetta_asset);
     }
   });
-  const clientiSortati = Object.entries(clientiNonMappati).sort((a,b) => b[1]-a[1]);
+  const clientiSortati = Object.entries(clientiNonMappati).sort((a,b) => b[1].length-a[1].length);
 
   // --- Totali ---
   const totRisolte = risultati.filter(r => r.chiave).length;
@@ -2904,6 +2903,7 @@ function generaReport(risultati, snMap, modMap, cliMap, eccMap) {
   const totClientiNonMap = Object.keys(clientiNonMappati).length;
   const totModelliNonMap = modelliSortati.length;
 
+  // --- Render Report ---
   body.innerHTML = `
     <!-- Riepilogo numerico -->
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
@@ -2934,8 +2934,19 @@ function generaReport(risultati, snMap, modMap, cliMap, eccMap) {
             ${clientiSortati.map(([cliente, count]) => `
               <tr>
                 <td style="font-size:12px;">${cliente}</td>
-                <td><span class="badge badge-inactive">${count}</span></td>
+                <td onclick="this.closest('tr').nextElementSibling.classList.toggle('panel'); this.classList.toggle('badge-open')" style="cursor: pointer;">
+                  <span class="badge badge-inactive">${count.length}</span><span class="badge badge-arrow">▶</span>
+                </td>
                 <td><button class="btn btn-primary btn-sm" onclick="switchTab('clienti');setTimeout(()=>openClienteModal('${escHtml(cliente)}'),100)">+ Mappa</button></td>
+              </tr>
+              <tr class="panel">
+                <td></td>
+                <td>
+                  <div class="form-group">
+                    ${count.map(e => `<label>${e}</label>`).join('')}
+                  </div>
+                </td>
+                <td></td>
               </tr>
             `).join('')}
           </tbody>
@@ -2954,28 +2965,22 @@ function generaReport(risultati, snMap, modMap, cliMap, eccMap) {
         <table>
           <thead><tr><th>Modello</th><th>Apparati coinvolti</th><th style="width:120px;"></th></tr></thead>
           <tbody>
-            ${modelliSortati.map(([modello, {sala, rimossi}]) => `
-              <tr onclick="this.nextElementSibling.classList.toggle('panel')" style="cursor: pointer;">
+            ${modelliSortati.map(([modello, sala]) => `
+              <tr>
                 <td style="font-family:var(--mono);font-size:11px;">${modello}</td>
-                <td>
-                  <span class="badge badge-inactive">${sala.length}</span>
-                  ${rimossi.length > 0 ? `<span style="color:var(--text-muted);font-family:var(--mono);font-size:10px;margin-left:6px;">(+ ${rimossi.length} Rimossi)</span>` : ''}
+                <td onclick="this.closest('tr').nextElementSibling.classList.toggle('panel'); this.classList.toggle('badge-open')" style="cursor: pointer;">
+                  <span class="badge badge-inactive">${sala.length}</span><span class="badge badge-arrow">▶</span>
                 </td>
                 <td><button class="btn btn-primary btn-sm" onclick="openLookupModal('modelli','${escHtml(modello)}','','')">+ Mappa</button></td>
               </tr>
               <tr class="panel">
-                <td colspan="3">
-                  <div class="form-grid">
-                    <div class="form-group">
-                      <label>in sala:</label>
-                      ${sala.map(e => `<label>${e}</label>`).join('')}
-                    </div>
-                    <div class="form-group">
-                      <label>rimossi:</label>
-                      ${rimossi.map(e => `<label>${e}</label>`).join('')}
-                    </div>
+                <td></td>
+                <td>
+                  <div class="form-group">
+                    ${sala.map(e => `<label>${e}</label>`).join('')}
                   </div>
                 </td>
+                <td></td>
               </tr>
             `).join('')}
           </tbody>
