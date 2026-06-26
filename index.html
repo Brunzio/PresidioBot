@@ -1678,7 +1678,7 @@ async function appCerca(rawsearch = '') {
   const tokens = ricerca ? ricerca.split(/[\s,]+/).filter(t => t.length > 0) : [];
   const isMulti = tokens.length > 1;
 
-  let query = db.from(TABLE).select('*, chiavi_calcolate( chiave )');
+  let query = db.from(TABLE).select('*');
 
   if (campo === 'rack_cliente') {
     campo = 'piattaforma_supportata';
@@ -1715,7 +1715,7 @@ function appRender() {
         <div>${asset[campo.key] || '-'}</div>
       `).join('') + `
         <div class="app-card-label">Chiave:</div>
-        <div>${asset.chiavi_calcolate ? asset.chiavi_calcolate.chiave : '-'}</div>`}
+        <div>${asset.chiave ? asset.chiave : '-'}</div>`}
     </div>
   `).join('');
   document.getElementById('app-table').innerHTML = html;
