@@ -642,10 +642,16 @@
             <button class="btn btn-primary" id="btn-aggiorna-db" onclick="aggiornaDB()">⟳ Calcola Chiavi</button>
           </div>
           <div class="form-grid">
-            <div class="form-group"><label>DB Aggiornato: </label><label>Chiavi calcolate: </label></div>
-            <div class="form-group"><label id="update-db"></label><label id="update-key"></label></div>
+            <div class="form-group">
+              <label>DB Aggiornato: </label>
+              <label>Chiavi calcolate: </label>
+            </div>
+            <div class="form-group">
+              <label id="update-db"></label>
+              <label id="update-key"></label>
+              <button class="btn btn-sm btn-secondary" onclick="caricaReport()" title="Carica il report dell'ultimo aggiornamento fatto">Ultimo Report</button>
+            </div>
           </div>
-          
         </div>
         <input type="file" id="import-file" accept=".csv" onchange="handleFileSelect(event)" style="display:none">
         <div id="import-preview" style="display:none;margin-top:14px;">
@@ -2865,13 +2871,9 @@ async function aggiornaDB() {
 
 // ─── REPORT POST-AGGIORNAMENTO ────────────────────────────────────────────────
 function generaReport(risultati, snMap, modMap, cliMap, eccMap) {
-  const section = document.getElementById('report-section');
-  const body = document.getElementById('report-body');
-  section.style.display = 'block';
-
   // --- Modelli non mappati: conteggiano separatamente in sala e rimossi ---
   const SUBCATEGORY_MAPPABILI = new Set(['Rack','Server Unix','Tape Drive','Appliance Backup','Espansioni Backup','Espansioni Server','Stack (ISS)','Tape Library','Switch in fibra','Espansioni Storage Enterprise']);
-  const modelliNonMappati = {}; // { modello: sala[] }
+  const modelliNonMappati = {}; // { modello: asset[] }
   risultati.forEach(r => {
     if (!r.chiave && !r.cliente && r.fonte) {
       const modello = r.fonte.trim();
@@ -2883,8 +2885,8 @@ function generaReport(risultati, snMap, modMap, cliMap, eccMap) {
       }
     }
   });
-  // Ordina per apparati in sala desc, esclude modelli con 0 apparati in sala
-  const modelliSortati = Object.entries(modelliNonMappati).filter(([,v]) => v.length > 0).sort((a,b) => b[1].length - a[1].length);
+  // Ordina per num apparati desc
+  const modelliSortati = Object.entries(modelliNonMappati).sort((a,b) => b[1].length - a[1].length);
 
   // --- Clienti non mappati: solo in sala ---
   const clientiNonMappati = {};
@@ -2898,20 +2900,39 @@ function generaReport(risultati, snMap, modMap, cliMap, eccMap) {
   const clientiSortati = Object.entries(clientiNonMappati).sort((a,b) => b[1].length-a[1].length);
 
   // --- Totali ---
-  const totRisolte = risultati.filter(r => r.chiave).length;
-  const totNonRis = risultati.filter(r => !r.chiave).length;
-  const totClientiNonMap = Object.keys(clientiNonMappati).length;
-  const totModelliNonMap = modelliSortati.length;
+  const risolte = risultati.filter(r => r.chiave).length;
+  const nonrisolte = risultati.filter(r => !r.chiave).length;
 
-  // --- Render Report ---
+  const report = { risolte, nonrisolte, modelli: modelliSortati, clienti: clientiSortati };
+  salvaReport(report);
+  renderReport(report);
+}
+
+async function caricaReport() {
+  const { data, error } = await db.from('update_status').select('last_report').eq('id',1).single();
+  if (error) { showToast('Errore: ' + error.message, 'error'); return; }
+  renderReport(data.last_report);
+}
+
+async function salvaReport(report) {
+  const { error } = await db.from('update_status').update({ ['last_report']: report }).eq('id',1);
+  if (error) { showToast('Errore nel salvataggio del report: ' + error.message, 'error'); return; }
+}
+
+function renderReport(report) {
+  const { risolte, nonrisolte, modelli, clienti } = report;
+  const section = document.getElementById('report-section');
+  const body = document.getElementById('report-body');
+  section.style.display = 'block';
+
   body.innerHTML = `
     <!-- Riepilogo numerico -->
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
       ${[
-        ['Chiavi risolte', totRisolte, 'var(--accent)'],
-        ['Non risolvibili', totNonRis, totNonRis > 0 ? 'var(--danger)' : 'var(--text-muted)'],
-        ['Clienti da mappare', totClientiNonMap, totClientiNonMap > 0 ? 'var(--warning)' : 'var(--text-muted)'],
-        ['Modelli da mappare', totModelliNonMap, totModelliNonMap > 0 ? 'var(--warning)' : 'var(--text-muted)'],
+        ['Chiavi risolte', risolte, 'var(--accent)'],
+        ['Non risolvibili', nonrisolte, nonrisolte > 0 ? 'var(--danger)' : 'var(--text-muted)'],
+        ['Clienti da mappare', clienti.length, clienti.length > 0 ? 'var(--warning)' : 'var(--text-muted)'],
+        ['Modelli da mappare', modelli.length, modelli.length > 0 ? 'var(--warning)' : 'var(--text-muted)'],
       ].map(([label, val, color]) => `
         <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
           <div style="font-family:var(--mono);font-size:22px;color:${color};font-weight:700;">${val.toLocaleString('it')}</div>
@@ -2921,21 +2942,21 @@ function generaReport(risultati, snMap, modMap, cliMap, eccMap) {
     </div>
 
     <!-- Clienti non mappati -->
-    ${clientiSortati.length > 0 ? `
+    ${clienti.length > 0 ? `
     <div style="margin-bottom:20px;">
       <div style="font-family:var(--mono);font-size:10px;color:var(--warning);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">
-        ⚠ Clienti Mercato Esterno senza chiave (${clientiSortati.length})
+        ⚠ Clienti Mercato Esterno senza chiave (${clienti.length})
         <span style="color:var(--text-muted);margin-left:8px;">→ aggiungi in tab Clienti</span>
       </div>
       <div class="table-wrapper">
         <table>
           <thead><tr><th>Cliente</th><th>Apparati in sala</th><th style="width:120px;"></th></tr></thead>
           <tbody>
-            ${clientiSortati.map(([cliente, count]) => `
+            ${clienti.map(([cliente, asset]) => `
               <tr>
                 <td style="font-size:12px;">${cliente}</td>
                 <td onclick="this.closest('tr').nextElementSibling.classList.toggle('panel'); this.classList.toggle('badge-open')" style="cursor: pointer;">
-                  <span class="badge badge-inactive">${count.length}</span><span class="badge badge-arrow">▶</span>
+                  <span class="badge badge-inactive">${asset.length}</span><span class="badge badge-arrow">▶</span>
                 </td>
                 <td><button class="btn btn-primary btn-sm" onclick="switchTab('clienti');setTimeout(()=>openClienteModal('${escHtml(cliente)}'),100)">+ Mappa</button></td>
               </tr>
@@ -2943,7 +2964,7 @@ function generaReport(risultati, snMap, modMap, cliMap, eccMap) {
                 <td></td>
                 <td>
                   <div class="form-group">
-                    ${count.map(e => `<label>${e}</label>`).join('')}
+                    ${asset.map(e => `<label>${e}</label>`).join('')}
                   </div>
                 </td>
                 <td></td>
@@ -2955,21 +2976,21 @@ function generaReport(risultati, snMap, modMap, cliMap, eccMap) {
     </div>` : `<div style="margin-bottom:16px;font-size:12px;color:var(--accent);">✓ Tutti i clienti Mercato Esterno sono mappati</div>`}
 
     <!-- Modelli non mappati -->
-    ${modelliSortati.length > 0 ? `
+    ${modelli.length > 0 ? `
     <div>
       <div style="font-family:var(--mono);font-size:10px;color:var(--warning);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">
-        ⚠ Modelli senza chiave (${modelliSortati.length})
+        ⚠ Modelli senza chiave (${modelli.length})
         <span style="color:var(--text-muted);margin-left:8px;">→ aggiungi in Modelli Chiave</span>
       </div>
       <div class="table-wrapper">
         <table>
           <thead><tr><th>Modello</th><th>Apparati coinvolti</th><th style="width:120px;"></th></tr></thead>
           <tbody>
-            ${modelliSortati.map(([modello, sala]) => `
+            ${modelli.map(([modello, asset]) => `
               <tr>
                 <td style="font-family:var(--mono);font-size:11px;">${modello}</td>
                 <td onclick="this.closest('tr').nextElementSibling.classList.toggle('panel'); this.classList.toggle('badge-open')" style="cursor: pointer;">
-                  <span class="badge badge-inactive">${sala.length}</span><span class="badge badge-arrow">▶</span>
+                  <span class="badge badge-inactive">${asset.length}</span><span class="badge badge-arrow">▶</span>
                 </td>
                 <td><button class="btn btn-primary btn-sm" onclick="openLookupModal('modelli','${escHtml(modello)}','','')">+ Mappa</button></td>
               </tr>
@@ -2977,7 +2998,7 @@ function generaReport(risultati, snMap, modMap, cliMap, eccMap) {
                 <td></td>
                 <td>
                   <div class="form-group">
-                    ${sala.map(e => `<label>${e}</label>`).join('')}
+                    ${asset.map(e => `<label>${e}</label>`).join('')}
                   </div>
                 </td>
                 <td></td>
