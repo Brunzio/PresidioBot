@@ -5205,13 +5205,14 @@ function ispControllaINC() {
 
 // ── Cerca INCIDENT da Asset ──────────────────────────────────────────────────────
 async function cercaINCdaAsset(assets, param = '') {
-  let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3Dcmdb_ciSTARTSWITH';
+  let url = 'https://noovleprod.service-now.com/now/nav/ui/classic/params/target/incident_list.do%3Fsysparm_query%3D';
   const { data } = await db.from('sn_main').select('hostname').in('etichetta_asset', assets);
   if (!data.length) {
     showToast('Nessun host trovato', 'error');
     return;
   }
-  const query = data.map(h => h.hostname).filter(Boolean).join('%255EORcmdb_ciSTARTSWITH');
+  const campo = (data.length > 1) ? 'cmdb_ciSTARTSWITH' : '123TEXTQUERY321%253D';
+  const query = data.map(h => campo + h.hostname).filter(Boolean).join('%255EOR');
   url += query;
 
   // Se non specificato ALL cerca solo inc attivi e non risolti
