@@ -2082,58 +2082,90 @@ async function loadData() {
   const locazione = document.getElementById('filter-locazione').value;
   const sala      = document.getElementById('filter-sala').value;
   FILTERS.forEach(f => { filters[f.col] = document.getElementById(f.id).value });
+
   if (!rawSearch && !sala && !locazione && Object.values(filters).every(v => !v)) {
     document.getElementById('table-body').innerHTML = `<tr><td colspan="${TABLE_COLS.length + 1}"><div class="empty">Nessun apparato</div></td></tr>`;
     currentPage = 0;
     totalCount = 0;
-    document.getElementById('record-count').textContent = totalCount.toLocaleString('it') + ' record';
+    document.getElementById('record-count').textContent = '0 record';
     updatePagination();
     updateButtons([]);
     return;
   }
 
   // Tokenizza: separa per spazio e/o virgola, rimuove token vuoti
-  const tokens = rawSearch ? rawSearch.split(/[\s,]+/).filter(t => t.length > 0) : [];
+  let tokens = rawSearch ? rawSearch.split(/[\s,]+/).filter(t => t.length > 0) : [];
+
   const isMulti = tokens.length > 1;
+  const newQuery = () => db.from(TABLE).select('*', { count: 'exact' });
+  let results = [];
 
-  let query = db.from(TABLE).select('*', { count: 'exact' });
-
+  function filtra(q) {
+    for (const [col, value] of Object.entries(filters)) {
+      if (value) q = q.eq(col, value);
+    }
+    if (locazione) q = q.ilike('nome_completo', `%${locazione}%`);
+    if (sala) q = q.ilike('nome_completo', `%${sala}%`);
+    return q;
+  }
+  
   if (isMulti) {
-    // Ricerca multipla: IN su etichetta_asset
-    query = query.in('etichetta_asset', tokens);
-  } else if (tokens.length === 1) {
-    const search = tokens[0];
-    query = query.or(
-      `etichetta_asset.ilike.%${search}%,asset_sn.ilike.%${search}%,numero_di_serie.ilike.%${search}%,hostname.ilike.%${search}%,rack.ilike.%${search}%,piattaforma_supportata.ilike.%${search}%`
-    );
-  }
+    const CFG = [
+      { remove: false, col: 'rack' },
+      { remove: true,  col: 'etichetta_asset' },
+      { remove: true,  col: 'asset_sn' },
+      { remove: true,  col: 'numero_di_serie' },
+    ];
 
-  for (const [col, value] of Object.entries(filters)) {
-    if (value) query = query.eq(col, value);
-  }
-  if (locazione) query = query.ilike('nome_completo', `%${locazione}%`);
-  if (sala) query = query.ilike('nome_completo', `%${sala}%`);
-
-  query = query.order(sortCol, { ascending: sortAsc });
-  // In ricerca multipla non paginiamo (al massimo sono tanti quanti i token)
-  if (!isMulti) {
-    query = query.range(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE - 1);
-  }
-
-  const { data, count, error } = await query;
-
-  if (error) { showError(error.message); return; }
-
-  totalCount = isMulti ? (data || []).length : (count || 0);
-  document.getElementById('record-count').textContent = totalCount.toLocaleString('it') + ' record';
-  renderTable(data || []);
-  updateButtons(data || []);
-  if (!isMulti) updatePagination();
-  else {
-    document.getElementById('pagination-info').textContent = `${totalCount} risultati (ricerca multipla)`;
+    for (const cfg of CFG) {
+      if (!tokens.length) break;
+      let q = newQuery();
+      q = q.in(cfg.col, tokens);
+      q = filtra(q);
+      const { data, count, error } = await q;
+      if (error) { showError(error.message); return; }
+      results.push(...data);
+      if (cfg.remove) {
+        const trovati = new Set(results.map(r => r[cfg.col]));
+        tokens = tokens.filter(t => !trovati.has(t));
+      }
+    };
+    if (tokens.length) {
+      let q = newQuery();
+      q = q.or(tokens.map(t => `hostname.ilike.%${t}%`).join(','));
+      q = filtra(q);
+      const { data, count, error } = await q;
+      if (error) { showError(error.message); return; }
+      results.push(...data);
+    }
+    document.getElementById('pagination-info').textContent = `${results.length} risultati (ricerca multipla)`;
     document.getElementById('btn-prev').disabled = true;
     document.getElementById('btn-next').disabled = true;
+    
+  } else {
+
+    let query = newQuery();
+    if (tokens.length === 1) {
+      const search = tokens[0];
+      query = query.or(
+        `etichetta_asset.ilike.%${search}%,asset_sn.ilike.%${search}%,numero_di_serie.ilike.%${search}%,hostname.ilike.%${search}%,rack.ilike.%${search}%,piattaforma_supportata.ilike.%${search}%`
+      );
+    }
+    query = filtra(query).order(sortCol, { ascending: sortAsc });
+    query = query.range(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE - 1);
+    const { data, count, error } = await query;
+    if (error) { showError(error.message); return; }
+    totalCount = count || 0;
+    results.push(...data);
+    updatePagination();
   }
+
+  // deduplico results
+  results = [...new Map(results.map(r => [r.etichetta_asset, r])).values()];
+
+  document.getElementById('record-count').textContent = totalCount.toLocaleString('it') + ' record';
+  renderTable(results || []);
+  updateButtons(results || []);
 }
 
 function showLoading() {
