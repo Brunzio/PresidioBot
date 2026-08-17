@@ -3306,7 +3306,10 @@ async function loadSnCall() {
     modello = record.produttore + ' ' + record.asset_model;
     btn.onclick = () => cercaINCdaAsset([asset]);
     btn.disabled = false;
-  } else { btn.disabled = true; }
+  } else {
+    if(data.length > 1) { showToast ('Risultati multipli, utilizza ETICHETTA', 'error'); }
+    btn.disabled = true;
+  }
   testo = `Si richiede apertura call Hw sul seguente apparato:\n\nHost: ${host}\nSerial number: ${sn}\nAsset: ${asset}\nModello: ${modello}`;
   document.getElementById('snText1').value = testo;
 }
