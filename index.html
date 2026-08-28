@@ -2114,7 +2114,7 @@ async function loadData() {
       if (value) q = q.eq(col, value);
     }
     if (locazione) q = q.ilike('nome_completo', `%${locazione}%`);
-    if (sala) q = q.ilike('nome_completo', `%${sala}%`);
+    if (sala) q = q.ilike('nome_completo', `%Sala${sala}%`);
     return q;
   }
   
