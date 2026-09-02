@@ -3962,15 +3962,21 @@ async function loadAnagrafiche() {
       <td>${r.nome}</td>
       <td style="white-space:pre-line;font-size:11px;color:var(--text-muted);">${r.indirizzo || '—'}</td>
       <td><div class="td-actions">
-        <button class="btn btn-secondary btn-sm" onclick='openAnagraficaModal(${r.id},${JSON.stringify(r.nome)},${JSON.stringify(r.indirizzo||"")})'>✎</button>
+        <button class="btn btn-secondary btn-sm" onclick='openAnagraficaModal(${r.id})'>✎</button>
         <button class="btn btn-danger btn-sm" onclick="deleteAnagrafica(${r.id})">✕</button>
       </div></td>
     </tr>
   `).join('') || '<tr><td colspan="3"><div class="empty">Nessuna anagrafica</div></td></tr>';
 }
 
-function openAnagraficaModal(id, nome, indirizzo) {
+async function openAnagraficaModal(id, nome = '', indirizzo = '') {
   anagraficaEditingId = id || null;
+  if (id) {
+    const { data, error } = await db.from('anagrafiche').select('*').eq('id', id).maybeSingle();
+    if (error || !data) return;
+    nome = data.nome;
+    indirizzo = data.indirizzo;
+  }
   document.getElementById('anagrafica-modal-title').textContent = id ? 'Modifica Anagrafica' : 'Nuova Anagrafica';
   document.getElementById('anagrafica-nome').value = nome || '';
   document.getElementById('anagrafica-indirizzo').value = indirizzo || '';
