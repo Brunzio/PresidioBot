@@ -2063,7 +2063,8 @@ async function loadFilters() {
 
   // CREA FILTRO PER SALA
   const salaSel = document.getElementById('filter-sala');
-  ISP_SALE.forEach(v => {
+  // aggiungo SalaNFVP del pallone al filtro per sala, non presente tra le sale da ispezionare
+  [...ISP_SALE,'NFVP'].forEach(v => {
     const opt = document.createElement('option');
     opt.value = v; opt.textContent = v;
     salaSel.appendChild(opt);
@@ -2806,7 +2807,7 @@ async function aggiornaDB() {
   while (true) {
     const { data, error } = await db.from('sn_main')
       .select('etichetta_asset,asset_subcategory,asset_model,rack,componente_di,tipo_piattaforma,piattaforma_supportata,container,nome_completo')
-      .like('nome_completo', '%Sala%')
+      .like('nome_completo', '%BO1/Sala%')
       .range(snFrom, snFrom + SN_BATCH - 1);
     if (error) {
       addLog(log, 'Errore caricamento sn_main: ' + error.message, 'error');
@@ -3298,6 +3299,20 @@ async function apriFoglioChiavi() {
 // ─── STRUMENTI SN ───────────────────────────────────────────────────────────────
 let snSearchTimeout = null;
 let snListaRef = [];
+const snCallState = {
+  asset: '',
+  host: '',
+  seriale: '',
+  modello: '',
+  locazione: '',
+  incident: '',
+  referente: ''
+};
+
+const LOCATION_ADDRESS = {
+  BO1: 'Via della Centralinista, 3 - 40138 Bologna',
+  BO2: 'Via del Pallone, 3 - 40126 Bologna'
+};
 
 function normalizeINC(text) {
   const m = (text || '').match(/(?:inc)?0*(\d{7,12})/i);
@@ -3326,6 +3341,11 @@ function onSnAssetSearch() {
   snSearchTimeout = setTimeout(loadSnCall, 350);
 }
 
+function getLocationAddress(nomeCompleto) {
+  const locationId = (nomeCompleto || '').split('/').filter(Boolean)[0]?.slice(0, 3).toUpperCase();
+  return LOCATION_ADDRESS[locationId] || '';
+}
+
 async function risaliMacchinaFisica(record) {
   if (/^\d{10}$/.test(record.etichetta_asset)) return record;
   
@@ -3345,28 +3365,29 @@ async function risaliMacchinaFisica(record) {
 
 async function loadSnCall() {
   const search = document.getElementById('snAsset').value.trim();
-  let asset = '';
-  let host = '';
-  let sn = '';
-  let modello = '';
   let btn = document.getElementById('sn-cerca-inc');
   const { data } = await db.from('sn_main').select('*')
     .or(`etichetta_asset.eq.${search},hostname.ilike.${search},asset_sn.ilike.${search},numero_di_serie.ilike.${search}`);
   if(data.length === 1) {
     const record = await risaliMacchinaFisica(data[0]);
     if (!record) { showToast('Nessuna macchina fisica associata', 'error'); return; }
-    asset = record.etichetta_asset;
-    host = record.hostname;
-    sn = record.asset_sn || record.numero_di_serie || '';
-    modello = record.produttore + ' ' + record.asset_model;
-    btn.onclick = () => cercaINCdaAsset([asset]);
+    snCallState.asset = record.etichetta_asset;
+    snCallState.host = record.hostname || '';
+    snCallState.seriale = record.asset_sn || record.numero_di_serie || '';
+    snCallState.modello = [record.produttore, record.asset_model].filter(Boolean).join(' ');
+    snCallState.locazione = getLocationAddress(record.nome_completo);
+    btn.onclick = () => cercaINCdaAsset([snCallState.asset]);
     btn.disabled = false;
   } else {
     if(data.length > 1) { showToast ('Risultati multipli, utilizza ETICHETTA', 'error'); }
+    snCallState.asset = '';
+    snCallState.host = '';
+    snCallState.seriale = '';
+    snCallState.modello = '';
+    snCallState.locazione = '';
     btn.disabled = true;
   }
-  testo = `Si richiede apertura call Hw sul seguente apparato:\n\nHost: ${host}\nSerial number: ${sn}\nAsset: ${asset}\nModello: ${modello}`;
-  document.getElementById('snText1').value = testo;
+  aggiornaTestoCall();
 }
 
 async function snLoadRef() {
@@ -3385,10 +3406,32 @@ async function snSaveRef(nome) {
 }
 
 function snCompila() {
-  incident = document.getElementById('snIncident').value.trim();
-  contact = document.getElementById('snReferente').value.trim();
-  testo = `Persona/Gruppo referente della chiamata: ${contact}\ninserire in CC presidioh24.dcbo@noovle.com\n\nLocation: Via della Centralinista n.3, Bologna, 40138\n\nNumero incident: ${incident}\n\nDescrizione guasto:\n`;
-    document.getElementById('snText2').value = testo;
+  snCallState.incident = document.getElementById('snIncident').value.trim();
+  snCallState.referente = document.getElementById('snReferente').value.trim();
+  aggiornaTestoCall();
+}
+
+function aggiornaTestoCall() {
+  const testoApparato = `
+Si richiede apertura call Hw sul seguente apparato:
+
+Host: ${snCallState.host}
+Serial number: ${snCallState.seriale}
+Asset: ${snCallState.asset}
+Modello: ${snCallState.modello}`.trim();
+
+  const testoCall = `
+Persona/Gruppo referente della chiamata: ${snCallState.referente}
+inserire in CC presidioh24.dcbo@noovle.com
+
+Location: ${snCallState.locazione}
+
+Numero incident: ${snCallState.incident}
+
+Descrizione guasto:`.trim();
+
+  document.getElementById('snText1').value = testoApparato;
+  document.getElementById('snText2').value = testoCall;
 }
 
 async function snCopiaText() {
