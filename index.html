@@ -1732,7 +1732,7 @@ function appRender() {
         <div>${asset[campo.key] || '-'}</div>
       `).join('') + `
         <div class="app-card-label">Chiave:</div>
-        <div>${asset.chiave ? asset.chiave : '-'}</div>`}
+        <div>${asset.chiave ?? '-'}</div>`}
     </div>
   `).join('');
   document.getElementById('app-table').innerHTML = html;
@@ -2010,7 +2010,7 @@ async function risolviChiave(etichetta) {
 async function cercaModello(modello) {
   if (!modello) return null;
   const { data } = await db.from('modelli_chiave').select('chiave').eq('modello', modello).single();
-  return data ? data.chiave : null;
+  return data?.chiave ?? null;
 }
 
 // ─── TABLE HEAD ───────────────────────────────────────────────────────────────
@@ -2240,7 +2240,7 @@ function renderTable(rows) {
         let val = row[key] || '';
         return `<td title="${val}" style="max-width:155px;">${val}</td>`;
       }).join('')}
-      <td><span class="badge badge-active">${row.chiave ? row.chiave : '-'}</span></td>
+      <td><span class="badge badge-active">${row.chiave ?? '-'}</span></td>
     </tr>
   `).join('');
 }
@@ -2267,7 +2267,7 @@ function updateButtons(data) {
 
   // ─── PULSANTE COPIA TESTO ───────────────────────────────────────────────────
   const textCopy = data.map(a => `${APP_MAP.map(c => `${c.label}: ${a[c.key] || '-'}`).join('\n')
-      + `\nChiave: ${a.chiavi_calcolate ? a.chiavi_calcolate.chiave : '-'}`
+      + `\nChiave: ${a.chiave ?? '-'}`
     }`).join('\n\n');
   btnShare.onclick = () => { navigator.clipboard.writeText(textCopy); showToast('Testo Copiato'); };
   btnShare.disabled = false;
@@ -3980,7 +3980,7 @@ async function archivioModifica(id) {
     const sel = document.getElementById(selId);
     if (!sel) return;
     const found = anagraficheCache.find(a => a.nome === nome);
-    sel.value = found ? found.id : '';
+    sel.value = found?.id ?? '';
   }
   _setSelectByNome('bolla-proprietario', data.proprietario);
   _setSelectByNome('bolla-cessionario', data.cessionario);
@@ -4563,7 +4563,7 @@ async function siteArchivioModifica(id) {
   }
 
   const found = anagraficheCache.find(a => a.nome === data.cliente);
-  document.getElementById('site-cliente').value = found ? found.id : '';
+  document.getElementById('site-cliente').value = found?.id ?? '';
   APPARATI['site'] = (data.apparati || []).map(b => ({ ...b }));
   SAVE_STATE['site'].initState = getFormData('site');
   switchSiteType();
