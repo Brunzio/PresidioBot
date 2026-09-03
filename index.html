@@ -1690,24 +1690,25 @@ async function appCerca(rawsearch = '') {
   const ricerca = document.getElementById('app-input').value.trim() || rawsearch;
   if (!ricerca) return;
   let campo = appSel.value;
-
-  // Tokenizza: separa per spazio e/o virgola, rimuove token vuoti
-  const tokens = ricerca ? ricerca.split(/[\s,]+/).filter(t => t.length > 0) : [];
-  const isMulti = tokens.length > 1;
-
   let query = db.from(TABLE).select('*');
+  let tokens;
 
-  if (campo === 'rack_cliente') {
+  if (campo === 'rack_cliente'){
+    tokens = [ricerca];
     campo = 'piattaforma_supportata';
     query = query.eq('asset_subcategory', 'Rack');
+  } else {
+    // Tokenizza: separa per spazio e/o virgola, rimuove token vuoti
+    tokens = ricerca.split(/[\s,]+/).filter(t => t.length > 0);
   }
 
+  const isMulti = tokens.length > 1;
+  
   if (isMulti) {
     // Ricerca multipla: IN sul campo specificato
     query = query.in(campo, tokens);
   } else if (tokens.length === 1) {
-    const search = tokens[0];
-    query = query.ilike(campo, `%${search}%`);
+    query = query.ilike(campo, `%${tokens[0]}%`);
   }
 
   query = query.order(campo, { ascending: true });
