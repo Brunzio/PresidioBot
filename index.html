@@ -2173,6 +2173,19 @@ async function loadData() {
   // deduplico results
   results = [...new Map(results.map(r => [r.etichetta_asset, r])).values()];
 
+  // ordinamento per ricerca multipla
+  if (isMulti) {
+    results.sort((left, right) => {
+      const leftValue = left[sortCol] ?? '';
+      const rightValue = right[sortCol] ?? '';
+      const comparison = String(leftValue).localeCompare(String(rightValue), 'it', {
+        numeric: true,
+        sensitivity: 'base'
+      });
+      return sortAsc ? comparison : -comparison;
+    });
+  }
+
   document.getElementById('record-count').textContent = totalCount.toLocaleString('it') + ' record';
   renderTable(results || []);
   updateButtons(results || []);
