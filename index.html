@@ -4598,15 +4598,9 @@ function _certModello(modello) {
 
 function _certMonoAlimentato(doppiaAlim) {
   const v = String(doppiaAlim || '').trim().toUpperCase();
-  if (v === 'S' || v === 'SI' || v === 'SÌ') return 'NO';
-  if (v === 'N' || v === 'NO')               return 'SI';
-  return '';
-}
-
-function _certQuadro(monoAlim, sezAlim) {
-  // Se mono_alimentato è NO (doppia alim) → A + B; altrimenti usa sezione_alimentazione se disponibile
-  if (monoAlim === 'NO') return 'A + B';
-  return sezAlim || '';
+  if (v === 'S' || v === 'SI' || v === 'SÌ') return false;
+  if (v === 'N' || v === 'NO')               return true;
+  return null;
 }
 
 function _certProgettoDefault(clienteNome, apparati) {
@@ -4616,7 +4610,25 @@ function _certProgettoDefault(clienteNome, apparati) {
 }
 
 // Converte apparati site → apparati cert
-function _siteApparatiToCert(apparatiSite, clienteNome, isCse) {
+async function _siteApparatiToCert(apparatiSite, clienteNome, isCse) {
+
+  // Estrae i rack dalla site e ne cerca le locazioni
+  const racks = !isCse
+    ? [...new Set((apparatiSite || []).map(a => a.rack).filter(Boolean))]
+    : [];
+  const salaByRack = {};
+
+  if (racks.length) {
+    const { data } = await db.from('sn_main')
+      .select('etichetta_asset,nome_completo')
+      .in('etichetta_asset', racks);
+    (data || []).forEach(record => {
+      const match = (record.nome_completo || '').match(/sala\/?(.+)/i);
+      if (!match) return;
+      salaByRack[record.etichetta_asset] = match[1].replace(/\/+$/, '');
+    });
+  }
+
   return (apparatiSite || []).map(a => {
     const mono = _certMonoAlimentato(a.doppia_alimentazione);
     return {
@@ -4624,12 +4636,12 @@ function _siteApparatiToCert(apparatiSite, clienteNome, isCse) {
       modello:        _certModello(a.modello),
       asset:          a.asset || '',
       serial_number:  a.serial_number || '',
-      mono_alimentato: mono,
+      mono_alimentato: mono === null ? '' : (mono ? 'SI' : 'NO'),
       rack:           a.rack || '',
       fornitore:      isCse ? 'CSE' : (clienteNome || ''),
-      sala:           isCse ? 'L0' : '',
+      sala:           isCse ? 'L0' : (salaByRack[a.rack] || ''),
       inter:          '',
-      quadro:         _certQuadro(mono, a.sezione_alimentazione),
+      quadro:         mono === false ? 'A + B' : (a.sezione_alimentazione || ''),
     };
   });
 }
@@ -4726,7 +4738,7 @@ async function certArchivioModifica(id) {
 // Apre il modal cert.
 // siteData: dati della site di installazione (per pre-compilare), oppure null
 // existingCert: record cert_elettrica esistente (per modifica), oppure null
-function openCertModal(siteData, existingCert) {
+async function openCertModal(siteData, existingCert) {
   certEditingId = existingCert?.id || null;
   APPARATI['cert'] = [];
 
@@ -4758,7 +4770,7 @@ function openCertModal(siteData, existingCert) {
     document.getElementById('cert-progetto').value  = isCse
       ? CERT_PROGETTO_CSE
       : _certProgettoDefault(siteData.cliente, siteData.apparati);
-    APPARATI['cert'] = _siteApparatiToCert(siteData.apparati, siteData.cliente, isCse);
+    APPARATI['cert'] = await _siteApparatiToCert(siteData.apparati, siteData.cliente, isCse);
   } else {
     // Nuova cert standalone: campi vuoti
     document.getElementById('cert-tipo').value      = 'standard';

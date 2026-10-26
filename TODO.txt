@@ -6,6 +6,7 @@ GENERA REPORT
     testare object.groupby
 
 STRUMENTI SN
+    anagrafica referenti
     codici a barre per degauss
     trova task da request
 
