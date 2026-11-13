@@ -280,7 +280,7 @@
 </div>
 
 <!-- QR CODE -->
-<div class="modal-overlay white" id="qr-modal" onclick="qrCode()">
+<div class="modal-overlay white" id="qr-modal">
   <div class="qr-code" id="qr-container"></div>
 </div>
 
@@ -1120,7 +1120,7 @@
   <div class="modal" style="width:680px;">
     <div class="modal-header">
       <h2 id="site-apparato-modal-title">Apparato</h2>
-      <button class="modal-close" onclick="closeSiteApparatoModal()">✕</button>
+      <button class="modal-close" onclick="closeModal(this)">✕</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="site-apparato-idx">
@@ -1195,7 +1195,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeSiteApparatoModal()">Annulla</button>
+      <button class="btn btn-secondary" onclick="closeModal(this)">Annulla</button>
       <button class="btn btn-primary" onclick="saveSiteApparato()">Salva</button>
     </div>
   </div>
@@ -1206,7 +1206,7 @@
   <div class="modal" style="width:900px;max-width:98vw;">
     <div class="modal-header">
       <h2 id="cert-modal-title">Nuova Certificazione Elettrica</h2>
-      <button class="modal-close" onclick="closeCertModal()">✕</button>
+      <button class="modal-close" onclick="closeModal(this)">✕</button>
     </div>
     <div class="modal-body" oninput="isUnsaved('cert')">
       <input type="hidden" id="cert-editing-id">
@@ -1264,7 +1264,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeCertModal()">Annulla</button>
+      <button class="btn btn-secondary" onclick="closeModal(this)">Annulla</button>
       <button class="btn btn-secondary" onclick="certGenera()">🖨️ Anteprima</button>
       <button class="btn btn-ok" onclick="certSalva()" id="cert-save-button">✓ Salva</button>
     </div>
@@ -1276,7 +1276,7 @@
   <div class="modal" style="width:700px;">
     <div class="modal-header">
       <h2>Apparato Certificazione</h2>
-      <button class="modal-close" onclick="closeCertAppModal()">✕</button>
+      <button class="modal-close" onclick="closeModal(this)">✕</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="cert-app-idx">
@@ -1324,7 +1324,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeCertAppModal()">Annulla</button>
+      <button class="btn btn-secondary" onclick="closeModal(this)">Annulla</button>
       <button class="btn btn-primary" onclick="saveCertApp()">Salva</button>
     </div>
   </div>
@@ -1335,11 +1335,11 @@
   <div class="modal" style="width:750px">
     <div class="modal-header">
       <h2 id="detail-title" style="color:var(--text);font-size:14px;"></h2>
-      <button class="modal-close" onclick="closeDetailModal()">✕</button>
+      <button class="modal-close" onclick="closeModal(this)">✕</button>
     </div>
     <div class="modal-body" id="detail-body"></div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeDetailModal()">Chiudi</button>
+      <button class="btn btn-secondary" onclick="closeModal(this)">Chiudi</button>
     </div>
   </div>
 </div>
@@ -1349,13 +1349,13 @@
   <div class="modal">
     <div class="modal-header">
       <h2 id="modal-title">Nuovo Record</h2>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+      <button class="modal-close" onclick="closeModal(this)">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-grid" id="modal-form"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal()">Annulla</button>
+      <button class="btn btn-secondary" onclick="closeModal(this)">Annulla</button>
       <button class="btn btn-primary" id="btn-save" onclick="saveRecord()">Salva</button>
     </div>
   </div>
@@ -1366,7 +1366,7 @@
   <div class="modal" style="width:440px">
     <div class="modal-header">
       <h2 style="color:var(--danger)">⚠ Conferma eliminazione</h2>
-      <button class="modal-close" onclick="closeDeleteModal()">✕</button>
+      <button class="modal-close" onclick="closeModal(this)">✕</button>
     </div>
     <div class="modal-body">
       <p style="font-size:13px;line-height:1.8;">
@@ -1379,7 +1379,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeDeleteModal()">Annulla</button>
+      <button class="btn btn-secondary" onclick="closeModal(this)">Annulla</button>
       <button class="btn btn-danger" onclick="confirmDelete()">Elimina definitivamente</button>
     </div>
   </div>
@@ -1390,7 +1390,7 @@
   <div class="modal" style="width:480px">
     <div class="modal-header">
       <h2 id="lookup-modal-title">Record</h2>
-      <button class="modal-close" onclick="closeLookupModal()">✕</button>
+      <button class="modal-close" onclick="closeModal(this)">✕</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="lookup-table">
@@ -1410,7 +1410,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeLookupModal()">Annulla</button>
+      <button class="btn btn-secondary" onclick="closeModal(this)">Annulla</button>
       <button class="btn btn-primary" id="btn-save-lookup" onclick="saveLookup()">Salva</button>
     </div>
   </div>
@@ -1421,7 +1421,7 @@
   <div class="modal" style="width:440px">
     <div class="modal-header">
       <h2 id="cliente-modal-title">Nuovo Cliente</h2>
-      <button class="modal-close" onclick="closeClienteModal()">✕</button>
+      <button class="modal-close" onclick="closeModal(this)">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-grid">
@@ -1436,7 +1436,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeClienteModal()">Annulla</button>
+      <button class="btn btn-secondary" onclick="closeModal(this)">Annulla</button>
       <button class="btn btn-primary" id="btn-save-cliente" onclick="saveCliente()">Salva</button>
     </div>
   </div>
@@ -1447,7 +1447,7 @@
   <div class="modal" style="width:480px">
     <div class="modal-header">
       <h2 id="anagrafica-modal-title">Nuova Anagrafica</h2>
-      <button class="modal-close" onclick="closeAnagraficaModal()">✕</button>
+      <button class="modal-close" onclick="closeModal(this)">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-grid">
@@ -1462,7 +1462,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeAnagraficaModal()">Annulla</button>
+      <button class="btn btn-secondary" onclick="closeModal(this)">Annulla</button>
       <button class="btn btn-primary" id="btn-save-anagrafica" onclick="saveAnagrafica()">Salva</button>
     </div>
   </div>
@@ -1473,7 +1473,7 @@
   <div class="modal" style="width:370px;">
     <div class="modal-header">
       <h2 id="isp-modal-title">Nuova Segnalazione</h2>
-      <button class="modal-close" onclick="closeIspModal()">✕</button>
+      <button class="modal-close" onclick="closeModal(this)">✕</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="isp-editing-id">
@@ -1512,7 +1512,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeIspModal()">Annulla</button>
+      <button class="btn btn-secondary" onclick="closeModal(this)">Annulla</button>
       <button class="btn btn-primary" onclick="saveIspSegnalazione()">Salva</button>
     </div>
   </div>
@@ -1523,7 +1523,7 @@
   <div class="modal" style="width:440px">
     <div class="modal-header">
       <h2 id="non-segnalare-modal-title">Nuovo Apparato da non segnalare</h2>
-      <button class="modal-close" onclick="closeNonSegnalareModal()">✕</button>
+      <button class="modal-close" onclick="closeModal(this)">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-grid">
@@ -1542,7 +1542,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeNonSegnalareModal()">Annulla</button>
+      <button class="btn btn-secondary" onclick="closeModal(this)">Annulla</button>
       <button class="btn btn-primary" id="btn-save-non-segnalare" onclick="saveNonSegnalare()">Salva</button>
     </div>
   </div>
@@ -1553,7 +1553,7 @@
   <div class="modal" style="width:650px">
     <div class="modal-header">
       <h2>Storico Ricerche</h2>
-      <button class="modal-close" onclick="closeRicercheModal()">✕</button>
+      <button class="modal-close" onclick="closeModal(this)">✕</button>
     </div>
     <div class="modal-body">
       <div class="table-wrapper scrollable">
@@ -1574,7 +1574,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeRicercheModal()">Annulla</button>
+      <button class="btn btn-secondary" onclick="closeModal(this)">Annulla</button>
     </div>
   </div>
 </div>
@@ -2221,13 +2221,36 @@ async function openRicercheModal() {
   document.getElementById('ricerche-modal').classList.add('open');
 }
 
-function closeRicercheModal() {
-  document.getElementById('ricerche-modal').classList.remove('open');
+const modalCloseActions = {
+  'record-modal': () => { editingKey = null; },
+  'delete-modal': () => { currentDelete = null; },
+  'lookup-modal': () => { lookupEditingKey = null; },
+  'cliente-modal': () => { clienteEditingKey = null; },
+  'anagrafica-modal': () => { anagraficaEditingId = null; },
+  'cert-modal': () => {
+    certEditingId = null;
+    APPARATI['cert'] = [];
+  },
+  'non-segnalare-modal': () => { nonSegnalareEditingKey = null; },
+  'qr-modal': () => {
+    const qr = document.getElementById('qr-container');
+    qr.innerHTML = '';
+    qr.classList.remove('show');
+  }
+};
+
+function closeModal(source) {
+  const overlay = source.closest('.modal-overlay');
+  if (!overlay) return;
+
+  overlay.classList.remove('open');
+  const onClose = modalCloseActions[overlay.id];
+  if (onClose) onClose();
 }
 
 function loadRicerche(search) {
   clearFilters();
-  closeRicercheModal();
+  closeModal(document.getElementById('ricerche-modal'));
   document.getElementById('search-input').value = search;
   loadData();
 }
@@ -2341,10 +2364,6 @@ async function openDetailModal(etichetta) {
   `;
 }
 
-function closeDetailModal() {
-  document.getElementById('detail-modal').classList.remove('open');
-}
-
 // ─── ADD / EDIT MODAL ─────────────────────────────────────────────────────────
 function buildForm(record = {}) {
   return COLUMNS.map(col => {
@@ -2373,13 +2392,8 @@ async function openEditModal(key) {
   document.getElementById('record-modal').classList.add('open');
 
   const { data, error } = await db.from(TABLE).select('*').eq('etichetta_asset', key).single();
-  if (error || !data) { showToast('Errore nel caricamento', 'error'); closeModal(); return; }
+  if (error || !data) { showToast('Errore nel caricamento', 'error'); closeModal(document.getElementById('record-modal')); return; }
   document.getElementById('modal-form').innerHTML = buildForm(data);
-}
-
-function closeModal() {
-  document.getElementById('record-modal').classList.remove('open');
-  editingKey = null;
 }
 
 async function saveRecord() {
@@ -2407,7 +2421,7 @@ async function saveRecord() {
 
   if (error) { showToast('Errore: ' + error.message, 'error'); return; }
   showToast(editingKey ? 'Record aggiornato' : 'Record aggiunto', 'success');
-  closeModal();
+  closeModal(document.getElementById('record-modal'));
   loadData();
 }
 
@@ -2483,15 +2497,10 @@ async function confirmDelete() {
   const { error } = await db.from(config.table).delete().eq(config.column, value);
   if (error) { showToast('Errore: ' + error.message, 'error'); return; }
 
-  closeDeleteModal();
+  closeModal(document.getElementById('delete-modal'));
   config.reload();
   showToast('Record eliminato', 'success');
 
-  currentDelete = null;
-}
-
-function closeDeleteModal() {
-  document.getElementById('delete-modal').classList.remove('open');
   currentDelete = null;
 }
 
@@ -2762,11 +2771,6 @@ function openLookupModal(table, key, chiave, tipo) {
   document.getElementById('lookup-modal').classList.add('open');
 }
 
-function closeLookupModal() {
-  document.getElementById('lookup-modal').classList.remove('open');
-  lookupEditingKey = null;
-}
-
 async function saveLookup() {
   const table = document.getElementById('lookup-table').value;
   const key = document.getElementById('lookup-key').value.trim();
@@ -2788,7 +2792,7 @@ async function saveLookup() {
   btn.disabled = false;
   if (error) { showToast('Errore: ' + error.message, 'error'); return; }
   showToast('Record salvato', 'success');
-  closeLookupModal();
+  closeModal(document.getElementById('lookup-modal'));
   if (isEcc) loadEccezioni(); else loadModelli();
 }
 
@@ -3159,11 +3163,6 @@ function openClienteModal(nome, chiave) {
   document.getElementById('cliente-modal').classList.add('open');
 }
 
-function closeClienteModal() {
-  document.getElementById('cliente-modal').classList.remove('open');
-  clienteEditingKey = null;
-}
-
 async function saveCliente() {
   const nome = document.getElementById('cliente-nome').value.trim();
   const chiave = document.getElementById('cliente-chiave').value.trim();
@@ -3174,7 +3173,7 @@ async function saveCliente() {
   btn.disabled = false;
   if (error) { showToast('Errore: ' + error.message, 'error'); return; }
   showToast(clienteEditingKey ? 'Cliente aggiornato' : 'Cliente aggiunto', 'success');
-  closeClienteModal();
+  closeModal(document.getElementById('cliente-modal'));
   loadClienti();
 }
 
@@ -3621,13 +3620,13 @@ db.auth.getSession().then(({ data: { session } }) => {
 });
 
 // ─── CLOSE MODAL ON OVERLAY CLICK ────────────────────────────────────────────
-document.getElementById('theme-modal').addEventListener('click', function(e) { if (e.target === this) closeThemeModal(); });
-document.getElementById('record-modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
-document.getElementById('detail-modal').addEventListener('click', function(e) { if (e.target === this) closeDetailModal(); });
-document.getElementById('delete-modal').addEventListener('click', function(e) { if (e.target === this) closeDeleteModal(); });
-document.getElementById('lookup-modal').addEventListener('click', function(e) { if (e.target === this) closeLookupModal(); });
-document.getElementById('cliente-modal').addEventListener('click', function(e) { if (e.target === this) closeClienteModal(); });
-document.getElementById('anagrafica-modal').addEventListener('click', function(e) { if (e.target === this) closeAnagraficaModal(); });
+function closeOnBackdrop(event) {
+  if (event.target === this) closeModal(this);
+}
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', closeOnBackdrop);
+});
 
 // ─── TAB BOLLE ────────────────────────────────────────────────────────────────
 
@@ -4044,11 +4043,6 @@ async function openAnagraficaModal(id, nome = '', indirizzo = '') {
   document.getElementById('anagrafica-modal').classList.add('open');
 }
 
-function closeAnagraficaModal() {
-  document.getElementById('anagrafica-modal').classList.remove('open');
-  anagraficaEditingId = null;
-}
-
 async function saveAnagrafica() {
   const nome = document.getElementById('anagrafica-nome').value.trim();
   const indirizzo = document.getElementById('anagrafica-indirizzo').value.trim();
@@ -4065,7 +4059,7 @@ async function saveAnagrafica() {
   btn.disabled = false;
   if (error) { showToast('Errore: ' + error.message, 'error'); return; }
   showToast(anagraficaEditingId ? 'Anagrafica aggiornata' : 'Anagrafica aggiunta', 'success');
-  closeAnagraficaModal();
+  closeModal(document.getElementById('anagrafica-modal'));
   loadAnagrafiche();
   loadAnagraficheCache();
 }
@@ -4298,10 +4292,6 @@ function openSiteApparatoModal(idx) {
   document.getElementById('site-apparato-modal').classList.add('open');
 }
 
-function closeSiteApparatoModal() {
-  document.getElementById('site-apparato-modal').classList.remove('open');
-}
-
 function saveSiteApparato() {
   const idx = parseInt(document.getElementById('site-apparato-idx').value, 10);
   const tipo = document.getElementById('site-tipo').value;
@@ -4312,7 +4302,7 @@ function saveSiteApparato() {
   });
   if (tipo === 'Sostituzione') app.azione = document.getElementById('site-app-azione').value;
   APPARATI['site'][idx] = app;
-  closeSiteApparatoModal();
+  closeModal(document.getElementById('site-apparato-modal'));
   siteRenderApparati();
 }
 
@@ -4789,12 +4779,6 @@ async function openCertModal(siteData, existingCert) {
   document.getElementById('cert-modal').classList.add('open');
 }
 
-function closeCertModal() {
-  document.getElementById('cert-modal').classList.remove('open');
-  certEditingId = null;
-  APPARATI['cert'] = [];
-}
-
 // Aggiorna il campo progetto quando l'utente cambia il tipo cert
 function onCertTipoChange() {
   const tipo    = document.getElementById('cert-tipo').value;
@@ -4875,10 +4859,6 @@ function openCertAppModal(idx) {
   document.getElementById('cert-app-modal').classList.add('open');
 }
 
-function closeCertAppModal() {
-  document.getElementById('cert-app-modal').classList.remove('open');
-}
-
 function saveCertApp() {
   const idx = parseInt(document.getElementById('cert-app-idx').value, 10);
   if (isNaN(idx) || idx < 0) return;
@@ -4887,7 +4867,7 @@ function saveCertApp() {
     const el = document.getElementById('cert-app-' + f);
     if (el) APPARATI['cert'][idx][f] = el.value.trim();
   });
-  closeCertAppModal();
+  closeModal(document.getElementById('cert-app-modal'));
   certRenderApparati();
 }
 
@@ -4942,7 +4922,7 @@ async function certSalva() {
   if (error) { showToast('Errore salvataggio: ' + error.message, 'error'); return; }
 
   showToast(id ? 'Certificazione aggiornata' : 'Certificazione salvata', 'success');
-  closeCertModal();
+  closeModal(document.getElementById('cert-modal'));
   _resetCertArchivioMesiCache();
   switchSiteTab('certificazioni');
 }
@@ -5135,11 +5115,6 @@ function openNonSegnalareModal(index) {
   document.getElementById('non-segnalare-modal-title').textContent = 'Modifica Apparato da non segnalare';
 }
 
-function closeNonSegnalareModal() {
-  document.getElementById('non-segnalare-modal').classList.remove('open');
-  nonSegnalareEditingKey = null;
-}
-
 async function saveNonSegnalare() {
   const etichetta = document.getElementById('non-segnalare-etichetta').value.trim();
   const incident = document.getElementById('non-segnalare-incident').value.trim();
@@ -5151,7 +5126,7 @@ async function saveNonSegnalare() {
   btn.disabled = false;
   if (error) { showToast('Errore: ' + error.message, 'error'); return; }
   showToast(nonSegnalareEditingKey ? 'Apparato aggiornato' : 'Apparato aggiunto', 'success');
-  closeNonSegnalareModal();
+  closeModal(document.getElementById('non-segnalare-modal'));
   ispLoadNonSegnalare();
 }
 
@@ -5260,10 +5235,6 @@ function ispModifica(idx) {
   document.getElementById('isp-modal').classList.add('open');
 }
 
-function closeIspModal() {
-  document.getElementById('isp-modal').classList.remove('open');
-}
-
 // ── Cerca asset e pre-compila ─────────────────────────────────────────────────
 async function ispCamera() {
   const asset = await readBarcode() || '';
@@ -5342,7 +5313,7 @@ async function saveIspSegnalazione() {
   if (owner) await ispEnsureOwner(owner);
 
   showToast(editId ? 'Segnalazione modificata' : 'Segnalazione salvata', 'success');
-  closeIspModal();
+  closeModal(document.getElementById('isp-modal'));
   await ispLoadSegnalazioni();
 }
 
@@ -5469,9 +5440,6 @@ function ispCopiaMail() {
   });
 }
 
-// Close modal on overlay click
-document.getElementById('isp-modal').addEventListener('click', function(e) { if (e.target === this) closeIspModal(); });
-
 // ── CAMERA ──────────────────────────────────────────
 async function readBarcode() {
 
@@ -5513,15 +5481,9 @@ async function readBarcode() {
   }
 }
 
-function qrCode(text = 'close') {
+function qrCode(text) {
   const modal = document.getElementById('qr-modal');
   const qr = document.getElementById('qr-container');
-  if (text === 'close') {
-    qr.innerHTML = '';
-    qr.classList.remove('show');
-    modal.classList.remove('open');
-    return;
-  }
   new QRCode(qr, {
       text: text,
       width: 200,
@@ -5577,10 +5539,6 @@ function resetTheme() {
   const mode = document.getElementById('themeMode').value;
   currTheme[mode] = structuredClone(DEF_COLORS[mode]);
   applyTheme(mode);
-}
-
-function closeThemeModal() {
-  document.getElementById('theme-modal').classList.remove('open');
 }
 
 let currTheme = loadTheme();
