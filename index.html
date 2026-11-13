@@ -149,6 +149,7 @@
   .modal-overlay { opacity: 0; pointer-events: none; display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
   .modal-overlay.open { opacity: 1; pointer-events: auto; }
   .modal-overlay.white { background: rgba(255,255,255,0.7); }
+  .modal-overlay.transparent { background: transparent; backdrop-filter: none; }
   .modal { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; max-width: 95vw; max-height: 90vh; overflow-y: hidden; }
   .modal-header { padding: 10px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--surface); z-index: 1; }
   .modal-header h2 { font-family: var(--mono); font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); }
@@ -289,12 +290,13 @@
     <span id="record-count" class="no-mobile">— record</span>
     <span id="user-email" class="user-email no-mobile"></span>
     <button class="btn btn-secondary btn-sm" id="btn-logout" onclick="doLogout()">Logout</button>
-    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('theme-panel').classList.toggle('open');" title="Tema">👤</button>
+    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('theme-modal').classList.toggle('open');" title="Tema">👤</button>
   </div>
 </header>
 
 <!-- TEMI -->
-<div id="theme-panel">
+<div id="theme-modal" class="modal-overlay transparent">
+<div id="theme-panel" class="open">
   <div><label>Modo</label>
     <select id="themeMode" onchange="applyTheme(this.value)">
       <option value="dark">Dark</option>
@@ -304,6 +306,7 @@
   <div><label>Default</label><button class="btn btn-secondary btn-sm" onclick="resetTheme()">↺ Reset</button></div>
   <div><label>Sfondo</label><input type="color" id="themeBg" oninput="updateTheme()"></div>
   <div><label>Colore</label><input type="color" id="themeColor" oninput="updateTheme()"></div>
+</div>
 </div>
 
 <div class="tabs">
@@ -3618,6 +3621,7 @@ db.auth.getSession().then(({ data: { session } }) => {
 });
 
 // ─── CLOSE MODAL ON OVERLAY CLICK ────────────────────────────────────────────
+document.getElementById('theme-modal').addEventListener('click', function(e) { if (e.target === this) closeThemeModal(); });
 document.getElementById('record-modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
 document.getElementById('detail-modal').addEventListener('click', function(e) { if (e.target === this) closeDetailModal(); });
 document.getElementById('delete-modal').addEventListener('click', function(e) { if (e.target === this) closeDeleteModal(); });
@@ -5573,6 +5577,10 @@ function resetTheme() {
   const mode = document.getElementById('themeMode').value;
   currTheme[mode] = structuredClone(DEF_COLORS[mode]);
   applyTheme(mode);
+}
+
+function closeThemeModal() {
+  document.getElementById('theme-modal').classList.remove('open');
 }
 
 let currTheme = loadTheme();
