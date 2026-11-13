@@ -567,11 +567,12 @@
           <table>
             <thead><tr>
               <th>Nome Cliente</th>
+              <th>Rack</th>
               <th>Chiave</th>
               <th style="width:80px;"></th>
             </tr></thead>
             <tbody id="clienti-body">
-              <tr><td colspan="3"><div class="loading"><div class="spinner"></div></div></td></tr>
+              <tr><td colspan="4"><div class="loading"><div class="spinner"></div></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -3122,6 +3123,8 @@ function renderReport(report) {
 
 // ─── TAB CLIENTI ─────────────────────────────────────────────────────────────
 let clientiSearchTimeout = null;
+let rackPerCliente = null;
+let rackCachePromise = null;
 
 function onClientiSearch() {
   clearTimeout(clientiSearchTimeout);
@@ -3132,25 +3135,81 @@ function onClientiSearch() {
   }, 300);
 }
 
+async function loadFoglioChiaviCache() {
+  if (rackPerCliente !== null) return true;
+  if (rackCachePromise) return rackCachePromise;
+
+  rackCachePromise = (async () => {
+    const { data, error } = await db.from('foglio_chiavi')
+      .select('cliente, sala, rack')
+      .order('sala')
+      .order('rack');
+    if (error) {
+      showToast('Errore nel caricamento del foglio chiavi: ' + error.message, 'error');
+      return false;
+    }
+
+    const grouped = Object.create(null);
+    (data || []).forEach(r => {
+      if (!grouped[r.cliente]) grouped[r.cliente] = [];
+      grouped[r.cliente].push(r);
+    });
+    rackPerCliente = grouped;
+    return true;
+  })();
+
+  const loaded = await rackCachePromise;
+  if (!loaded) rackCachePromise = null;
+  return loaded;
+}
+
 async function loadClienti() {
   let query = db.from('clienti_chiave').select('*', { count: 'exact' }).order('nome_cliente');
   if (cliSearch) {
     query = query.or(`nome_cliente.ilike.%${cliSearch}%,chiave.ilike.%${cliSearch}%`);
   }
   const { data, count, error } = await query;
-  if (error) return;
+  if (error) { showToast('Errore nel caricamento clienti: ' + error.message, 'error'); return; }
+  if (!await loadFoglioChiaviCache()) return;
+
   cliTotal = count || 0;
   document.getElementById('clienti-info').textContent = `${cliTotal} record`;
-  document.getElementById('clienti-body').innerHTML = (data || []).map(r => `
-    <tr>
-      <td>${r.nome_cliente}</td>
-      <td><span class="badge badge-active">${r.chiave}</span></td>
-      <td><div class="td-actions">
-        <button class="btn btn-secondary btn-sm" onclick="openClienteModal('${escHtml(r.nome_cliente)}','${escHtml(r.chiave)}')">✎</button>
-        <button class="btn btn-danger btn-sm" onclick="openDeleteModal('cliente', { value: '${escHtml(r.nome_cliente)}', record: '${escHtml(r.nome_cliente)} - Chiave ${escHtml(r.chiave)}' })">✕</button>
-      </div></td>
-    </tr>
-  `).join('') || '<tr><td colspan="3"><div class="empty">Nessun cliente</div></td></tr>';
+  document.getElementById('clienti-body').innerHTML = (data || []).map(r => {
+    const racks = rackPerCliente[r.nome_cliente] || [];
+    const rackRows = racks.length
+      ? racks.map(item => `
+          <div style="display:flex;gap:8px;">
+            <div>${escapeHtmlText(item.rack)}</div>
+            <div>${escapeHtmlText(String(item.sala || '').slice(8))}</div>
+          </div>
+        `).join('')
+      : '<div class="empty">Nessun rack</div>';
+
+    return `
+      <tr>
+        <td>${escapeHtmlText(r.nome_cliente)}</td>
+        <td onclick="this.closest('tr').nextElementSibling.classList.toggle('panel'); this.classList.toggle('badge-open')" style="cursor:pointer;">
+          <span class="badge badge-inactive">${racks.length}</span><span class="badge badge-arrow">▶</span>
+        </td>
+        <td><span class="badge badge-active">${escapeHtmlText(r.chiave)}</span></td>
+        <td><div class="td-actions">
+          <button class="btn btn-secondary btn-sm" onclick="openClienteModal('${escHtml(r.nome_cliente)}','${escHtml(r.chiave)}')">✎</button>
+          <button class="btn btn-danger btn-sm" onclick="openDeleteModal('cliente', { value: '${escHtml(r.nome_cliente)}', record: '${escHtml(r.nome_cliente)} - Chiave ${escHtml(r.chiave)}' })">✕</button>
+        </div></td>
+      </tr>
+      <tr class="panel">
+        <td></td>
+        <td colspan="3"><div class="form-group">${rackRows}</div></td>
+      </tr>
+    `;
+  }).join('') || '<tr><td colspan="4"><div class="empty">Nessun cliente</div></td></tr>';
+}
+
+function escapeHtmlText(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function openClienteModal(nome, chiave) {
