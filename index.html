@@ -584,11 +584,11 @@
       <!-- SEZIONE: CLIENTI SENZA CHIAVE -->
       <div class="admin-section">
         <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
-          <span>Clienti Mercato Esterno senza chiave mappata</span>
-          <button class="btn btn-secondary btn-sm" onclick="loadClientiSenzaChiave()">↺ Aggiorna</button>
+          <span>Clienti Mercato Esterno senza chiave associata</span>
+          <button class="btn btn-secondary btn-sm" onclick="loadClientiSenzaChiave()">🔍 Analizza</button>
         </div>
         <div id="clienti-senza-chiave-body">
-          <div class="empty" style="padding:30px;">Clicca Aggiorna per analizzare il DB</div>
+          <div class="empty" style="padding:30px;">Clicca Analizza per verificare</div>
         </div>
       </div>
 
@@ -596,10 +596,10 @@
       <div class="admin-section">
         <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
           <span>Chiavi potenzialmente riutilizzabili</span>
-          <button class="btn btn-secondary btn-sm" onclick="loadChiaviRiutilizzabili()">↺ Analizza</button>
+          <button class="btn btn-secondary btn-sm" onclick="loadChiaviRiutilizzabili()">🔍 Analizza</button>
         </div>
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">
-          Clienti con chiave mappata ma nessun apparato attualmente in sala (nome_completo contiene /sala/)
+          Clienti con chiave associata ma nessun apparato attualmente in sala (nome_completo contiene /sala/)
         </div>
         <div id="chiavi-riutilizzabili-body">
           <div class="empty" style="padding:30px;">Clicca Analizza per verificare</div>
@@ -610,7 +610,7 @@
       <div class="admin-section">
         <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
           <span>Chiavi C non utilizzate</span>
-          <button class="btn btn-secondary btn-sm" onclick="loadChiaviCLibere()">↺ Analizza</button>
+          <button class="btn btn-secondary btn-sm" onclick="loadChiaviCLibere()">🔍 Analizza</button>
         </div>
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">
           Chiavi CXX non assegnate ad alcun cliente, nell'intervallo C1–Cmax
@@ -624,7 +624,7 @@
       <div class="admin-section">
         <div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center;">
           <span>Chiavi C condivise</span>
-          <button class="btn btn-secondary btn-sm" onclick="loadChiaviCCondivise()">↺ Analizza</button>
+          <button class="btn btn-secondary btn-sm" onclick="loadChiaviCCondivise()">🔍 Analizza</button>
         </div>
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">
           Chiavi assegnate a più clienti, con almeno un apparato in sala
@@ -3068,7 +3068,7 @@ function renderReport(report) {
                 <td onclick="this.closest('tr').nextElementSibling.classList.toggle('panel'); this.classList.toggle('badge-open')" style="cursor: pointer;">
                   <span class="badge badge-inactive">${asset.length}</span><span class="badge badge-arrow">▶</span>
                 </td>
-                <td><button class="btn btn-primary btn-sm" onclick="switchTab('clienti');setTimeout(()=>openClienteModal('${escHtml(cliente)}'),100)">+ Mappa</button></td>
+                <td><button class="btn btn-primary btn-sm" onclick="switchTab('clienti');setTimeout(()=>openClienteModal('${escHtml(cliente)}'),100)">+ Associa</button></td>
               </tr>
               <tr class="panel">
                 <td></td>
@@ -3102,7 +3102,7 @@ function renderReport(report) {
                 <td onclick="this.closest('tr').nextElementSibling.classList.toggle('panel'); this.classList.toggle('badge-open')" style="cursor: pointer;">
                   <span class="badge badge-inactive">${asset.length}</span><span class="badge badge-arrow">▶</span>
                 </td>
-                <td><button class="btn btn-primary btn-sm" onclick="openLookupModal('modelli','${escHtml(modello)}','','')">+ Mappa</button></td>
+                <td><button class="btn btn-primary btn-sm" onclick="openLookupModal('modelli','${escHtml(modello)}','','')">+ Associa</button></td>
               </tr>
               <tr class="panel">
                 <td></td>
@@ -3247,7 +3247,7 @@ async function loadClientiSenzaChiave() {
   if (error) { el.innerHTML = `<div class="empty" style="color:var(--danger)">Errore: ${error.message}</div>`; return; }
 
   if (!risultati.length) {
-    el.innerHTML = `<div class="empty" style="padding:20px;color:var(--accent);">✓ Tutti i clienti Mercato Esterno hanno una chiave mappata</div>`;
+    el.innerHTML = `<div class="empty" style="padding:20px;color:var(--accent);">✓ Tutti i clienti Mercato Esterno hanno una chiave associata</div>`;
     return;
   }
 
@@ -3259,7 +3259,7 @@ async function loadClientiSenzaChiave() {
           ${risultati.map(r => `
             <tr>
               <td style="font-size:12px;">${r.piattaforma_supportata}</td>
-              <td><button class="btn btn-primary btn-sm" onclick="openClienteModal('${escHtml(r.piattaforma_supportata)}','')">+ Mappa</button></td>
+              <td><button class="btn btn-primary btn-sm" onclick="openClienteModal('${escHtml(r.piattaforma_supportata)}','')">+ Associa</button></td>
             </tr>
           `).join('')}
         </tbody>
